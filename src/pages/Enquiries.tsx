@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus, Phone, Mail, MessageSquare } from "lucide-react";
+import { Search, Phone, Mail, MessageSquare } from "lucide-react";
+import { AddEnquiryDialog } from "@/components/forms/AddEnquiryDialog";
 
 const enquiries = [
   {
@@ -72,10 +73,7 @@ export default function Enquiries() {
           <h1 className="text-3xl font-bold text-foreground">Enquiries & Leads</h1>
           <p className="text-muted-foreground">Manage admission enquiries and follow-ups</p>
         </div>
-        <Button className="shadow-elegant">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Enquiry
-        </Button>
+        <AddEnquiryDialog />
       </div>
 
       {/* Stats Cards */}

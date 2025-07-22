@@ -8,6 +8,8 @@ import {
   UserCheck,
   ClipboardCheck
 } from "lucide-react";
+import { AddStudentDialog } from "@/components/forms/AddStudentDialog";
+import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,20 +63,28 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid gap-3">
-              <button className="flex items-center p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors text-left">
-                <Users className="mr-3 h-4 w-4 text-primary" />
-                <div>
-                  <p className="font-medium">Add New Student</p>
-                  <p className="text-sm text-muted-foreground">Register a new student</p>
-                </div>
-              </button>
-              <button className="flex items-center p-3 bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors text-left">
-                <DollarSign className="mr-3 h-4 w-4 text-accent" />
-                <div>
-                  <p className="font-medium">Collect Fee</p>
-                  <p className="text-sm text-muted-foreground">Process fee payment</p>
-                </div>
-              </button>
+              <AddStudentDialog 
+                trigger={
+                  <button className="flex items-center p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors text-left w-full">
+                    <Users className="mr-3 h-4 w-4 text-primary" />
+                    <div>
+                      <p className="font-medium">Add New Student</p>
+                      <p className="text-sm text-muted-foreground">Register a new student</p>
+                    </div>
+                  </button>
+                }
+              />
+              <CollectFeeDialog 
+                trigger={
+                  <button className="flex items-center p-3 bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors text-left w-full">
+                    <DollarSign className="mr-3 h-4 w-4 text-accent" />
+                    <div>
+                      <p className="font-medium">Collect Fee</p>
+                      <p className="text-sm text-muted-foreground">Process fee payment</p>
+                    </div>
+                  </button>
+                }
+              />
               <button className="flex items-center p-3 bg-warning/10 hover:bg-warning/20 rounded-lg transition-colors text-left">
                 <ClipboardCheck className="mr-3 h-4 w-4 text-warning" />
                 <div>

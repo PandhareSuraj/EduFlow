@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Edit, Eye, Users } from "lucide-react";
+import { Search, Edit, Eye, Users } from "lucide-react";
+import { AddCourseDialog } from "@/components/forms/AddCourseDialog";
 
 const courses = [
   {
@@ -56,10 +57,7 @@ export default function Courses() {
           <h1 className="text-3xl font-bold text-foreground">Courses</h1>
           <p className="text-muted-foreground">Manage college courses and programs</p>
         </div>
-        <Button className="shadow-elegant">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Course
-        </Button>
+        <AddCourseDialog />
       </div>
 
       {/* Search and Filters */}

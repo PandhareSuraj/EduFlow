@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Plus, Edit, Eye, Mail, Phone } from "lucide-react";
+import { Search, Edit, Eye, Mail, Phone } from "lucide-react";
+import { AddFacultyDialog } from "@/components/forms/AddFacultyDialog";
 
 const faculty = [
   {
@@ -61,10 +62,7 @@ export default function Faculty() {
           <h1 className="text-3xl font-bold text-foreground">Faculty & Staff</h1>
           <p className="text-muted-foreground">Manage teaching staff and faculty members</p>
         </div>
-        <Button className="shadow-elegant">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Faculty
-        </Button>
+        <AddFacultyDialog />
       </div>
 
       {/* Search and Filters */}

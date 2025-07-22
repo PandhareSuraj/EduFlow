@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Plus, Search, Filter, Download, Edit, Trash2, Eye } from "lucide-react";
+import { Search, Filter, Download, Edit, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AddStudentDialog } from "@/components/forms/AddStudentDialog";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -102,10 +103,7 @@ export default function Students() {
           <h1 className="text-3xl font-bold text-foreground">Student Management</h1>
           <p className="text-muted-foreground">Manage student admissions, profiles, and records</p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90">
-          <Plus className="mr-2 h-4 w-4" />
-          Add New Student
-        </Button>
+        <AddStudentDialog />
       </div>
 
       {/* Filters and Search */}
