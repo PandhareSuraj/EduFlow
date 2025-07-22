@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Phone, Mail, MessageSquare } from "lucide-react";
 import { AddEnquiryDialog } from "@/components/forms/AddEnquiryDialog";
+import { ViewEnquiryDialog, EditEnquiryDialog } from "@/components/forms/EnquiryDialogs";
 
 const enquiries = [
   {
@@ -188,8 +189,13 @@ export default function Enquiries() {
                   <TableCell>{enquiry.assignedTo}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">View</Button>
-                      <Button size="sm">Follow Up</Button>
+                      <ViewEnquiryDialog enquiry={enquiry} />
+                      <EditEnquiryDialog 
+                        enquiry={enquiry}
+                        trigger={
+                          <Button size="sm">Follow Up</Button>
+                        }
+                      />
                     </div>
                   </TableCell>
                 </TableRow>

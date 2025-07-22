@@ -1,0 +1,264 @@
+import { useState } from "react";
+import { Eye, Edit, Phone, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+
+interface Enquiry {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  course: string;
+  source: string;
+  status: string;
+  followUpDate: string;
+  assignedTo: string;
+  createdDate: string;
+}
+
+interface ViewEnquiryDialogProps {
+  enquiry: Enquiry;
+  trigger?: React.ReactNode;
+}
+
+export function ViewEnquiryDialog({ enquiry, trigger }: ViewEnquiryDialogProps) {
+  const [open, setOpen] = useState(false);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "New": return "bg-blue-500";
+      case "Contacted": return "bg-yellow-500";
+      case "Interested": return "bg-green-500";
+      case "Not Interested": return "bg-red-500";
+      case "Converted": return "bg-green-600";
+      default: return "bg-gray-500";
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button variant="outline" size="sm">
+            <Eye className="mr-2 h-4 w-4" />
+            View
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Enquiry Details</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-semibold">{enquiry.name}</h3>
+              <p className="text-muted-foreground">Enquiry ID: {enquiry.id}</p>
+            </div>
+            <Badge className={getStatusColor(enquiry.status)} style={{backgroundColor: getStatusColor(enquiry.status)}}>
+              {enquiry.status}
+            </Badge>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm font-medium">Phone</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <Phone className="h-4 w-4" />
+                <p>{enquiry.phone}</p>
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Email</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <Mail className="h-4 w-4" />
+                <p>{enquiry.email}</p>
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Interested Course</Label>
+              <p className="mt-1">{enquiry.course}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Source</Label>
+              <p className="mt-1">{enquiry.source}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Created Date</Label>
+              <p className="mt-1">{enquiry.createdDate}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Follow-up Date</Label>
+              <p className="mt-1">{enquiry.followUpDate}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Assigned To</Label>
+              <p className="mt-1">{enquiry.assignedTo}</p>
+            </div>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button size="sm">
+              <Phone className="mr-2 h-4 w-4" />
+              Call
+            </Button>
+            <Button variant="outline" size="sm">
+              <Mail className="mr-2 h-4 w-4" />
+              Email
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface EditEnquiryDialogProps {
+  enquiry: Enquiry;
+  trigger?: React.ReactNode;
+}
+
+export function EditEnquiryDialog({ enquiry, trigger }: EditEnquiryDialogProps) {
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+  
+  const [formData, setFormData] = useState({
+    name: enquiry.name,
+    email: enquiry.email,
+    phone: enquiry.phone,
+    course: enquiry.course,
+    source: enquiry.source,
+    status: enquiry.status,
+    assignedTo: enquiry.assignedTo,
+    followUpDate: enquiry.followUpDate
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast({
+      title: "Enquiry Updated",
+      description: `Enquiry for ${formData.name} has been successfully updated.`,
+    });
+    setOpen(false);
+  };
+
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button variant="outline" size="sm">
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Edit Enquiry - {enquiry.id}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => handleChange("name", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => handleChange("phone", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleChange("email", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="course">Course</Label>
+              <Select value={formData.course} onValueChange={(value) => handleChange("course", value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DMLT">DMLT</SelectItem>
+                  <SelectItem value="Radiology Technician">Radiology Technician</SelectItem>
+                  <SelectItem value="PGDMLT">PGDMLT</SelectItem>
+                  <SelectItem value="Hospital Management">Hospital Management</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <Select value={formData.status} onValueChange={(value) => handleChange("status", value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="New">New</SelectItem>
+                  <SelectItem value="Contacted">Contacted</SelectItem>
+                  <SelectItem value="Interested">Interested</SelectItem>
+                  <SelectItem value="Not Interested">Not Interested</SelectItem>
+                  <SelectItem value="Converted">Converted</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="assignedTo">Assigned To</Label>
+              <Select value={formData.assignedTo} onValueChange={(value) => handleChange("assignedTo", value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Priya Sharma">Priya Sharma</SelectItem>
+                  <SelectItem value="Amit Desai">Amit Desai</SelectItem>
+                  <SelectItem value="Rajesh Kumar">Rajesh Kumar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="followUpDate">Follow-up Date</Label>
+              <Input
+                id="followUpDate"
+                type="date"
+                value={formData.followUpDate}
+                onChange={(e) => handleChange("followUpDate", e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">Update Enquiry</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

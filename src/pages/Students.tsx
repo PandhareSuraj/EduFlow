@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Search, Filter, Download, Edit, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddStudentDialog } from "@/components/forms/AddStudentDialog";
+import { ViewStudentDialog, EditStudentDialog } from "@/components/forms/StudentDialogs";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -192,14 +193,24 @@ export default function Students() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Student
-                        </DropdownMenuItem>
+                        <ViewStudentDialog 
+                          student={student}
+                          trigger={
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Profile
+                            </DropdownMenuItem>
+                          }
+                        />
+                        <EditStudentDialog 
+                          student={student}
+                          trigger={
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Student
+                            </DropdownMenuItem>
+                          }
+                        />
                         <DropdownMenuItem>
                           Generate ID Card
                         </DropdownMenuItem>

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search, Edit, Eye, Users } from "lucide-react";
 import { AddCourseDialog } from "@/components/forms/AddCourseDialog";
+import { ViewCourseDialog, EditCourseDialog } from "@/components/forms/CourseDialogs";
 
 const courses = [
   {
@@ -101,14 +102,8 @@ export default function Courses() {
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1">
-                  <Eye className="h-4 w-4 mr-2" />
-                  View
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
+                <ViewCourseDialog course={course} />
+                <EditCourseDialog course={course} />
               </div>
             </CardContent>
           </Card>
