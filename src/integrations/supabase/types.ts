@@ -14,7 +14,129 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      exams: {
+        Row: {
+          course_id: number
+          created_at: string
+          description: string | null
+          exam_date: string
+          id: string
+          name: string
+          status: string
+          total_marks: number
+          updated_at: string
+        }
+        Insert: {
+          course_id: number
+          created_at?: string
+          description?: string | null
+          exam_date: string
+          id?: string
+          name: string
+          status?: string
+          total_marks?: number
+          updated_at?: string
+        }
+        Update: {
+          course_id?: number
+          created_at?: string
+          description?: string | null
+          exam_date?: string
+          id?: string
+          name?: string
+          status?: string
+          total_marks?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      results: {
+        Row: {
+          created_at: string
+          exam_id: string
+          grade: string | null
+          id: string
+          marks_obtained: number
+          percentage: number | null
+          student_id: number
+          subject_id: string
+          total_marks: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          exam_id: string
+          grade?: string | null
+          id?: string
+          marks_obtained?: number
+          percentage?: number | null
+          student_id: number
+          subject_id: string
+          total_marks?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          exam_id?: string
+          grade?: string | null
+          id?: string
+          marks_obtained?: number
+          percentage?: number | null
+          student_id?: number
+          subject_id?: string
+          total_marks?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "results_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "results_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subjects: {
+        Row: {
+          code: string
+          course_id: number
+          created_at: string
+          credits: number | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          course_id: number
+          created_at?: string
+          credits?: number | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          course_id?: number
+          created_at?: string
+          credits?: number | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
