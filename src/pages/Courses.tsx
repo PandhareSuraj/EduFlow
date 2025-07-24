@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Search, Edit, Eye, Users } from "lucide-react";
 import { AddCourseDialog } from "@/components/forms/AddCourseDialog";
 import { ViewCourseDialog, EditCourseDialog } from "@/components/forms/CourseDialogs";
+import { ViewSubjectsDialog } from "@/components/forms/SubjectDialogs";
+import { ViewExamsDialog } from "@/components/forms/ExamDialogs";
+import { ViewResultsDialog } from "@/components/forms/ResultDialogs";
 
 const courses = [
   {
@@ -101,9 +104,20 @@ export default function Courses() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <ViewCourseDialog course={course} />
-                <EditCourseDialog course={course} />
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <ViewCourseDialog course={course} />
+                  <EditCourseDialog course={course} />
+                </div>
+                
+                <div className="border-t pt-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Course Management</p>
+                  <div className="grid grid-cols-1 gap-2">
+                    <ViewSubjectsDialog course={course} />
+                    <ViewExamsDialog course={course} />
+                    <ViewResultsDialog course={course} />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
