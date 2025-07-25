@@ -146,6 +146,106 @@ export type Database = {
           },
         ]
       }
+      student_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          student_id: number | null
+          updated_at: string
+          uploaded_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          student_id?: number | null
+          updated_at?: string
+          uploaded_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          student_id?: number | null
+          updated_at?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_documents_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          admission_date: string
+          class: string | null
+          course_id: number | null
+          created_at: string
+          email: string
+          id: number
+          mobile_number: string
+          name: string
+          semester: number | null
+          status: string
+          student_id: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          admission_date?: string
+          class?: string | null
+          course_id?: number | null
+          created_at?: string
+          email: string
+          id?: number
+          mobile_number: string
+          name: string
+          semester?: number | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          admission_date?: string
+          class?: string | null
+          course_id?: number | null
+          created_at?: string
+          email?: string
+          id?: number
+          mobile_number?: string
+          name?: string
+          semester?: number | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subjects: {
         Row: {
           code: string

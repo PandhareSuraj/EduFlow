@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Search, Filter, Download, Edit, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AddStudentDialog } from "@/components/forms/AddStudentDialog";
-import { ViewStudentDialog, EditStudentDialog } from "@/components/forms/StudentDialogs";
+import { AddStudentDialog, ViewStudentsDialog } from "@/components/forms/StudentDialogs";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -102,129 +101,82 @@ export default function Students() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Student Management</h1>
-          <p className="text-muted-foreground">Manage student admissions, profiles, and records</p>
+          <p className="text-muted-foreground">Manage student admissions, profiles, and records with document upload</p>
         </div>
-        <AddStudentDialog />
+        <div className="flex gap-2">
+          <ViewStudentsDialog />
+          <AddStudentDialog />
+        </div>
       </div>
 
-      {/* Filters and Search */}
-      <Card className="shadow-card">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search by name, ID, or course..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+      {/* Quick Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Students</p>
+                <p className="text-2xl font-bold">{students.length}</p>
               </div>
+              <Eye className="h-8 w-8 text-primary" />
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline">
-                <Filter className="mr-2 h-4 w-4" />
-                Filter
-              </Button>
-              <Button variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Active Students</p>
+                <p className="text-2xl font-bold">{students.filter(s => s.status === "Active").length}</p>
+              </div>
+              <Badge className="bg-green-500/10 text-green-500">Active</Badge>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Pending Fees</p>
+                <p className="text-2xl font-bold">{students.filter(s => s.feesStatus === "Pending").length}</p>
+              </div>
+              <Badge className="bg-red-500/10 text-red-500">Due</Badge>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">New Admissions</p>
+                <p className="text-2xl font-bold">15</p>
+              </div>
+              <Badge className="bg-blue-500/10 text-blue-500">This Month</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Students Table */}
+      {/* Course-wise Summary */}
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle>Students List ({filteredStudents.length})</CardTitle>
+          <CardTitle>Quick Access</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Student ID</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Batch</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Fees Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStudents.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {student.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{student.name}</p>
-                        <p className="text-sm text-muted-foreground">{student.email}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-mono">{student.id}</TableCell>
-                  <TableCell>{student.course}</TableCell>
-                  <TableCell>{student.batch}</TableCell>
-                  <TableCell>{student.phone}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(student.status)}>
-                      {student.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getFeesStatusColor(student.feesStatus)}>
-                      {student.feesStatus}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          Actions
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <ViewStudentDialog 
-                          student={student}
-                          trigger={
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Profile
-                            </DropdownMenuItem>
-                          }
-                        />
-                        <EditStudentDialog 
-                          student={student}
-                          trigger={
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit Student
-                            </DropdownMenuItem>
-                          }
-                        />
-                        <DropdownMenuItem>
-                          Generate ID Card
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Button variant="outline" className="h-20 flex-col">
+              <Search className="h-6 w-6 mb-2" />
+              Search Students
+            </Button>
+            <Button variant="outline" className="h-20 flex-col">
+              <Download className="h-6 w-6 mb-2" />
+              Export Records
+            </Button>
+            <Button variant="outline" className="h-20 flex-col">
+              <Filter className="h-6 w-6 mb-2" />
+              Advanced Filters
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
