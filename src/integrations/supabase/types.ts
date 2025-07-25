@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      courses: {
+        Row: {
+          code: string
+          created_at: string
+          department: string | null
+          description: string | null
+          duration_months: number
+          fees_per_semester: number | null
+          id: number
+          name: string
+          status: string
+          total_semesters: number | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          duration_months?: number
+          fees_per_semester?: number | null
+          id?: number
+          name: string
+          status?: string
+          total_semesters?: number | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          duration_months?: number
+          fees_per_semester?: number | null
+          id?: number
+          name?: string
+          status?: string
+          total_semesters?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       exams: {
         Row: {
           course_id: number
