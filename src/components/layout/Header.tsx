@@ -1,4 +1,4 @@
-import { Bell, User, Search } from "lucide-react";
+import { Bell, User, Search, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,8 +9,31 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 export function Header() {
+  const { user, userRole, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
+
+  const getRoleColor = (role: string | null) => {
+    switch (role) {
+      case 'admin': return 'bg-red-500/10 text-red-500 border-red-500/20';
+      case 'teacher': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+      case 'clerk': return 'bg-green-500/10 text-green-500 border-green-500/20';
+      case 'librarian': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+      case 'accountant': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+      case 'assistant': return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+      default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+    }
+  };
+
   return (
     <header className="bg-card border-b border-border px-6 py-4">
       <div className="flex items-center justify-between">
@@ -40,11 +63,17 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center space-x-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback>AD</AvatarFallback>
+                  <AvatarFallback>
+                    {user?.email?.charAt(0).toUpperCase() || 'U'}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="text-left">
-                  <p className="text-sm font-medium">Admin User</p>
-                  <p className="text-xs text-muted-foreground">Administrator</p>
+                  <p className="text-sm font-medium">{user?.email}</p>
+                  <div className="flex items-center gap-1">
+                    <Badge className={getRoleColor(userRole)} variant="outline">
+                      {userRole?.charAt(0).toUpperCase()}{userRole?.slice(1)}
+                    </Badge>
+                  </div>
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -53,9 +82,13 @@ export function Header() {
                 <User className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/settings')}>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
+              <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
