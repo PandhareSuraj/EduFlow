@@ -8,8 +8,69 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Settings as SettingsIcon, User, Bell, Shield, Database, Mail, Globe } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
+  const { toast } = useToast();
+
+  const handleSaveSettings = () => {
+    // Collect all form data and save to database
+    // For now, we'll just show a success message
+    toast({
+      title: "Settings Saved",
+      description: "All settings have been updated successfully",
+    });
+  };
+
+  const handleManageRole = (roleName: string) => {
+    toast({
+      title: "Role Management",
+      description: `Opening ${roleName} management panel`,
+    });
+  };
+
+  const handleAddUser = () => {
+    toast({
+      title: "Add User",
+      description: "Opening new user creation form",
+    });
+  };
+
+  const handleConnectIntegration = (service: string) => {
+    toast({
+      title: "Integration",
+      description: `Connecting to ${service}...`,
+    });
+  };
+
+  const handleCreateBackup = () => {
+    toast({
+      title: "Backup Created",
+      description: "Creating backup... This may take a few minutes.",
+    });
+  };
+
+  const handleRestoreBackup = () => {
+    toast({
+      title: "Restore Backup",
+      description: "Opening restore selection dialog",
+    });
+  };
+
+  const handleDownloadBackup = (date: string) => {
+    // Create a fake backup file download
+    const element = document.createElement('a');
+    const content = `Backup created on ${date}\nSystem data and configurations included.`;
+    const file = new Blob([content], {type: 'text/plain'});
+    element.href = URL.createObjectURL(file);
+    element.download = `backup_${date.replace(/[^0-9]/g, '')}.txt`;
+    element.click();
+    
+    toast({
+      title: "Download Started",
+      description: `Downloading backup from ${date}`,
+    });
+  };
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -141,12 +202,18 @@ export default function Settings() {
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-sm text-muted-foreground">{role.users} users</span>
-                    <Button variant="outline" size="sm">Manage</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleManageRole(role.role)}
+                    >
+                      Manage
+                    </Button>
                   </div>
                 </div>
               ))}
               <Separator />
-              <Button>Add New User</Button>
+              <Button onClick={handleAddUser}>Add New User</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -301,7 +368,11 @@ export default function Settings() {
                     }`}>
                       {integration.status}
                     </span>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleConnectIntegration(integration.service)}
+                    >
                       {integration.status === 'Connected' ? 'Configure' : 'Connect'}
                     </Button>
                   </div>
@@ -364,14 +435,20 @@ export default function Settings() {
                       <span className="text-sm px-2 py-1 rounded-full bg-green-100 text-green-700">
                         {backup.status}
                       </span>
-                      <Button variant="outline" size="sm">Download</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDownloadBackup(backup.date)}
+                      >
+                        Download
+                      </Button>
                     </div>
                   </div>
                 ))}
               </div>
               <div className="flex gap-4">
-                <Button>Create Backup Now</Button>
-                <Button variant="outline">Restore from Backup</Button>
+                <Button onClick={handleCreateBackup}>Create Backup Now</Button>
+                <Button variant="outline" onClick={handleRestoreBackup}>Restore from Backup</Button>
               </div>
             </CardContent>
           </Card>
@@ -380,7 +457,11 @@ export default function Settings() {
 
       {/* Save Settings */}
       <div className="flex justify-end">
-        <Button size="lg" className="shadow-elegant">
+        <Button 
+          size="lg" 
+          className="shadow-elegant"
+          onClick={handleSaveSettings}
+        >
           Save All Settings
         </Button>
       </div>

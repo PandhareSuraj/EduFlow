@@ -72,6 +72,32 @@ const students = [
 export default function Students() {
   const [searchTerm, setSearchTerm] = useState("");
 
+  const handleExportRecords = () => {
+    // Create CSV content
+    const headers = ["Student ID", "Name", "Course", "Batch", "Phone", "Email", "Status", "Admission Date", "Fees Status"];
+    const csvContent = [
+      headers.join(","),
+      ...students.map(student => [
+        student.id,
+        `"${student.name}"`,
+        `"${student.course}"`,
+        student.batch,
+        student.phone,
+        student.email,
+        student.status,
+        student.admissionDate,
+        student.feesStatus
+      ].join(","))
+    ].join("\n");
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `students_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -168,7 +194,11 @@ export default function Students() {
               <Search className="h-6 w-6 mb-2" />
               Search Students
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col"
+              onClick={handleExportRecords}
+            >
               <Download className="h-6 w-6 mb-2" />
               Export Records
             </Button>

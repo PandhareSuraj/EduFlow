@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AddCourseDialogProps {
   trigger?: React.ReactNode;
@@ -33,23 +34,52 @@ export function AddCourseDialog({ trigger }: AddCourseDialogProps) {
     status: "Active"
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Course Added",
-      description: `${formData.name} course has been successfully created.`,
-    });
-    setFormData({
-      name: "",
-      code: "",
-      duration: "",
-      fees: "",
-      description: "",
-      eligibility: "",
-      seats: "",
-      status: "Active"
-    });
-    setOpen(false);
+    try {
+      const durationMap: { [key: string]: number } = {
+        "6 Months": 6,
+        "1 Year": 12,
+        "2 Years": 24,
+        "3 Years": 36
+      };
+
+      const { error } = await supabase
+        .from('courses')
+        .insert({
+          name: formData.name,
+          code: formData.code,
+          duration_months: durationMap[formData.duration] || 24,
+          fees_per_semester: parseFloat(formData.fees.replace(/[^\d.]/g, '')) || 0,
+          description: formData.description,
+          status: formData.status.toLowerCase()
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Course Added",
+        description: `${formData.name} course has been successfully created.`,
+      });
+      setFormData({
+        name: "",
+        code: "",
+        duration: "",
+        fees: "",
+        description: "",
+        eligibility: "",
+        seats: "",
+        status: "Active"
+      });
+      setOpen(false);
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add course",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleChange = (field: string, value: string) => {
