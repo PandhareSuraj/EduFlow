@@ -14,7 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
 export function Header() {
-  const { user, userRole, signOut } = useAuth();
+  const { user, userRole, signOut, refreshUserRole } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
