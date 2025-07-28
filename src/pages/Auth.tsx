@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, GraduationCap } from 'lucide-react';
+import { Eye, EyeOff, GraduationCap, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { createDemoUsers } from '@/utils/createDemoUsers';
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -17,6 +18,16 @@ export default function Auth() {
   const navigate = useNavigate();
   const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
+
+  // Demo accounts
+  const demoAccounts = [
+    { email: 'admin@demo.com', password: 'demo123', role: 'Admin', description: 'Full system access' },
+    { email: 'teacher@demo.com', password: 'demo123', role: 'Teacher', description: 'Attendance, Study materials, Marks' },
+    { email: 'clerk@demo.com', password: 'demo123', role: 'Clerk', description: 'Admissions, Fees, Reports' },
+    { email: 'librarian@demo.com', password: 'demo123', role: 'Librarian', description: 'Book management' },
+    { email: 'accountant@demo.com', password: 'demo123', role: 'Accountant', description: 'Fees, Salary, Expenses' },
+    { email: 'assistant@demo.com', password: 'demo123', role: 'Assistant', description: 'Basic access' },
+  ];
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -122,6 +133,30 @@ export default function Auth() {
     }
   };
 
+  const handleDemoLogin = (email: string, password: string) => {
+    setLoginForm({ email, password });
+    setError('');
+  };
+
+  const handleCreateDemoUsers = async () => {
+    setIsLoading(true);
+    try {
+      await createDemoUsers();
+      toast({
+        title: "Demo users created!",
+        description: "All demo accounts have been set up. You can now use them to log in.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error creating demo users",
+        description: "Some demo users may already exist.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -198,6 +233,37 @@ export default function Auth() {
                     {isLoading ? 'Signing in...' : 'Sign In'}
                   </Button>
                 </form>
+
+                {/* Demo Accounts Section */}
+                <div className="mt-6 p-4 bg-muted/50 rounded-lg border">
+                  <h3 className="text-sm font-medium text-foreground mb-3">Demo Accounts</h3>
+                  <div className="space-y-2">
+                    {demoAccounts.map((account) => (
+                      <div key={account.email} className="flex items-center justify-between p-2 rounded bg-background border">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-foreground">{account.role}</span>
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <span className="text-xs text-muted-foreground">{account.description}</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">{account.email}</div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => handleDemoLogin(account.email, account.password)}
+                        >
+                          Use
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3">
+                    Click "Use" to auto-fill login credentials, then click "Sign In"
+                  </p>
+                </div>
               </TabsContent>
 
               <TabsContent value="signup">
@@ -281,8 +347,18 @@ export default function Auth() {
           </CardContent>
         </Card>
 
-        <div className="text-center mt-6 text-sm text-muted-foreground">
-          <p>© 2024 KK Patil Paramedical College. All rights reserved.</p>
+        <div className="text-center mt-6 space-y-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCreateDemoUsers}
+            disabled={isLoading}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            <Users className="h-3 w-3 mr-1" />
+            {isLoading ? 'Creating...' : 'Create Demo Users'}
+          </Button>
+          <p className="text-sm text-muted-foreground">© 2024 KK Patil Paramedical College. All rights reserved.</p>
         </div>
       </div>
     </div>
