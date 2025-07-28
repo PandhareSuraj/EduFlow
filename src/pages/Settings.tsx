@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,32 +8,139 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Settings as SettingsIcon, User, Bell, Shield, Database, Mail, Globe } from "lucide-react";
+import { Settings as SettingsIcon, User, Bell, Shield, Database as DatabaseIcon, Mail, Globe, Users, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type AppRole = Database['public']['Enums']['app_role'];
+type UserWithRole = {
+  email: string;
+  full_name: string;
+  role: AppRole;
+  user_id: string;
+};
 
 export default function Settings() {
   const { toast } = useToast();
+  const { userRole } = useAuth();
+  const [users, setUsers] = useState<UserWithRole[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch users and their roles
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      // For now, let's use a simpler query that gets basic user info
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select(`
+          user_id,
+          role,
+          profiles(full_name)
+        `);
+
+      if (error) {
+        console.error('Error fetching users:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load users",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Map the data to our UserWithRole type
+      const usersWithRoles: UserWithRole[] = data.map((item: any) => ({
+        user_id: item.user_id,
+        email: 'Email not available', // We'll show email as not available for now
+        full_name: item.profiles?.full_name || 'Unknown',
+        role: item.role
+      }));
+
+      setUsers(usersWithRoles);
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load users",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateRole = async (userId: string, newRole: AppRole) => {
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .update({ role: newRole })
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Error updating role:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update role",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Role Updated",
+        description: "User role has been updated successfully",
+      });
+
+      // Refresh users list
+      fetchUsers();
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update role",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getRoleDescription = (role: AppRole) => {
+    const descriptions = {
+      admin: "Full System Access",
+      teacher: "Attendance, Study materials, Marks",
+      clerk: "Admissions, Fees, Reports",
+      librarian: "Book management",
+      accountant: "Fees, Salary, Expenses",
+      assistant: "Basic access"
+    };
+    return descriptions[role] || "Unknown permissions";
+  };
+
+  const getRoleStats = () => {
+    const roleStats = users.reduce((acc, user) => {
+      acc[user.role] = (acc[user.role] || 0) + 1;
+      return acc;
+    }, {} as Record<AppRole, number>);
+
+    return [
+      { role: "admin", count: roleStats.admin || 0, description: "Full System Access" },
+      { role: "teacher", count: roleStats.teacher || 0, description: "Teaching & Assessment" },
+      { role: "clerk", count: roleStats.clerk || 0, description: "Administrative Tasks" },
+      { role: "librarian", count: roleStats.librarian || 0, description: "Library Management" },
+      { role: "accountant", count: roleStats.accountant || 0, description: "Financial Management" },
+      { role: "assistant", count: roleStats.assistant || 0, description: "Basic Operations" },
+    ];
+  };
 
   const handleSaveSettings = () => {
-    // Collect all form data and save to database
-    // For now, we'll just show a success message
     toast({
       title: "Settings Saved",
       description: "All settings have been updated successfully",
-    });
-  };
-
-  const handleManageRole = (roleName: string) => {
-    toast({
-      title: "Role Management",
-      description: `Opening ${roleName} management panel`,
-    });
-  };
-
-  const handleAddUser = () => {
-    toast({
-      title: "Add User",
-      description: "Opening new user creation form",
     });
   };
 
@@ -58,7 +166,6 @@ export default function Settings() {
   };
 
   const handleDownloadBackup = (date: string) => {
-    // Create a fake backup file download
     const element = document.createElement('a');
     const content = `Backup created on ${date}\nSystem data and configurations included.`;
     const file = new Blob([content], {type: 'text/plain'});
@@ -189,31 +296,74 @@ export default function Settings() {
               <CardDescription>Manage user access levels and permissions</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {[
-                { role: "Admin", users: 2, permissions: "Full System Access" },
-                { role: "Faculty", users: 8, permissions: "Student & Course Management" },
-                { role: "Accountant", users: 1, permissions: "Fees & Financial Management" },
-                { role: "Clerk", users: 3, permissions: "Data Entry & Basic Operations" }
-              ].map((role, index) => (
-                <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium">{role.role}</h4>
-                    <p className="text-sm text-muted-foreground">{role.permissions}</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm text-muted-foreground">{role.users} users</span>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleManageRole(role.role)}
-                    >
-                      Manage
-                    </Button>
-                  </div>
-                </div>
-              ))}
+              {/* Role Statistics */}
+              <div className="space-y-4">
+                <h4 className="font-medium">Role Distribution</h4>
+                {loading ? (
+                  <div className="text-center py-4">Loading roles...</div>
+                ) : (
+                  getRoleStats().map((role, index) => (
+                    <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
+                      <div>
+                        <h4 className="font-medium capitalize">{role.role}</h4>
+                        <p className="text-sm text-muted-foreground">{role.description}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm text-muted-foreground">{role.count} users</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
               <Separator />
-              <Button onClick={handleAddUser}>Add New User</Button>
+
+              {/* Individual Users */}
+              <div className="space-y-4">
+                <h4 className="font-medium">Individual Users</h4>
+                {loading ? (
+                  <div className="text-center py-4">Loading users...</div>
+                ) : users.length === 0 ? (
+                  <div className="text-center py-4 text-muted-foreground">No users found</div>
+                ) : (
+                  <div className="space-y-3">
+                    {users.map((user) => (
+                      <div key={user.user_id} className="flex justify-between items-center p-3 border rounded-lg">
+                        <div>
+                          <h4 className="font-medium">{user.full_name}</h4>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                          <p className="text-xs text-muted-foreground">Current role: {user.role}</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          {userRole === 'admin' && (
+                            <Select
+                              value={user.role}
+                              onValueChange={(newRole: AppRole) => handleUpdateRole(user.user_id, newRole)}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="admin">Admin</SelectItem>
+                                <SelectItem value="teacher">Teacher</SelectItem>
+                                <SelectItem value="clerk">Clerk</SelectItem>
+                                <SelectItem value="librarian">Librarian</SelectItem>
+                                <SelectItem value="accountant">Accountant</SelectItem>
+                                <SelectItem value="assistant">Assistant</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                          {userRole !== 'admin' && (
+                            <span className="text-sm px-2 py-1 rounded-full bg-muted">
+                              {user.role}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -387,7 +537,7 @@ export default function Settings() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5" />
+                <DatabaseIcon className="h-5 w-5" />
                 Data Backup & Recovery
               </CardTitle>
               <CardDescription>Manage your data backups and recovery options</CardDescription>
