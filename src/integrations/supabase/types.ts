@@ -14,9 +14,55 @@ export type Database = {
   }
   public: {
     Tables: {
+      colleges: {
+        Row: {
+          address: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          phone: string | null
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           code: string
+          college_id: string | null
           created_at: string
           department: string | null
           description: string | null
@@ -30,6 +76,7 @@ export type Database = {
         }
         Insert: {
           code: string
+          college_id?: string | null
           created_at?: string
           department?: string | null
           description?: string | null
@@ -43,6 +90,7 @@ export type Database = {
         }
         Update: {
           code?: string
+          college_id?: string | null
           created_at?: string
           department?: string | null
           description?: string | null
@@ -54,10 +102,19 @@ export type Database = {
           total_semesters?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "courses_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exams: {
         Row: {
+          college_id: string | null
           course_id: number
           created_at: string
           description: string | null
@@ -69,6 +126,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          college_id?: string | null
           course_id: number
           created_at?: string
           description?: string | null
@@ -80,6 +138,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          college_id?: string | null
           course_id?: number
           created_at?: string
           description?: string | null
@@ -90,7 +149,15 @@ export type Database = {
           total_marks?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "exams_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -124,6 +191,7 @@ export type Database = {
       }
       results: {
         Row: {
+          college_id: string | null
           created_at: string
           exam_id: string
           grade: string | null
@@ -136,6 +204,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          college_id?: string | null
           created_at?: string
           exam_id: string
           grade?: string | null
@@ -148,6 +217,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          college_id?: string | null
           created_at?: string
           exam_id?: string
           grade?: string | null
@@ -160,6 +230,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "results_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "results_exam_id_fkey"
             columns: ["exam_id"]
@@ -178,6 +255,7 @@ export type Database = {
       }
       student_documents: {
         Row: {
+          college_id: string | null
           created_at: string
           document_type: string
           file_name: string
@@ -189,6 +267,7 @@ export type Database = {
           uploaded_at: string
         }
         Insert: {
+          college_id?: string | null
           created_at?: string
           document_type: string
           file_name: string
@@ -200,6 +279,7 @@ export type Database = {
           uploaded_at?: string
         }
         Update: {
+          college_id?: string | null
           created_at?: string
           document_type?: string
           file_name?: string
@@ -211,6 +291,13 @@ export type Database = {
           uploaded_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "student_documents_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "student_documents_student_id_fkey"
             columns: ["student_id"]
@@ -224,6 +311,7 @@ export type Database = {
         Row: {
           admission_date: string
           class: string | null
+          college_id: string | null
           course_id: number | null
           created_at: string
           email: string
@@ -239,6 +327,7 @@ export type Database = {
         Insert: {
           admission_date?: string
           class?: string | null
+          college_id?: string | null
           course_id?: number | null
           created_at?: string
           email: string
@@ -254,6 +343,7 @@ export type Database = {
         Update: {
           admission_date?: string
           class?: string | null
+          college_id?: string | null
           course_id?: number | null
           created_at?: string
           email?: string
@@ -268,6 +358,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "students_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "students_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
@@ -279,6 +376,7 @@ export type Database = {
       subjects: {
         Row: {
           code: string
+          college_id: string | null
           course_id: number
           created_at: string
           credits: number | null
@@ -289,6 +387,7 @@ export type Database = {
         }
         Insert: {
           code: string
+          college_id?: string | null
           course_id: number
           created_at?: string
           credits?: number | null
@@ -299,6 +398,7 @@ export type Database = {
         }
         Update: {
           code?: string
+          college_id?: string | null
           course_id?: number
           created_at?: string
           credits?: number | null
@@ -307,28 +407,47 @@ export type Database = {
           name?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subjects_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
+          college_id: string | null
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          college_id?: string | null
           created_at?: string
           id?: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          college_id?: string | null
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -338,6 +457,10 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_user_college: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       has_role: {
         Args: {
