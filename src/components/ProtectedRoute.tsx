@@ -32,7 +32,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   }
 
   // Check role-based access if required
-  if (requiredRole && userRole !== requiredRole && userRole !== 'admin') {
+  if (requiredRole && userRole !== requiredRole && userRole !== 'admin' && userRole !== 'super_admin') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

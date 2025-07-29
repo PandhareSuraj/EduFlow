@@ -12,6 +12,13 @@ const demoUsers: Array<{
   role: AppRole;
 }> = [
   { 
+    email: 'super@college.com', 
+    password: '7588351751', 
+    full_name: 'Super Admin',
+    phone: '+91-7588351751',
+    role: 'super_admin'
+  },
+  { 
     email: 'admin@demo.com', 
     password: 'demo123', 
     full_name: 'Admin Demo User',

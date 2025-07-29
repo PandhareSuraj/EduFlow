@@ -13,29 +13,41 @@ import {
   Menu,
   X,
   IdCard,
-  Package
+  Package,
+  Building2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-
-const navigation = [
-  { name: "Dashboard", href: "/", icon: BarChart3 },
-  { name: "Students", href: "/students", icon: Users },
-  { name: "Courses", href: "/courses", icon: GraduationCap },
-  { name: "Faculty", href: "/faculty", icon: UserCheck },
-  { name: "Fees", href: "/fees", icon: CreditCard },
-  { name: "Enquiries", href: "/enquiries", icon: MessageSquare },
-  { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
-  { name: "Exams", href: "/exams", icon: FileText },
-  { name: "ID Cards", href: "/id-cards", icon: IdCard },
-  { name: "Inventory", href: "/inventory", icon: Package },
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Settings", href: "/settings", icon: Settings },
-];
+import { useAuth } from "@/hooks/useAuth";
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+  const { userRole } = useAuth();
+
+  const getNavigation = () => {
+    const baseNavigation = [
+      { name: "Dashboard", href: "/", icon: BarChart3 },
+      { name: "Students", href: "/students", icon: Users },
+      { name: "Courses", href: "/courses", icon: GraduationCap },
+      { name: "Faculty", href: "/faculty", icon: UserCheck },
+      { name: "Fees", href: "/fees", icon: CreditCard },
+      { name: "Enquiries", href: "/enquiries", icon: MessageSquare },
+      { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
+      { name: "Exams", href: "/exams", icon: FileText },
+      { name: "ID Cards", href: "/id-cards", icon: IdCard },
+      { name: "Inventory", href: "/inventory", icon: Package },
+      { name: "Reports", href: "/reports", icon: BarChart3 },
+      { name: "Settings", href: "/settings", icon: Settings },
+    ];
+
+    // Add College Management for super admins
+    if (userRole === 'super_admin') {
+      baseNavigation.splice(-1, 0, { name: "Colleges", href: "/colleges", icon: Building2 });
+    }
+
+    return baseNavigation;
+  };
 
   return (
     <div className={cn(
@@ -64,7 +76,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-1">
-        {navigation.map((item) => {
+        {getNavigation().map((item) => {
           const isActive = location.pathname === item.href;
           return (
             <NavLink

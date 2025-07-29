@@ -18,6 +18,7 @@ import IDCards from "./pages/IDCards";
 import Inventory from "./pages/Inventory";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import CollegeManagement from "./pages/CollegeManagement";
 import Auth from "./pages/Auth";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -115,6 +116,13 @@ const App = () => (
               <ProtectedRoute requiredRole="admin">
                 <Layout>
                   <Settings />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/colleges" element={
+              <ProtectedRoute requiredRole="super_admin">
+                <Layout>
+                  <CollegeManagement />
                 </Layout>
               </ProtectedRoute>
             } />
