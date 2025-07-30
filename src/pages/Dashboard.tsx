@@ -6,46 +6,128 @@ import {
   Calendar,
   DollarSign,
   UserCheck,
-  ClipboardCheck
+  ClipboardCheck,
+  Building2
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { AddStudentDialog } from "@/components/forms/AddStudentDialog";
 import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+interface DashboardStats {
+  totalStudents: number;
+  activeCourses: number;
+  monthlyRevenue: string;
+  facultyMembers: number;
+  totalColleges?: number;
+}
+
 export default function Dashboard() {
+  const { userRole } = useAuth();
+  const [stats, setStats] = useState<DashboardStats>({
+    totalStudents: 0,
+    activeCourses: 0,
+    monthlyRevenue: "₹0",
+    facultyMembers: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [userRole]);
+
+  const fetchDashboardData = async () => {
+    try {
+      if (userRole === 'super_admin') {
+        // Fetch aggregate data across all colleges
+        const [studentsResult, coursesResult, facultyResult, collegesResult] = await Promise.all([
+          supabase.from('students').select('id', { count: 'exact' }),
+          supabase.from('courses').select('id', { count: 'exact' }),
+          supabase.from('profiles').select('id', { count: 'exact' }),
+          supabase.from('colleges').select('id', { count: 'exact' })
+        ]);
+
+        setStats({
+          totalStudents: studentsResult.count || 0,
+          activeCourses: coursesResult.count || 0,
+          monthlyRevenue: "₹12,45,670", // This would need proper fee calculation
+          facultyMembers: facultyResult.count || 0,
+          totalColleges: collegesResult.count || 0,
+        });
+      } else {
+        // Fetch data for user's specific college
+        const [studentsResult, coursesResult, facultyResult] = await Promise.all([
+          supabase.from('students').select('id', { count: 'exact' }),
+          supabase.from('courses').select('id', { count: 'exact' }),
+          supabase.from('profiles').select('id', { count: 'exact' })
+        ]);
+
+        setStats({
+          totalStudents: studentsResult.count || 0,
+          activeCourses: coursesResult.count || 0,
+          monthlyRevenue: "₹5,67,890",
+          facultyMembers: facultyResult.count || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isSuperAdmin = userRole === 'super_admin';
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Welcome Header */}
       <div className="bg-gradient-header rounded-lg p-6 text-white shadow-header">
-        <h1 className="text-3xl font-bold mb-2">Welcome to KK Patil Paramedical College ERP</h1>
-        <p className="text-white/90">Manage your institution efficiently with our comprehensive system</p>
+        <h1 className="text-3xl font-bold mb-2">
+          {isSuperAdmin ? 'Multi-College Management Dashboard' : 'Welcome to KK Patil Paramedical College ERP'}
+        </h1>
+        <p className="text-white/90">
+          {isSuperAdmin 
+            ? 'Manage all colleges and monitor system-wide performance' 
+            : 'Manage your institution efficiently with our comprehensive system'
+          }
+        </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid gap-6 md:grid-cols-2 ${isSuperAdmin ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
+        {isSuperAdmin && (
+          <StatsCard
+            title="Total Colleges"
+            value={stats.totalColleges?.toString() || "0"}
+            icon={Building2}
+            trend={{ value: 0, isPositive: true }}
+          />
+        )}
         <StatsCard
-          title="Total Students"
-          value="1,247"
+          title={isSuperAdmin ? "Total Students (All Colleges)" : "Total Students"}
+          value={loading ? "..." : stats.totalStudents.toLocaleString()}
           icon={Users}
           trend={{ value: 12, isPositive: true }}
         />
         <StatsCard
-          title="Active Courses"
-          value="4"
+          title={isSuperAdmin ? "Total Courses" : "Active Courses"}
+          value={loading ? "..." : stats.activeCourses.toString()}
           icon={GraduationCap}
           trend={{ value: 0, isPositive: true }}
         />
         <StatsCard
-          title="Monthly Revenue"
-          value="₹5,67,890"
+          title={isSuperAdmin ? "Combined Revenue" : "Monthly Revenue"}
+          value={loading ? "..." : stats.monthlyRevenue}
           icon={CreditCard}
           trend={{ value: 8, isPositive: true }}
         />
         <StatsCard
-          title="Faculty Members"
-          value="23"
+          title={isSuperAdmin ? "Total Faculty" : "Faculty Members"}
+          value={loading ? "..." : stats.facultyMembers.toString()}
           icon={UserCheck}
           trend={{ value: 4, isPositive: true }}
         />
@@ -63,35 +145,64 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid gap-3">
-              <AddStudentDialog 
-                trigger={
-                  <button className="flex items-center p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors text-left w-full">
-                    <Users className="mr-3 h-4 w-4 text-primary" />
+              {isSuperAdmin ? (
+                <>
+                  <button className="flex items-center p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors text-left w-full"
+                    onClick={() => window.location.href = '/colleges'}>
+                    <Building2 className="mr-3 h-4 w-4 text-primary" />
                     <div>
-                      <p className="font-medium">Add New Student</p>
-                      <p className="text-sm text-muted-foreground">Register a new student</p>
+                      <p className="font-medium">Manage Colleges</p>
+                      <p className="text-sm text-muted-foreground">Add or manage colleges</p>
                     </div>
                   </button>
-                }
-              />
-              <CollectFeeDialog 
-                trigger={
                   <button className="flex items-center p-3 bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors text-left w-full">
-                    <DollarSign className="mr-3 h-4 w-4 text-accent" />
+                    <Users className="mr-3 h-4 w-4 text-accent" />
                     <div>
-                      <p className="font-medium">Collect Fee</p>
-                      <p className="text-sm text-muted-foreground">Process fee payment</p>
+                      <p className="font-medium">System Overview</p>
+                      <p className="text-sm text-muted-foreground">View all colleges performance</p>
                     </div>
                   </button>
-                }
-              />
-              <button className="flex items-center p-3 bg-warning/10 hover:bg-warning/20 rounded-lg transition-colors text-left">
-                <ClipboardCheck className="mr-3 h-4 w-4 text-warning" />
-                <div>
-                  <p className="font-medium">Mark Attendance</p>
-                  <p className="text-sm text-muted-foreground">Daily attendance entry</p>
-                </div>
-              </button>
+                  <button className="flex items-center p-3 bg-warning/10 hover:bg-warning/20 rounded-lg transition-colors text-left">
+                    <UserCheck className="mr-3 h-4 w-4 text-warning" />
+                    <div>
+                      <p className="font-medium">User Management</p>
+                      <p className="text-sm text-muted-foreground">Manage system users</p>
+                    </div>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <AddStudentDialog 
+                    trigger={
+                      <button className="flex items-center p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors text-left w-full">
+                        <Users className="mr-3 h-4 w-4 text-primary" />
+                        <div>
+                          <p className="font-medium">Add New Student</p>
+                          <p className="text-sm text-muted-foreground">Register a new student</p>
+                        </div>
+                      </button>
+                    }
+                  />
+                  <CollectFeeDialog 
+                    trigger={
+                      <button className="flex items-center p-3 bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors text-left w-full">
+                        <DollarSign className="mr-3 h-4 w-4 text-accent" />
+                        <div>
+                          <p className="font-medium">Collect Fee</p>
+                          <p className="text-sm text-muted-foreground">Process fee payment</p>
+                        </div>
+                      </button>
+                    }
+                  />
+                  <button className="flex items-center p-3 bg-warning/10 hover:bg-warning/20 rounded-lg transition-colors text-left">
+                    <ClipboardCheck className="mr-3 h-4 w-4 text-warning" />
+                    <div>
+                      <p className="font-medium">Mark Attendance</p>
+                      <p className="text-sm text-muted-foreground">Daily attendance entry</p>
+                    </div>
+                  </button>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
