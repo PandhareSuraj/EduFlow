@@ -21,6 +21,7 @@ export default function Auth() {
 
   // Demo accounts
   const demoAccounts = [
+    { email: 'super@college.com', password: '7588351751', role: 'Super Admin', description: 'Manage multiple colleges' },
     { email: 'admin@demo.com', password: 'demo123', role: 'Admin', description: 'Full system access' },
     { email: 'teacher@demo.com', password: 'demo123', role: 'Teacher', description: 'Attendance, Study materials, Marks' },
     { email: 'clerk@demo.com', password: 'demo123', role: 'Clerk', description: 'Admissions, Fees, Reports' },
