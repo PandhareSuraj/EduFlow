@@ -14,7 +14,12 @@ import {
   X,
   IdCard,
   Package,
-  Building2
+  Building2,
+  IndianRupee,
+  Shield,
+  Database,
+  TrendingUp,
+  Globe
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,27 +31,34 @@ export function Sidebar() {
   const { userRole } = useAuth();
 
   const getNavigation = () => {
-    const baseNavigation = [
-      { name: "Dashboard", href: "/", icon: BarChart3 },
-      { name: "Students", href: "/students", icon: Users },
-      { name: "Courses", href: "/courses", icon: GraduationCap },
-      { name: "Faculty", href: "/faculty", icon: UserCheck },
-      { name: "Fees", href: "/fees", icon: CreditCard },
-      { name: "Enquiries", href: "/enquiries", icon: MessageSquare },
-      { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
-      { name: "Exams", href: "/exams", icon: FileText },
-      { name: "ID Cards", href: "/id-cards", icon: IdCard },
-      { name: "Inventory", href: "/inventory", icon: Package },
-      { name: "Reports", href: "/reports", icon: BarChart3 },
-      { name: "Settings", href: "/settings", icon: Settings },
-    ];
-
-    // Add College Management for super admins
     if (userRole === 'super_admin') {
-      baseNavigation.splice(-1, 0, { name: "Colleges", href: "/colleges", icon: Building2 });
+      // Super Admin Navigation - Multi-college management
+      return [
+        { name: "Dashboard", href: "/", icon: BarChart3 },
+        { name: "College Management", href: "/colleges", icon: Building2 },
+        { name: "AMC Revenue", href: "/amc-revenue", icon: IndianRupee },
+        { name: "System Analytics", href: "/system-analytics", icon: TrendingUp },
+        { name: "Global Reports", href: "/global-reports", icon: Database },
+        { name: "User Management", href: "/user-management", icon: Shield },
+        { name: "System Settings", href: "/system-settings", icon: Settings },
+      ];
+    } else {
+      // College Admin Navigation - Single college operations
+      return [
+        { name: "Dashboard", href: "/", icon: BarChart3 },
+        { name: "Students", href: "/students", icon: Users },
+        { name: "Courses", href: "/courses", icon: GraduationCap },
+        { name: "Faculty", href: "/faculty", icon: UserCheck },
+        { name: "Fees", href: "/fees", icon: CreditCard },
+        { name: "Enquiries", href: "/enquiries", icon: MessageSquare },
+        { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
+        { name: "Exams", href: "/exams", icon: FileText },
+        { name: "ID Cards", href: "/id-cards", icon: IdCard },
+        { name: "Inventory", href: "/inventory", icon: Package },
+        { name: "Reports", href: "/reports", icon: BarChart3 },
+        { name: "Settings", href: "/settings", icon: Settings },
+      ];
     }
-
-    return baseNavigation;
   };
 
   return (
@@ -59,8 +71,12 @@ export function Sidebar() {
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div className="text-white">
-              <h2 className="font-bold text-lg">KK Patil College</h2>
-              <p className="text-sm text-white/80">ERP System</p>
+              <h2 className="font-bold text-lg">
+                {userRole === 'super_admin' ? 'Multi-College ERP' : 'KK Patil College'}
+              </h2>
+              <p className="text-sm text-white/80">
+                {userRole === 'super_admin' ? 'System Management' : 'ERP System'}
+              </p>
             </div>
           )}
           <Button
