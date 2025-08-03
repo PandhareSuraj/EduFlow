@@ -7,7 +7,10 @@ import {
   DollarSign,
   UserCheck,
   ClipboardCheck,
-  Building2
+  Building2,
+  IndianRupee,
+  TrendingDown,
+  Activity
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,6 +20,7 @@ import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface DashboardStats {
   totalStudents: number;
@@ -24,6 +28,19 @@ interface DashboardStats {
   monthlyRevenue: string;
   facultyMembers: number;
   totalColleges?: number;
+  totalAMCRevenue?: string;
+  totalUsers?: number;
+}
+
+interface CollegeAMCData {
+  id: string;
+  name: string;
+  code: string;
+  studentCount: number;
+  userCount: number;
+  amcAmount: number;
+  status: 'active' | 'inactive' | 'pending';
+  lastPayment?: string;
 }
 
 export default function Dashboard() {
@@ -34,7 +51,13 @@ export default function Dashboard() {
     monthlyRevenue: "₹0",
     facultyMembers: 0,
   });
+  const [collegeAMCData, setCollegeAMCData] = useState<CollegeAMCData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // AMC calculation constants
+  const AMC_BASE_FEE = 25000; // Base annual fee per college
+  const AMC_PER_STUDENT = 100; // Per student annual fee
+  const AMC_PER_USER = 500; // Per user annual fee
 
   useEffect(() => {
     fetchDashboardData();
@@ -43,20 +66,55 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       if (userRole === 'super_admin') {
-        // Fetch aggregate data across all colleges
-        const [studentsResult, coursesResult, facultyResult, collegesResult] = await Promise.all([
-          supabase.from('students').select('id', { count: 'exact' }),
+        // Fetch basic stats and college data for AMC calculation
+        const [studentsResult, coursesResult, usersResult, collegesResult, collegeDetails] = await Promise.all([
+          supabase.from('students').select('id, college_id', { count: 'exact' }),
           supabase.from('courses').select('id', { count: 'exact' }),
-          supabase.from('profiles').select('id', { count: 'exact' }),
-          supabase.from('colleges').select('id', { count: 'exact' })
+          supabase.from('user_roles').select('user_id, college_id', { count: 'exact' }),
+          supabase.from('colleges').select('id', { count: 'exact' }),
+          supabase.from('colleges').select('id, name, code, status')
         ]);
 
+        // Calculate AMC data for each college
+        const collegeAMCs: CollegeAMCData[] = [];
+        let totalAMCRevenue = 0;
+
+        if (collegeDetails.data) {
+          for (const college of collegeDetails.data) {
+            // Count students for this college
+            const collegeStudents = studentsResult.data?.filter(s => s.college_id === college.id) || [];
+            const studentCount = collegeStudents.length;
+
+            // Count users for this college
+            const collegeUsers = usersResult.data?.filter(u => u.college_id === college.id) || [];
+            const userCount = collegeUsers.length;
+
+            // Calculate AMC amount
+            const amcAmount = AMC_BASE_FEE + (studentCount * AMC_PER_STUDENT) + (userCount * AMC_PER_USER);
+            totalAMCRevenue += amcAmount;
+
+            collegeAMCs.push({
+              id: college.id,
+              name: college.name,
+              code: college.code,
+              studentCount,
+              userCount,
+              amcAmount,
+              status: college.status === 'active' ? 'active' : 'inactive',
+              lastPayment: 'April 2024' // This would come from a payments table
+            });
+          }
+        }
+
+        setCollegeAMCData(collegeAMCs);
         setStats({
           totalStudents: studentsResult.count || 0,
           activeCourses: coursesResult.count || 0,
-          monthlyRevenue: "₹12,45,670", // This would need proper fee calculation
-          facultyMembers: facultyResult.count || 0,
+          monthlyRevenue: `₹${(totalAMCRevenue / 12).toLocaleString()}`, // Monthly AMC revenue
+          facultyMembers: usersResult.count || 0,
           totalColleges: collegesResult.count || 0,
+          totalAMCRevenue: `₹${totalAMCRevenue.toLocaleString()}`,
+          totalUsers: usersResult.count || 0,
         });
       } else {
         // Fetch data for user's specific college
@@ -98,37 +156,46 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className={`grid gap-6 md:grid-cols-2 ${isSuperAdmin ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
+      <div className={`grid gap-6 md:grid-cols-2 ${isSuperAdmin ? 'lg:grid-cols-6' : 'lg:grid-cols-4'}`}>
         {isSuperAdmin && (
-          <StatsCard
-            title="Total Colleges"
-            value={stats.totalColleges?.toString() || "0"}
-            icon={Building2}
-            trend={{ value: 0, isPositive: true }}
-          />
+          <>
+            <StatsCard
+              title="Total Colleges"
+              value={stats.totalColleges?.toString() || "0"}
+              icon={Building2}
+              trend={{ value: 0, isPositive: true }}
+            />
+            <StatsCard
+              title="Total AMC Revenue"
+              value={loading ? "..." : stats.totalAMCRevenue || "₹0"}
+              icon={IndianRupee}
+              trend={{ value: 15, isPositive: true }}
+              className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900"
+            />
+          </>
         )}
         <StatsCard
-          title={isSuperAdmin ? "Total Students (All Colleges)" : "Total Students"}
+          title={isSuperAdmin ? "Total Students" : "Total Students"}
           value={loading ? "..." : stats.totalStudents.toLocaleString()}
           icon={Users}
           trend={{ value: 12, isPositive: true }}
         />
         <StatsCard
-          title={isSuperAdmin ? "Total Courses" : "Active Courses"}
-          value={loading ? "..." : stats.activeCourses.toString()}
-          icon={GraduationCap}
-          trend={{ value: 0, isPositive: true }}
+          title={isSuperAdmin ? "System Users" : "Active Courses"}
+          value={loading ? "..." : (isSuperAdmin ? stats.totalUsers?.toString() || "0" : stats.activeCourses.toString())}
+          icon={isSuperAdmin ? Activity : GraduationCap}
+          trend={{ value: isSuperAdmin ? 8 : 0, isPositive: true }}
         />
         <StatsCard
-          title={isSuperAdmin ? "Combined Revenue" : "Monthly Revenue"}
+          title={isSuperAdmin ? "Monthly AMC" : "Monthly Revenue"}
           value={loading ? "..." : stats.monthlyRevenue}
           icon={CreditCard}
           trend={{ value: 8, isPositive: true }}
         />
         <StatsCard
-          title={isSuperAdmin ? "Total Faculty" : "Faculty Members"}
-          value={loading ? "..." : stats.facultyMembers.toString()}
-          icon={UserCheck}
+          title={isSuperAdmin ? "Active Courses" : "Faculty Members"}
+          value={loading ? "..." : (isSuperAdmin ? stats.activeCourses.toString() : stats.facultyMembers.toString())}
+          icon={isSuperAdmin ? GraduationCap : UserCheck}
           trend={{ value: 4, isPositive: true }}
         />
       </div>
@@ -213,61 +280,117 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Upcoming Events & Alerts */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* College AMC Management for Super Admin OR Events & Alerts for College Admin */}
+      {isSuperAdmin ? (
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Calendar className="mr-2 h-5 w-5" />
-              Upcoming Events
+              <IndianRupee className="mr-2 h-5 w-5" />
+              College AMC Management
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center p-3 bg-muted/50 rounded-lg">
-                <div className="bg-primary text-primary-foreground rounded-lg p-2 mr-3">
-                  <Calendar className="h-4 w-4" />
+            <div className="grid gap-4">
+              {collegeAMCData.map((college) => (
+                <div key={college.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="bg-primary/10 p-2 rounded-lg">
+                        <Building2 className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">{college.name}</h3>
+                        <p className="text-sm text-muted-foreground">Code: {college.code}</p>
+                      </div>
+                    </div>
+                    <Badge variant={college.status === 'active' ? 'default' : 'secondary'}>
+                      {college.status}
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-primary">{college.studentCount}</p>
+                      <p className="text-xs text-muted-foreground">Students</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-accent">{college.userCount}</p>
+                      <p className="text-xs text-muted-foreground">Users</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-emerald-600">₹{college.amcAmount.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">Annual AMC</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium">{college.lastPayment}</p>
+                      <p className="text-xs text-muted-foreground">Last Payment</p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                    AMC Calculation: Base ₹{AMC_BASE_FEE.toLocaleString()} + Students (₹{AMC_PER_STUDENT} × {college.studentCount}) + Users (₹{AMC_PER_USER} × {college.userCount})
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">DMLT Practical Exam</p>
-                  <p className="text-sm text-muted-foreground">Tomorrow, 10:00 AM</p>
-                </div>
-              </div>
-              <div className="flex items-center p-3 bg-muted/50 rounded-lg">
-                <div className="bg-accent text-accent-foreground rounded-lg p-2 mr-3">
-                  <GraduationCap className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="font-medium">New Batch Orientation</p>
-                  <p className="text-sm text-muted-foreground">March 15, 2024</p>
-                </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Calendar className="mr-2 h-5 w-5" />
+                Upcoming Events
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center p-3 bg-muted/50 rounded-lg">
+                  <div className="bg-primary text-primary-foreground rounded-lg p-2 mr-3">
+                    <Calendar className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="font-medium">DMLT Practical Exam</p>
+                    <p className="text-sm text-muted-foreground">Tomorrow, 10:00 AM</p>
+                  </div>
+                </div>
+                <div className="flex items-center p-3 bg-muted/50 rounded-lg">
+                  <div className="bg-accent text-accent-foreground rounded-lg p-2 mr-3">
+                    <GraduationCap className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="font-medium">New Batch Orientation</p>
+                    <p className="text-sm text-muted-foreground">March 15, 2024</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle className="text-warning">Pending Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
-                <p className="font-medium text-warning">Fee Reminders</p>
-                <p className="text-sm text-muted-foreground">45 students have pending fees</p>
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="text-warning">Pending Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                  <p className="font-medium text-warning">Fee Reminders</p>
+                  <p className="text-sm text-muted-foreground">45 students have pending fees</p>
+                </div>
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <p className="font-medium text-destructive">Low Attendance</p>
+                  <p className="text-sm text-muted-foreground">12 students below 75% attendance</p>
+                </div>
+                <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                  <p className="font-medium text-primary">Certificates Pending</p>
+                  <p className="text-sm text-muted-foreground">8 course completion certificates</p>
+                </div>
               </div>
-              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <p className="font-medium text-destructive">Low Attendance</p>
-                <p className="text-sm text-muted-foreground">12 students below 75% attendance</p>
-              </div>
-              <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
-                <p className="font-medium text-primary">Certificates Pending</p>
-                <p className="text-sm text-muted-foreground">8 course completion certificates</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
