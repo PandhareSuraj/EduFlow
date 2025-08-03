@@ -35,17 +35,30 @@ export default function Settings() {
 
   const fetchUsers = async () => {
     try {
-      // For now, let's use a simpler query that gets basic user info
-      const { data, error } = await supabase
+      // First get user roles
+      const { data: userRoles, error: userRolesError } = await supabase
         .from('user_roles')
-        .select(`
-          user_id,
-          role,
-          profiles(full_name)
-        `);
+        .select('user_id, role');
 
-      if (error) {
-        console.error('Error fetching users:', error);
+      if (userRolesError) {
+        console.error('Error fetching user roles:', userRolesError);
+        toast({
+          title: "Error",
+          description: "Failed to fetch user roles",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Then get profiles for those users
+      const userIds = userRoles?.map(ur => ur.user_id) || [];
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
         toast({
           title: "Error",
           description: "Failed to load users",
@@ -54,13 +67,16 @@ export default function Settings() {
         return;
       }
 
-      // Map the data to our UserWithRole type
-      const usersWithRoles: UserWithRole[] = data.map((item: any) => ({
-        user_id: item.user_id,
-        email: 'Email not available', // We'll show email as not available for now
-        full_name: item.profiles?.full_name || 'Unknown',
-        role: item.role
-      }));
+      // Combine user roles with profile data
+      const usersWithRoles: UserWithRole[] = userRoles.map((userRole) => {
+        const profile = profiles?.find(p => p.id === userRole.user_id);
+        return {
+          user_id: userRole.user_id,
+          email: 'Email not available', // We'll show email as not available for now
+          full_name: profile?.full_name || 'Unknown',
+          role: userRole.role
+        };
+      });
 
       setUsers(usersWithRoles);
     } catch (error) {
