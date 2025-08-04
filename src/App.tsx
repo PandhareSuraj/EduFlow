@@ -22,6 +22,10 @@ import CollegeManagement from "./pages/CollegeManagement";
 import Auth from "./pages/Auth";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import StudentProfile from "./pages/StudentProfile";
+import StudentCourse from "./pages/StudentCourse";
+import StudentResults from "./pages/StudentResults";
+import StudentTests from "./pages/StudentTests";
 
 const queryClient = new QueryClient();
 
@@ -126,6 +130,37 @@ const App = () => (
                 </Layout>
               </ProtectedRoute>
             } />
+            
+            {/* Student Routes */}
+            <Route path="/student-profile" element={
+              <ProtectedRoute requiredRole="student">
+                <Layout>
+                  <StudentProfile />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/student-course" element={
+              <ProtectedRoute requiredRole="student">
+                <Layout>
+                  <StudentCourse />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/student-results" element={
+              <ProtectedRoute requiredRole="student">
+                <Layout>
+                  <StudentResults />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/student-tests" element={
+              <ProtectedRoute requiredRole="student">
+                <Layout>
+                  <StudentTests />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

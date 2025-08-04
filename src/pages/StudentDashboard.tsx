@@ -179,31 +179,31 @@ export default function StudentDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => window.location.href = '/student-profile'}>
               <CardContent className="flex flex-col items-center justify-center p-6">
                 <GraduationCap className="h-8 w-8 text-primary mb-2" />
-                <span className="text-sm font-medium">View Course Details</span>
+                <span className="text-sm font-medium">My Profile</span>
               </CardContent>
             </Card>
             
-            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => window.location.href = '/student-course'}>
               <CardContent className="flex flex-col items-center justify-center p-6">
                 <FileText className="h-8 w-8 text-primary mb-2" />
+                <span className="text-sm font-medium">My Course</span>
+              </CardContent>
+            </Card>
+            
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => window.location.href = '/student-results'}>
+              <CardContent className="flex flex-col items-center justify-center p-6">
+                <Clock className="h-8 w-8 text-primary mb-2" />
                 <span className="text-sm font-medium">My Results</span>
               </CardContent>
             </Card>
             
-            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
-              <CardContent className="flex flex-col items-center justify-center p-6">
-                <Clock className="h-8 w-8 text-primary mb-2" />
-                <span className="text-sm font-medium">MCQ Tests</span>
-              </CardContent>
-            </Card>
-            
-            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => window.location.href = '/student-tests'}>
               <CardContent className="flex flex-col items-center justify-center p-6">
                 <Calendar className="h-8 w-8 text-primary mb-2" />
-                <span className="text-sm font-medium">Exam Schedule</span>
+                <span className="text-sm font-medium">MCQ Tests</span>
               </CardContent>
             </Card>
           </div>
