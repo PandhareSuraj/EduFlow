@@ -21,13 +21,14 @@ export default function Auth() {
 
   // Demo accounts
   const demoAccounts = [
-    { email: 'super@college.com', password: '7588351751', role: 'Super Admin', description: 'Manage multiple colleges' },
-    { email: 'admin@demo.com', password: 'demo123', role: 'Admin', description: 'Full system access' },
-    { email: 'teacher@demo.com', password: 'demo123', role: 'Teacher', description: 'Attendance, Study materials, Marks' },
-    { email: 'clerk@demo.com', password: 'demo123', role: 'Clerk', description: 'Admissions, Fees, Reports' },
-    { email: 'librarian@demo.com', password: 'demo123', role: 'Librarian', description: 'Book management' },
-    { email: 'accountant@demo.com', password: 'demo123', role: 'Accountant', description: 'Fees, Salary, Expenses' },
-    { email: 'assistant@demo.com', password: 'demo123', role: 'Assistant', description: 'Basic access' },
+    { email: 'super@college.com', password: 'demo123', role: 'Super Admin', description: 'Manage multiple colleges' },
+    { email: 'admin@college.com', password: 'demo123', role: 'Admin', description: 'Full system access' },
+    { email: 'teacher@college.com', password: 'demo123', role: 'Teacher', description: 'Attendance, Study materials, Marks' },
+    { email: 'student@college.com', password: 'demo123', role: 'Student', description: 'View profile, results, take tests' },
+    { email: 'clerk@college.com', password: 'demo123', role: 'Clerk', description: 'Admissions, Fees, Reports' },
+    { email: 'librarian@college.com', password: 'demo123', role: 'Librarian', description: 'Book management' },
+    { email: 'accountant@college.com', password: 'demo123', role: 'Accountant', description: 'Fees, Salary, Expenses' },
+    { email: 'assistant@college.com', password: 'demo123', role: 'Assistant', description: 'Basic access' },
   ];
 
   // Redirect if already authenticated
