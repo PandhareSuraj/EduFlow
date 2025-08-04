@@ -458,6 +458,21 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_student_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: number
+          student_id: string
+          name: string
+          email: string
+          mobile_number: string
+          course_name: string
+          admission_date: string
+          year: number
+          semester: number
+          status: string
+        }[]
+      }
       get_user_college: {
         Args: Record<PropertyKey, never>
         Returns: string

@@ -42,6 +42,16 @@ export function Sidebar() {
         { name: "User Management", href: "/user-management", icon: Shield },
         { name: "System Settings", href: "/system-settings", icon: Settings },
       ];
+    } else if (userRole === 'student') {
+      // Student Navigation - View own information and tests
+      return [
+        { name: "Dashboard", href: "/", icon: BarChart3 },
+        { name: "My Profile", href: "/student-profile", icon: Users },
+        { name: "My Course", href: "/student-course", icon: GraduationCap },
+        { name: "My Results", href: "/student-results", icon: FileText },
+        { name: "MCQ Tests", href: "/student-tests", icon: ClipboardCheck },
+        { name: "Settings", href: "/settings", icon: Settings },
+      ];
     } else {
       // College Admin Navigation - Single college operations
       return [
@@ -72,10 +82,12 @@ export function Sidebar() {
           {!isCollapsed && (
             <div className="text-white">
               <h2 className="font-bold text-lg">
-                {userRole === 'super_admin' ? 'Multi-College ERP' : 'KK Patil College'}
+                {userRole === 'super_admin' ? 'Multi-College ERP' : 
+                 userRole === 'student' ? 'Student Portal' : 'KK Patil College'}
               </h2>
               <p className="text-sm text-white/80">
-                {userRole === 'super_admin' ? 'System Management' : 'ERP System'}
+                {userRole === 'super_admin' ? 'System Management' : 
+                 userRole === 'student' ? 'Student Dashboard' : 'ERP System'}
               </p>
             </div>
           )}

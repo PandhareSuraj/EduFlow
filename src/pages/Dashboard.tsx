@@ -21,6 +21,7 @@ import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import StudentDashboard from './StudentDashboard';
 
 interface DashboardStats {
   totalStudents: number;
@@ -53,6 +54,11 @@ export default function Dashboard() {
   });
   const [collegeAMCData, setCollegeAMCData] = useState<CollegeAMCData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Render student dashboard for student users
+  if (userRole === 'student') {
+    return <StudentDashboard />;
+  }
 
   // AMC calculation constants
   const AMC_BASE_FEE = 25000; // Base annual fee per college
