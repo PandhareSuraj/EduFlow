@@ -138,14 +138,14 @@ export const createDemoUsers = async () => {
       if (data.user) {
         console.log(`User ${user.email} created successfully`);
         
-        // Update user role and add college_id
+        // Insert or update user role and add college_id
         const { error: roleError } = await supabase
           .from('user_roles')
-          .update({ 
+          .upsert({ 
+            user_id: data.user.id,
             role: user.role,
             college_id: collegeId
-          })
-          .eq('user_id', data.user.id);
+          }, { onConflict: 'user_id' });
             
         if (roleError) {
           console.error(`Error updating role for ${user.email}:`, roleError);
