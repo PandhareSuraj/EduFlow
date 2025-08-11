@@ -58,18 +58,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('user_roles')
-        .select('role')
+        .select('role, created_at')
         .eq('user_id', userId)
-        .single();
-      
+        .order('created_at', { ascending: false });
+
       if (error) {
         console.error('Error fetching user role:', error);
+        setUserRole(null);
         return;
       }
-      
-      setUserRole(data?.role || null);
+
+      if (!data || data.length === 0) {
+        setUserRole(null);
+        return;
+      }
+
+      // Prefer the highest-privilege role if multiple exist
+      const priority = [
+        'super_admin',
+        'admin',
+        'teacher',
+        'accountant',
+        'librarian',
+        'clerk',
+        'assistant',
+        'student',
+      ] as const;
+
+      const top = data
+        .map((r) => r.role as string)
+        .sort((a, b) => priority.indexOf(a as any) - priority.indexOf(b as any))[0];
+
+      setUserRole(top || null);
     } catch (error) {
       console.error('Error fetching user role:', error);
+      setUserRole(null);
     }
   };
 
