@@ -30,8 +30,8 @@ export default function Faculty() {
   const [filteredFaculty, setFilteredFaculty] = useState<Faculty[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
 
   const fetchFaculty = async () => {
@@ -89,11 +89,11 @@ export default function Faculty() {
       );
     }
 
-    if (departmentFilter) {
+    if (departmentFilter && departmentFilter !== "all") {
       filtered = filtered.filter(member => member.department === departmentFilter);
     }
 
-    if (statusFilter) {
+    if (statusFilter && statusFilter !== "all") {
       filtered = filtered.filter(member => member.status === statusFilter);
     }
 
@@ -131,7 +131,7 @@ export default function Faculty() {
                 <SelectValue placeholder="Filter by Department" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Departments</SelectItem>
+                <SelectItem value="all">All Departments</SelectItem>
                 {departments.map(dept => (
                   <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                 ))}
@@ -142,7 +142,7 @@ export default function Faculty() {
                 <SelectValue placeholder="Filter by Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 {statuses.map(status => (
                   <SelectItem key={status} value={status}>{status}</SelectItem>
                 ))}
