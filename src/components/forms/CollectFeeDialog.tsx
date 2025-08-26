@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -26,9 +25,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, DollarSign } from "lucide-react";
+import { CalendarIcon, DollarSign, CreditCard, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { PaymentReceipt } from "./PaymentReceipt";
 
 interface CollectFeeDialogProps {
   trigger?: React.ReactNode;
@@ -41,6 +41,11 @@ interface Student {
   student_id: string;
   name: string;
   email: string;
+  mobile_number: string;
+  courses: {
+    name: string;
+    code: string;
+  } | null;
 }
 
 interface StudentFee {
@@ -48,6 +53,37 @@ interface StudentFee {
   balance_amount: number;
   total_amount: number;
   paid_amount: number;
+  due_date: string;
+  status: string;
+}
+
+interface PaymentReceiptData {
+  id: string;
+  receipt_number: string;
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  transaction_id?: string;
+  cheque_number?: string;
+  bank_name?: string;
+  remarks?: string;
+  student: {
+    name: string;
+    student_id: string;
+    email: string;
+    mobile_number: string;
+    course: {
+      name: string;
+      code: string;
+    };
+  };
+  college: {
+    name: string;
+    code: string;
+    address: string;
+    phone: string;
+    email: string;
+  };
 }
 
 export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDialogProps) {
@@ -55,6 +91,8 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
   const [students, setStudents] = useState<Student[]>([]);
   const [studentFees, setStudentFees] = useState<StudentFee[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [paymentReceipt, setPaymentReceipt] = useState<PaymentReceiptData | null>(null);
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -86,12 +124,27 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
     try {
       const { data, error } = await supabase
         .from('students')
-        .select('id, student_id, name, email')
+        .select(`
+          id, 
+          student_id, 
+          name, 
+          email, 
+          mobile_number,
+          courses!students_course_id_fkey (
+            name,
+            code
+          )
+        `)
         .eq('status', 'active')
         .order('name');
 
       if (error) {
         console.error('Error fetching students:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch students",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -105,7 +158,7 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
     try {
       const { data, error } = await supabase
         .from('student_fees')
-        .select('id, balance_amount, total_amount, paid_amount')
+        .select('id, balance_amount, total_amount, paid_amount, due_date, status')
         .eq('student_id', studentId)
         .gt('balance_amount', 0);
 
@@ -201,7 +254,7 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
       const receiptNumber = `RCP${Date.now()}`;
 
       // Insert payment record
-      const { error } = await supabase
+      const { data: paymentData, error } = await supabase
         .from('fee_payments')
         .insert([{
           student_fee_id: formData.studentFeeId,
@@ -215,7 +268,9 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
           remarks: formData.remarks || null,
           receipt_number: receiptNumber,
           college_id: userRoleData.college_id,
-        }]);
+        }])
+        .select()
+        .single();
 
       if (error) {
         console.error('Error recording payment:', error);
@@ -227,11 +282,55 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
         return;
       }
 
+      // Get student data separately
       const selectedStudent = students.find(s => s.id === parseInt(formData.studentId));
+      
+      // Get college information for receipt
+      const { data: collegeData } = await supabase
+        .from('colleges')
+        .select('*')
+        .eq('id', userRoleData.college_id)
+        .single();
+
+      // Generate receipt data
+      if (selectedStudent && paymentData) {
+        const receiptData: PaymentReceiptData = {
+          id: paymentData.id,
+          receipt_number: paymentData.receipt_number,
+          amount: paymentData.amount,
+          payment_date: paymentData.payment_date,
+          payment_method: paymentData.payment_method,
+          transaction_id: paymentData.transaction_id,
+          cheque_number: paymentData.cheque_number,
+          bank_name: paymentData.bank_name,
+          remarks: paymentData.remarks,
+          student: {
+            name: selectedStudent.name,
+            student_id: selectedStudent.student_id,
+            email: selectedStudent.email,
+            mobile_number: selectedStudent.mobile_number,
+            course: {
+              name: selectedStudent.courses?.name || 'N/A',
+              code: selectedStudent.courses?.code || 'N/A'
+            }
+          },
+          college: {
+            name: collegeData?.name || 'College',
+            code: collegeData?.code || '',
+            address: collegeData?.address || '',
+            phone: collegeData?.phone || '',
+            email: collegeData?.email || ''
+          }
+        };
+
+        setPaymentReceipt(receiptData);
+        setShowReceipt(true);
+      }
+
       
       toast({
         title: "Payment Recorded",
-        description: `Payment of ₹${amount} collected from ${selectedStudent?.name}. Receipt: ${receiptNumber}`,
+        description: `Payment of ₹${amount.toLocaleString('en-IN')} collected successfully. Receipt: ${receiptNumber}`,
       });
       
       // Reset form
@@ -280,14 +379,17 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
       <DialogTrigger asChild>
         {trigger || (
           <Button>
-            <DollarSign className="mr-2 h-4 w-4" />
-            Collect Fee
+            <CreditCard className="mr-2 h-4 w-4" />
+            Collect Payment
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Collect Fee Payment</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Collect Fee Payment
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -443,11 +545,30 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
               Cancel
             </Button>
             <Button type="submit" disabled={loading || !formData.studentFeeId}>
-              {loading ? "Recording..." : "Record Payment"}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Recording...
+                </>
+              ) : (
+                'Record Payment'
+              )}
             </Button>
           </div>
         </form>
       </DialogContent>
+      
+      {/* Payment Receipt Dialog */}
+      {showReceipt && paymentReceipt && (
+        <Dialog open={showReceipt} onOpenChange={setShowReceipt}>
+          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+            <PaymentReceipt 
+              receipt={paymentReceipt} 
+              onClose={() => setShowReceipt(false)} 
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 }
