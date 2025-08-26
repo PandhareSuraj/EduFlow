@@ -83,17 +83,17 @@ export default function Fees() {
           balance_amount,
           status,
           due_date,
-          students (
+          students!student_fees_student_id_fkey (
             student_id,
             name,
             email,
             mobile_number,
-            courses (
+            courses!students_course_id_fkey (
               name,
               code
             )
           ),
-          fee_payments (
+          fee_payments!fee_payments_student_fee_id_fkey (
             amount,
             payment_date,
             payment_method,
@@ -106,7 +106,7 @@ export default function Fees() {
         console.error('Error fetching fee records:', error);
         toast({
           title: "Error",
-          description: "Failed to load fee records",
+          description: `Failed to load fee records: ${error.message}`,
           variant: "destructive",
         });
         return;
