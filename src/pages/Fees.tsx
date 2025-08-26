@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,8 +49,8 @@ interface StudentFeeData {
     courses: {
       name: string;
       code: string;
-    };
-  };
+    } | null;
+  } | null;
   total_amount: number;
   paid_amount: number;
   balance_amount: number;
@@ -82,12 +83,12 @@ export default function Fees() {
           balance_amount,
           status,
           due_date,
-          students!inner (
+          students (
             student_id,
             name,
             email,
             mobile_number,
-            courses!inner (
+            courses (
               name,
               code
             )
@@ -111,7 +112,8 @@ export default function Fees() {
         return;
       }
 
-      setFeeRecords(data || []);
+      // Type assertion to handle the Supabase response
+      setFeeRecords((data as any) || []);
     } catch (error) {
       console.error('Error fetching fee records:', error);
       toast({
