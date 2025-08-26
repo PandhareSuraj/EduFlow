@@ -100,8 +100,8 @@ export default function Faculty() {
     setFilteredFaculty(filtered);
   }, [faculty, searchTerm, departmentFilter, statusFilter]);
 
-  const departments = [...new Set(faculty.map(member => member.department))];
-  const statuses = [...new Set(faculty.map(member => member.status))];
+  const departments = [...new Set(faculty.map(member => member.department).filter(dept => dept && dept.trim() !== ""))];
+  const statuses = [...new Set(faculty.map(member => member.status).filter(status => status && status.trim() !== ""))];
   return (
     <div className="p-6 space-y-6">
       {/* Header */}

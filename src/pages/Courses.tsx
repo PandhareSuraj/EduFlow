@@ -87,7 +87,7 @@ export default function Courses() {
     setFilteredCourses(filtered);
   }, [courses, searchTerm, statusFilter]);
 
-  const statuses = [...new Set(courses.map(course => course.status))];
+  const statuses = [...new Set(courses.map(course => course.status).filter(status => status && status.trim() !== ""))];
 
   const formatDuration = (months: number) => {
     if (months < 12) return `${months} Months`;
