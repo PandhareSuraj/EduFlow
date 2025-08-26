@@ -81,11 +81,11 @@ export default function Students() {
           admission_date,
           status,
           class,
-          courses (
+          courses!students_course_id_fkey (
             name,
             code
           ),
-          student_fees (
+          student_fees!student_fees_student_id_fkey (
             status,
             balance_amount
           )
@@ -96,7 +96,7 @@ export default function Students() {
         console.error('Error fetching students:', error);
         toast({
           title: "Error",
-          description: "Failed to load students",
+          description: `Failed to load students: ${error.message}`,
           variant: "destructive",
         });
         return;
