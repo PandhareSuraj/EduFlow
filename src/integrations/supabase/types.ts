@@ -159,6 +159,147 @@ export type Database = {
           },
         ]
       }
+      fee_installments: {
+        Row: {
+          amount: number
+          college_id: string | null
+          created_at: string
+          due_date: string
+          id: string
+          installment_number: number
+          paid_amount: number | null
+          paid_date: string | null
+          status: string
+          student_fee_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          college_id?: string | null
+          created_at?: string
+          due_date: string
+          id?: string
+          installment_number: number
+          paid_amount?: number | null
+          paid_date?: string | null
+          status?: string
+          student_fee_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          college_id?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          installment_number?: number
+          paid_amount?: number | null
+          paid_date?: string | null
+          status?: string
+          student_fee_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fee_payments: {
+        Row: {
+          amount: number
+          bank_name: string | null
+          cheque_number: string | null
+          college_id: string | null
+          created_at: string
+          id: string
+          payment_date: string
+          payment_method: string
+          receipt_number: string | null
+          remarks: string | null
+          student_fee_id: string
+          student_id: number
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          bank_name?: string | null
+          cheque_number?: string | null
+          college_id?: string | null
+          created_at?: string
+          id?: string
+          payment_date?: string
+          payment_method?: string
+          receipt_number?: string | null
+          remarks?: string | null
+          student_fee_id: string
+          student_id: number
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          bank_name?: string | null
+          cheque_number?: string | null
+          college_id?: string | null
+          created_at?: string
+          id?: string
+          payment_date?: string
+          payment_method?: string
+          receipt_number?: string | null
+          remarks?: string | null
+          student_fee_id?: string
+          student_id?: number
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fee_structures: {
+        Row: {
+          college_id: string | null
+          course_id: number
+          created_at: string
+          due_date: string | null
+          id: string
+          lab_fee: number | null
+          library_fee: number | null
+          other_fees: number | null
+          registration_fee: number | null
+          semester: number
+          total_fee: number
+          tuition_fee: number | null
+          updated_at: string
+        }
+        Insert: {
+          college_id?: string | null
+          course_id: number
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          lab_fee?: number | null
+          library_fee?: number | null
+          other_fees?: number | null
+          registration_fee?: number | null
+          semester: number
+          total_fee?: number
+          tuition_fee?: number | null
+          updated_at?: string
+        }
+        Update: {
+          college_id?: string | null
+          course_id?: number
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          lab_fee?: number | null
+          library_fee?: number | null
+          other_fees?: number | null
+          registration_fee?: number | null
+          semester?: number
+          total_fee?: number
+          tuition_fee?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -306,6 +447,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      student_fees: {
+        Row: {
+          balance_amount: number
+          college_id: string | null
+          created_at: string
+          due_date: string | null
+          fee_structure_id: string
+          id: string
+          paid_amount: number
+          status: string
+          student_id: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          balance_amount?: number
+          college_id?: string | null
+          created_at?: string
+          due_date?: string | null
+          fee_structure_id: string
+          id?: string
+          paid_amount?: number
+          status?: string
+          student_id: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          balance_amount?: number
+          college_id?: string | null
+          created_at?: string
+          due_date?: string | null
+          fee_structure_id?: string
+          id?: string
+          paid_amount?: number
+          status?: string
+          student_id?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       students: {
         Row: {
