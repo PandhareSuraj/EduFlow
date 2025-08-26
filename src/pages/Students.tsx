@@ -32,7 +32,7 @@ import {
   Trash2,
   Loader2
 } from "lucide-react";
-import { AddStudentDialog } from "@/components/forms/AddStudentDialog";
+import { AddStudentDialog } from "@/components/forms/StudentDialogs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -55,7 +55,7 @@ interface Student {
   student_fees?: {
     status: string;
     balance_amount: number;
-  }[];
+  }[] | null;
 }
 
 export default function Students() {
@@ -102,8 +102,14 @@ export default function Students() {
         return;
       }
 
-      // Type assertion to handle the Supabase response
-      setStudents((data as any) || []);
+      // Type assertion and null checks to handle the Supabase response
+      const studentsData = (data as any[])?.map(student => ({
+        ...student,
+        courses: student.courses || null,
+        student_fees: Array.isArray(student.student_fees) ? student.student_fees : null
+      })) || [];
+      
+      setStudents(studentsData);
     } catch (error) {
       console.error('Error fetching students:', error);
       toast({
@@ -193,15 +199,7 @@ export default function Students() {
           <h1 className="text-3xl font-bold">Students</h1>
           <p className="text-muted-foreground">Manage student records and information</p>
         </div>
-        <AddStudentDialog
-          trigger={
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Student
-            </Button>
-          }
-          onSuccess={fetchStudents}
-        />
+        <AddStudentDialog />
       </div>
 
       {/* Summary Cards */}
