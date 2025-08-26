@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,10 +17,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface AddCourseDialogProps {
   trigger?: React.ReactNode;
+  onSuccess?: () => void;
 }
 
-export function AddCourseDialog({ trigger }: AddCourseDialogProps) {
+export function AddCourseDialog({ trigger, onSuccess }: AddCourseDialogProps) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -36,7 +38,25 @@ export function AddCourseDialog({ trigger }: AddCourseDialogProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.name || !formData.code || !formData.duration) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
     try {
+      // Get user's college
+      const { data: userCollegeData } = await supabase
+        .from('user_roles')
+        .select('college_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
       const durationMap: { [key: string]: number } = {
         "6 Months": 6,
         "1 Year": 12,
@@ -52,7 +72,8 @@ export function AddCourseDialog({ trigger }: AddCourseDialogProps) {
           duration_months: durationMap[formData.duration] || 24,
           fees_per_semester: parseFloat(formData.fees.replace(/[^\d.]/g, '')) || 0,
           description: formData.description,
-          status: formData.status.toLowerCase()
+          status: formData.status.toLowerCase(),
+          college_id: userCollegeData?.college_id
         });
 
       if (error) throw error;
@@ -72,13 +93,15 @@ export function AddCourseDialog({ trigger }: AddCourseDialogProps) {
         status: "Active"
       });
       setOpen(false);
-      window.location.reload();
+      onSuccess?.();
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Failed to add course",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -190,10 +213,13 @@ export function AddCourseDialog({ trigger }: AddCourseDialogProps) {
             />
           </div>
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit">Add Course</Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Add Course
+            </Button>
           </div>
         </form>
       </DialogContent>

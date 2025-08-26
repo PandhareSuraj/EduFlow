@@ -1,58 +1,107 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Edit, Eye, Users } from "lucide-react";
+import { Search, Eye, Edit, Users, BookOpen, BarChart3, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddCourseDialog } from "@/components/forms/AddCourseDialog";
 import { ViewCourseDialog, EditCourseDialog } from "@/components/forms/CourseDialogs";
 import { ViewSubjectsDialog } from "@/components/forms/SubjectDialogs";
 import { ViewExamsDialog } from "@/components/forms/ExamDialogs";
 import { ViewResultsDialog } from "@/components/forms/ResultDialogs";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-const courses = [
-  {
-    id: 1,
-    name: "Radiology Technician",
-    code: "RT",
-    duration: "2 Years",
-    fees: "₹75,000",
-    students: 45,
-    status: "Active",
-    description: "Medical imaging and diagnostic procedures"
-  },
-  {
-    id: 2,
-    name: "DMLT",
-    code: "DMLT",
-    duration: "2 Years", 
-    fees: "₹65,000",
-    students: 38,
-    status: "Active",
-    description: "Diploma in Medical Laboratory Technology"
-  },
-  {
-    id: 3,
-    name: "PGDMLT",
-    code: "PGDMLT",
-    duration: "1 Year",
-    fees: "₹45,000",
-    students: 22,
-    status: "Active",
-    description: "Post Graduate Diploma in Medical Laboratory Technology"
-  },
-  {
-    id: 4,
-    name: "Hospital Management",
-    code: "HM",
-    duration: "1 Year",
-    fees: "₹55,000",
-    students: 18,
-    status: "Active",
-    description: "Healthcare administration and management"
-  }
-];
+interface Course {
+  id: number;
+  name: string;
+  code: string;
+  duration_months: number;
+  fees_per_semester: number | null;
+  status: string;
+  description: string | null;
+  students?: { count: number }[];
+}
 
 export default function Courses() {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const { toast } = useToast();
+
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('courses')
+        .select(`
+          *,
+          students(id)
+        `)
+        .order('name', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      const coursesData = (data || []).map(course => ({
+        ...course,
+        students: [{ count: course.students?.length || 0 }]
+      }));
+
+      setCourses(coursesData);
+      setFilteredCourses(coursesData);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch courses data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  useEffect(() => {
+    let filtered = courses;
+
+    if (searchTerm) {
+      filtered = filtered.filter(course =>
+        course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (course.description && course.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    if (statusFilter) {
+      filtered = filtered.filter(course => course.status === statusFilter);
+    }
+
+    setFilteredCourses(filtered);
+  }, [courses, searchTerm, statusFilter]);
+
+  const statuses = [...new Set(courses.map(course => course.status))];
+
+  const formatDuration = (months: number) => {
+    if (months < 12) return `${months} Months`;
+    const years = Math.floor(months / 12);
+    const remainingMonths = months % 12;
+    if (remainingMonths === 0) return `${years} Year${years > 1 ? 's' : ''}`;
+    return `${years} Year${years > 1 ? 's' : ''} ${remainingMonths} Month${remainingMonths > 1 ? 's' : ''}`;
+  };
+
+  const formatFees = (fees: number | null) => {
+    if (!fees) return "Not set";
+    return `₹${fees.toLocaleString()}`;
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -61,68 +110,99 @@ export default function Courses() {
           <h1 className="text-3xl font-bold text-foreground">Courses</h1>
           <p className="text-muted-foreground">Manage college courses and programs</p>
         </div>
-        <AddCourseDialog />
+        <AddCourseDialog onSuccess={fetchCourses} />
       </div>
 
       {/* Search and Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
+          <div className="flex gap-4 flex-wrap">
+            <div className="relative flex-1 min-w-64">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input placeholder="Search courses..." className="pl-10" />
+              <Input 
+                placeholder="Search courses..." 
+                className="pl-10" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            <Button variant="outline">Filter</Button>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Statuses</SelectItem>
+                {statuses.map(status => (
+                  <SelectItem key={status} value={status}>{status}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
       {/* Courses Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {courses.map((course) => (
-          <Card key={course.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-xl">{course.name}</CardTitle>
-                  <CardDescription>{course.code} • {course.duration}</CardDescription>
+      {loading ? (
+        <div className="flex justify-center items-center min-h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      ) : filteredCourses.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <p className="text-muted-foreground">No courses found.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCourses.map((course) => (
+            <Card key={course.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xl">{course.name}</CardTitle>
+                    <CardDescription>{course.code} • {formatDuration(course.duration_months)}</CardDescription>
+                  </div>
+                  <Badge variant="secondary">{course.status}</Badge>
                 </div>
-                <Badge variant="secondary">{course.status}</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">{course.description}</p>
-              
-              <div className="flex justify-between items-center">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Course Fees</p>
-                  <p className="text-lg font-bold text-primary">{course.fees}</p>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Users className="h-4 w-4" />
-                  {course.students} students
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  <ViewCourseDialog course={course} />
-                  <EditCourseDialog course={course} />
-                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">{course.description || "No description available"}</p>
                 
-                <div className="border-t pt-3">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Course Management</p>
-                  <div className="grid grid-cols-1 gap-2">
-                    <ViewSubjectsDialog course={course} />
-                    <ViewExamsDialog course={course} />
-                    <ViewResultsDialog course={course} />
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Duration:</span>
+                    <span className="text-sm font-medium">{formatDuration(course.duration_months)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Fees:</span>
+                    <span className="text-sm font-medium text-primary">{formatFees(course.fees_per_semester)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Students:</span>
+                    <span className="text-sm font-medium">{course.students?.[0]?.count || 0}</span>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <ViewCourseDialog course={course} />
+                    <EditCourseDialog course={course} />
+                  </div>
+                  
+                  <div className="border-t pt-3">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Course Management</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      <ViewSubjectsDialog course={course} />
+                      <ViewExamsDialog course={course} />
+                      <ViewResultsDialog course={course} />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 
 interface Faculty {
-  id: number;
+  id: string;
   name: string;
   designation: string;
   department: string;

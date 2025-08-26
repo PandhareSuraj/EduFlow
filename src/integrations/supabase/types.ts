@@ -159,6 +159,57 @@ export type Database = {
           },
         ]
       }
+      faculty: {
+        Row: {
+          address: string | null
+          college_id: string | null
+          created_at: string
+          department: string
+          designation: string
+          email: string
+          experience: string | null
+          id: string
+          name: string
+          phone: string
+          qualification: string | null
+          status: string
+          subjects: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          college_id?: string | null
+          created_at?: string
+          department: string
+          designation: string
+          email: string
+          experience?: string | null
+          id?: string
+          name: string
+          phone: string
+          qualification?: string | null
+          status?: string
+          subjects?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          college_id?: string | null
+          created_at?: string
+          department?: string
+          designation?: string
+          email?: string
+          experience?: string | null
+          id?: string
+          name?: string
+          phone?: string
+          qualification?: string | null
+          status?: string
+          subjects?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fee_installments: {
         Row: {
           amount: number

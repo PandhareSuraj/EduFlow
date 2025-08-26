@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,14 +13,19 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AddFacultyDialogProps {
   trigger?: React.ReactNode;
+  onSuccess?: () => void;
 }
 
-export function AddFacultyDialog({ trigger }: AddFacultyDialogProps) {
+export function AddFacultyDialog({ trigger, onSuccess }: AddFacultyDialogProps) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { userRole } = useAuth();
   
   const [formData, setFormData] = useState({
     name: "",
@@ -35,25 +40,73 @@ export function AddFacultyDialog({ trigger }: AddFacultyDialogProps) {
     status: "Active"
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Faculty Added",
-      description: `${formData.name} has been successfully added to the faculty.`,
-    });
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      designation: "",
-      department: "",
-      experience: "",
-      qualification: "",
-      subjects: "",
-      address: "",
-      status: "Active"
-    });
-    setOpen(false);
+    
+    if (!formData.name || !formData.email || !formData.phone || !formData.designation || !formData.department) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Get user's college
+      const { data: userCollegeData } = await supabase
+        .from('user_roles')
+        .select('college_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      const { error } = await supabase
+        .from('faculty')
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          designation: formData.designation,
+          department: formData.department,
+          experience: formData.experience || null,
+          qualification: formData.qualification || null,
+          subjects: formData.subjects ? formData.subjects.split(',').map(s => s.trim()) : [],
+          address: formData.address || null,
+          status: formData.status.toLowerCase(),
+          college_id: userCollegeData?.college_id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Faculty Added",
+        description: `${formData.name} has been successfully added to the faculty.`,
+      });
+      
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        designation: "",
+        department: "",
+        experience: "",
+        qualification: "",
+        subjects: "",
+        address: "",
+        status: "Active"
+      });
+      setOpen(false);
+      onSuccess?.();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add faculty member",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -175,10 +228,13 @@ export function AddFacultyDialog({ trigger }: AddFacultyDialogProps) {
             />
           </div>
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit">Add Faculty</Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Add Faculty
+            </Button>
           </div>
         </form>
       </DialogContent>

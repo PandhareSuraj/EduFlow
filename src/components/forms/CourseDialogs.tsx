@@ -19,11 +19,11 @@ interface Course {
   id: number;
   name: string;
   code: string;
-  duration: string;
-  fees: string;
-  students: number;
+  duration_months: number;
+  fees_per_semester: number | null;
+  students?: { count: number }[];
   status: string;
-  description: string;
+  description: string | null;
 }
 
 interface ViewCourseDialogProps {
@@ -33,6 +33,19 @@ interface ViewCourseDialogProps {
 
 export function ViewCourseDialog({ course, trigger }: ViewCourseDialogProps) {
   const [open, setOpen] = useState(false);
+
+  const formatDuration = (months: number) => {
+    if (months < 12) return `${months} Months`;
+    const years = Math.floor(months / 12);
+    const remainingMonths = months % 12;
+    if (remainingMonths === 0) return `${years} Year${years > 1 ? 's' : ''}`;
+    return `${years} Year${years > 1 ? 's' : ''} ${remainingMonths} Month${remainingMonths > 1 ? 's' : ''}`;
+  };
+
+  const formatFees = (fees: number | null) => {
+    if (!fees) return "Not set";
+    return `₹${fees.toLocaleString()}`;
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -62,15 +75,15 @@ export function ViewCourseDialog({ course, trigger }: ViewCourseDialogProps) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-sm font-medium">Duration</Label>
-              <p className="mt-1">{course.duration}</p>
+              <p className="mt-1">{formatDuration(course.duration_months)}</p>
             </div>
             <div>
               <Label className="text-sm font-medium">Course Fees</Label>
-              <p className="mt-1">{course.fees}</p>
+              <p className="mt-1">{formatFees(course.fees_per_semester)}</p>
             </div>
             <div>
               <Label className="text-sm font-medium">Enrolled Students</Label>
-              <p className="mt-1">{course.students} students</p>
+              <p className="mt-1">{course.students?.[0]?.count || 0} students</p>
             </div>
             <div>
               <Label className="text-sm font-medium">Status</Label>
@@ -80,7 +93,7 @@ export function ViewCourseDialog({ course, trigger }: ViewCourseDialogProps) {
           
           <div>
             <Label className="text-sm font-medium">Description</Label>
-            <p className="mt-1 text-sm">{course.description}</p>
+            <p className="mt-1 text-sm">{course.description || "No description available"}</p>
           </div>
         </div>
       </DialogContent>
@@ -96,13 +109,21 @@ interface EditCourseDialogProps {
 export function EditCourseDialog({ course, trigger }: EditCourseDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+
+  const formatDurationForSelect = (months: number) => {
+    if (months === 6) return "6 Months";
+    if (months === 12) return "1 Year";
+    if (months === 24) return "2 Years";
+    if (months === 36) return "3 Years";
+    return `${months} Months`;
+  };
   
   const [formData, setFormData] = useState({
     name: course.name,
     code: course.code,
-    duration: course.duration,
-    fees: course.fees,
-    description: course.description,
+    duration: formatDurationForSelect(course.duration_months),
+    fees: course.fees_per_semester?.toString() || "",
+    description: course.description || "",
     status: course.status
   });
 
