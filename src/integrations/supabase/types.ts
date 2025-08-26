@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -454,6 +454,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      finalize_demo_setup: {
+        Args: { demo: Json }
+        Returns: undefined
+      }
+      get_current_user_email: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
@@ -461,16 +469,16 @@ export type Database = {
       get_student_data: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: number
-          student_id: string
-          name: string
-          email: string
-          mobile_number: string
-          course_name: string
           admission_date: string
-          year: number
+          course_name: string
+          email: string
+          id: number
+          mobile_number: string
+          name: string
           semester: number
           status: string
+          student_id: string
+          year: number
         }[]
       }
       get_user_college: {
@@ -479,8 +487,8 @@ export type Database = {
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
