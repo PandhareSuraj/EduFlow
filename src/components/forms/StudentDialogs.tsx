@@ -109,42 +109,141 @@ export function AddStudentDialog() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Form validation
+    if (!formData.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Student name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      toast({
+        title: "Validation Error", 
+        description: "Email is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.mobile_number.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Mobile number is required", 
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Phone number validation (10 digits)
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(formData.mobile_number.replace(/\D/g, ''))) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid 10-digit mobile number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.course_id) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a course",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Insert student data
-      const { data: student, error: studentError } = await supabase
+      // Get user's college_id
+      const { data: userRoleData } = await supabase
+        .from('user_roles')
+        .select('college_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!userRoleData?.college_id) {
+        toast({
+          title: "Error",
+          description: "Unable to determine your college association",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if email already exists
+      const { data: existingStudent } = await supabase
         .from('students')
-        .insert({
-          name: formData.name,
-          email: formData.email,
-          mobile_number: formData.mobile_number,
+        .select('id')
+        .eq('email', formData.email.trim().toLowerCase())
+        .maybeSingle();
+
+      if (existingStudent) {
+        toast({
+          title: "Error",
+          description: "A student with this email already exists",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Insert student data
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .insert([{
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase(),
+          mobile_number: formData.mobile_number.replace(/\D/g, ''),
           course_id: parseInt(formData.course_id),
-          class: formData.class,
-          semester: formData.semester,
-          year: formData.year,
-          admission_date: formData.admission_date
-        })
+          year: formData.year || 1,
+          semester: formData.semester || 1,
+          college_id: userRoleData.college_id,
+          status: 'active'
+        }])
         .select()
         .single();
 
       if (studentError) {
-        throw studentError;
+        console.error('Error inserting student:', studentError);
+        toast({
+          title: "Error",
+          description: studentError.message || "Failed to add student. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      // Upload documents
-      const documentPromises = Object.entries(documents).map(([docType, file]) =>
-        uploadDocument(student.id, docType, file)
-      );
-
-      await Promise.all(documentPromises);
+      // Upload documents if any
+      if (Object.keys(documents).length > 0 && studentData) {
+        const documentPromises = Object.entries(documents).map(([docType, file]) =>
+          uploadDocument(studentData.id, docType, file)
+        );
+        await Promise.all(documentPromises);
+      }
 
       toast({
-        title: "Student Added Successfully",
-        description: `Student ${formData.name} has been registered with ID: ${student.student_id}`,
+        title: "Success",
+        description: `Student ${formData.name} added successfully with ID: ${studentData.student_id}!`,
       });
 
-      setOpen(false);
+      // Reset form
       setFormData({
         name: "",
         email: "",
@@ -156,11 +255,13 @@ export function AddStudentDialog() {
         admission_date: new Date().toISOString().split('T')[0]
       });
       setDocuments({});
+      setOpen(false);
     } catch (error: any) {
+      console.error('Error adding student:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to add student",
-        variant: "destructive"
+        description: error.message || "An unexpected error occurred. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);

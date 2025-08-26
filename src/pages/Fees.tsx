@@ -1,178 +1,391 @@
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus, CreditCard, AlertCircle, Download } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  Search, 
+  Plus, 
+  DollarSign, 
+  Clock, 
+  TrendingUp, 
+  Calendar,
+  Download,
+  Filter,
+  Eye,
+  CreditCard,
+  Loader2,
+  Settings
+} from "lucide-react";
+import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
+import { FeeStructureDialog } from "@/components/forms/FeeStructureDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-const feeRecords = [
-  {
-    id: "ST001",
-    studentName: "Aarti Sharma",
-    course: "DMLT",
-    totalFees: 65000,
-    paidAmount: 40000,
-    pendingAmount: 25000,
-    lastPayment: "2024-01-15",
-    status: "Pending",
-    installment: "2/3"
-  },
-  {
-    id: "ST002",
-    studentName: "Rohit Patil",
-    course: "Radiology Technician",
-    totalFees: 75000,
-    paidAmount: 75000,
-    pendingAmount: 0,
-    lastPayment: "2024-01-20",
-    status: "Paid",
-    installment: "3/3"
-  },
-  {
-    id: "ST003",
-    studentName: "Priya Kumar",
-    course: "PGDMLT",
-    totalFees: 45000,
-    paidAmount: 15000,
-    pendingAmount: 30000,
-    lastPayment: "2023-12-10",
-    status: "Overdue",
-    installment: "1/3"
-  },
-  {
-    id: "ST004",
-    studentName: "Amit Desai",
-    course: "Hospital Management",
-    totalFees: 55000,
-    paidAmount: 35000,
-    pendingAmount: 20000,
-    lastPayment: "2024-01-10",
-    status: "Pending",
-    installment: "2/3"
-  }
-];
+interface StudentFeeData {
+  id: string;
+  student_id: number;
+  students: {
+    student_id: string;
+    name: string;
+    email: string;
+    mobile_number: string;
+    courses: {
+      name: string;
+      code: string;
+    };
+  };
+  total_amount: number;
+  paid_amount: number;
+  balance_amount: number;
+  status: string;
+  due_date: string;
+  fee_payments: {
+    amount: number;
+    payment_date: string;
+    payment_method: string;
+    receipt_number: string;
+  }[];
+}
 
 export default function Fees() {
-  const totalCollection = feeRecords.reduce((sum, record) => sum + record.paidAmount, 0);
-  const totalPending = feeRecords.reduce((sum, record) => sum + record.pendingAmount, 0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [feeRecords, setFeeRecords] = useState<StudentFeeData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchFeeRecords = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('student_fees')
+        .select(`
+          id,
+          student_id,
+          total_amount,
+          paid_amount,
+          balance_amount,
+          status,
+          due_date,
+          students!inner (
+            student_id,
+            name,
+            email,
+            mobile_number,
+            courses!inner (
+              name,
+              code
+            )
+          ),
+          fee_payments (
+            amount,
+            payment_date,
+            payment_method,
+            receipt_number
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching fee records:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load fee records",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setFeeRecords(data || []);
+    } catch (error) {
+      console.error('Error fetching fee records:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeeRecords();
+  }, []);
+
+  // Filter records based on search term and status
+  const filteredRecords = feeRecords.filter(record => {
+    const matchesSearch = 
+      record.students?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.students?.student_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.students?.courses?.code?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || record.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  // Calculate totals
+  const totalCollection = feeRecords.reduce((sum, record) => sum + record.paid_amount, 0);
+  const totalPending = feeRecords.reduce((sum, record) => sum + record.balance_amount, 0);
+  const totalAmount = feeRecords.reduce((sum, record) => sum + record.total_amount, 0);
+  const collectionRate = totalAmount > 0 ? ((totalCollection / totalAmount) * 100).toFixed(1) : 0;
+
+  const handleExportRecords = () => {
+    const headers = [
+      "Student ID", "Name", "Course", "Total Amount", "Paid Amount", 
+      "Balance", "Status", "Due Date", "Last Payment", "Contact"
+    ];
+    
+    const csvContent = [
+      headers.join(","),
+      ...filteredRecords.map(record => [
+        record.students?.student_id || 'N/A',
+        record.students?.name || 'N/A',
+        record.students?.courses?.code || 'N/A',
+        record.total_amount,
+        record.paid_amount,
+        record.balance_amount,
+        record.status,
+        record.due_date,
+        record.fee_payments?.[0]?.payment_date || 'No payments',
+        record.students?.mobile_number || 'N/A'
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `fee_records_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'partial':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'overdue':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+    }
+  };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Fees Management</h1>
-          <p className="text-muted-foreground">Track student fees and payments</p>
+          <h1 className="text-3xl font-bold">Fee Management</h1>
+          <p className="text-muted-foreground">Manage student fee collections and payments</p>
         </div>
-        <Button className="shadow-elegant">
-          <Plus className="h-4 w-4 mr-2" />
-          Collect Payment
-        </Button>
+        <div className="flex gap-2">
+          <FeeStructureDialog
+            trigger={
+              <Button variant="outline">
+                <Settings className="mr-2 h-4 w-4" />
+                Fee Structure
+              </Button>
+            }
+            onSuccess={fetchFeeRecords}
+          />
+          <CollectFeeDialog
+            trigger={
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Collect Payment
+              </Button>
+            }
+            onSuccess={fetchFeeRecords}
+          />
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Collection</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">₹{totalCollection.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{totalCollection.toLocaleString('en-IN')}</div>
+            <p className="text-xs text-muted-foreground">Total collected amount</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Amount</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">₹{totalPending.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{totalPending.toLocaleString('en-IN')}</div>
+            <p className="text-xs text-muted-foreground">Amount yet to collect</p>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">
-              {Math.round((totalCollection / (totalCollection + totalPending)) * 100)}%
-            </div>
+            <div className="text-2xl font-bold">{collectionRate}%</div>
+            <p className="text-xs text-muted-foreground">Fee collection efficiency</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{feeRecords.length}</div>
+            <p className="text-xs text-muted-foreground">Students with fee records</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input placeholder="Search by student name or ID..." className="pl-10" />
-            </div>
-            <Button variant="outline">Filter</Button>
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Quick Access Buttons */}
+      <div className="flex flex-wrap gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Search students, ID, course..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[140px]">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="paid">Paid</SelectItem>
+            <SelectItem value="partial">Partial</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="overdue">Overdue</SelectItem>
+          </SelectContent>
+        </Select>
+        
+        <Button variant="outline" onClick={handleExportRecords}>
+          <Download className="mr-2 h-4 w-4" />
+          Export
+        </Button>
+      </div>
 
-      {/* Fees Table */}
+      {/* Fee Records Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Student Fees Records</CardTitle>
-          <CardDescription>Complete overview of student fee payments and pending amounts</CardDescription>
+          <CardTitle>Fee Records</CardTitle>
+          <CardDescription>
+            Track and manage student fee payments
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student ID</TableHead>
-                <TableHead>Student Name</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Total Fees</TableHead>
-                <TableHead>Paid Amount</TableHead>
-                <TableHead>Pending</TableHead>
-                <TableHead>Installment</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {feeRecords.map((record) => (
-                <TableRow key={record.id}>
-                  <TableCell className="font-medium">{record.id}</TableCell>
-                  <TableCell>{record.studentName}</TableCell>
-                  <TableCell>{record.course}</TableCell>
-                  <TableCell>₹{record.totalFees.toLocaleString()}</TableCell>
-                  <TableCell className="text-green-600">₹{record.paidAmount.toLocaleString()}</TableCell>
-                  <TableCell className="text-orange-600">₹{record.pendingAmount.toLocaleString()}</TableCell>
-                  <TableCell>{record.installment}</TableCell>
-                  <TableCell>
-                    <Badge variant={
-                      record.status === 'Paid' ? 'default' : 
-                      record.status === 'Overdue' ? 'destructive' : 'secondary'
-                    }>
-                      {record.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">View</Button>
-                      {record.pendingAmount > 0 && (
-                        <Button size="sm">Pay</Button>
-                      )}
-                    </div>
-                  </TableCell>
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Loading fee records...</span>
+            </div>
+          ) : filteredRecords.length === 0 ? (
+            <div className="text-center p-8">
+              <p className="text-muted-foreground">
+                {searchTerm || statusFilter !== "all" 
+                  ? "No fee records found matching your criteria." 
+                  : "No fee records found. Students will appear here once fee structures are created."}
+              </p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student ID</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Course</TableHead>
+                  <TableHead>Total Fees</TableHead>
+                  <TableHead>Paid</TableHead>
+                  <TableHead>Balance</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredRecords.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell className="font-medium">{record.students?.student_id || 'N/A'}</TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{record.students?.name || 'N/A'}</div>
+                        <div className="text-sm text-muted-foreground">{record.students?.email || 'N/A'}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{record.students?.courses?.code || 'N/A'}</TableCell>
+                    <TableCell>₹{record.total_amount.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>₹{record.paid_amount.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>
+                      <span className={record.balance_amount > 0 ? "text-red-600 font-medium" : "text-green-600"}>
+                        ₹{record.balance_amount.toLocaleString('en-IN')}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(record.status)}>
+                        {record.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {record.due_date ? new Date(record.due_date).toLocaleDateString('en-IN') : 'No due date'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {record.balance_amount > 0 && (
+                          <CollectFeeDialog
+                            studentId={record.student_id}
+                            onSuccess={fetchFeeRecords}
+                            trigger={
+                              <Button variant="ghost" size="sm">
+                                <CreditCard className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

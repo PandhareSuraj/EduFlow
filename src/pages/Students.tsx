@@ -1,11 +1,8 @@
-import { useState } from "react";
-import { Search, Filter, Download, Edit, Trash2, Eye } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AddStudentDialog, ViewStudentsDialog } from "@/components/forms/StudentDialogs";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -14,201 +11,357 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { 
+  Search, 
+  Plus, 
+  Users, 
+  UserCheck, 
+  CreditCard, 
+  Calendar, 
+  Download,
+  Filter,
+  Eye,
+  Loader2
+} from "lucide-react";
+import { AddStudentDialog, ViewStudentsDialog } from "@/components/forms/StudentDialogs";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock data for students
-const students = [
-  {
-    id: "STU001",
-    name: "Priya Sharma",
-    course: "DMLT",
-    batch: "2024-A",
-    phone: "+91 9876543210",
-    email: "priya.sharma@email.com",
-    status: "Active",
-    admissionDate: "2024-01-15",
-    feesStatus: "Paid"
-  },
-  {
-    id: "STU002", 
-    name: "Rahul Patil",
-    course: "Radiology Technician",
-    batch: "2024-B",
-    phone: "+91 9876543211",
-    email: "rahul.patil@email.com",
-    status: "Active",
-    admissionDate: "2024-01-20",
-    feesStatus: "Pending"
-  },
-  {
-    id: "STU003",
-    name: "Anjali Desai",
-    course: "PGDMLT",
-    batch: "2023-A",
-    phone: "+91 9876543212",
-    email: "anjali.desai@email.com",
-    status: "Active",
-    admissionDate: "2023-08-10",
-    feesStatus: "Paid"
-  },
-  {
-    id: "STU004",
-    name: "Vikram Singh",
-    course: "Hospital Management",
-    batch: "2024-A",
-    phone: "+91 9876543213",
-    email: "vikram.singh@email.com",
-    status: "Active",
-    admissionDate: "2024-02-01",
-    feesStatus: "Partial"
-  }
-];
+interface Student {
+  id: number;
+  student_id: string;
+  name: string;
+  email: string;
+  mobile_number: string;
+  course_id: number;
+  year: number;
+  semester: number;
+  status: string;
+  admission_date: string;
+  courses: {
+    name: string;
+    code: string;
+  };
+  student_fees?: {
+    status: string;
+    balance_amount: number;
+  }[];
+}
 
 export default function Students() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchStudents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select(`
+          *,
+          courses!inner (
+            name,
+            code
+          ),
+          student_fees (
+            status,
+            balance_amount
+          )
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching students:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load students data",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setStudents(data || []);
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      toast({
+        title: "Error", 
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
 
   const handleExportRecords = () => {
     // Create CSV content
-    const headers = ["Student ID", "Name", "Course", "Batch", "Phone", "Email", "Status", "Admission Date", "Fees Status"];
+    const headers = ["Student ID", "Name", "Course", "Year", "Semester", "Status", "Fees Status", "Phone", "Email", "Admission Date"];
     const csvContent = [
       headers.join(","),
-      ...students.map(student => [
-        student.id,
-        `"${student.name}"`,
-        `"${student.course}"`,
-        student.batch,
-        student.phone,
-        student.email,
-        student.status,
-        student.admissionDate,
-        student.feesStatus
-      ].join(","))
+      ...students.map(student => {
+        const feeStatus = student.student_fees?.[0]?.status || 'pending';
+        return [
+          student.student_id,
+          student.name,
+          student.courses?.code || 'N/A',
+          student.year,
+          student.semester,
+          student.status,
+          feeStatus,
+          student.mobile_number,
+          student.email,
+          student.admission_date
+        ].join(",");
+      })
     ].join("\n");
 
     // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `students_export_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `students_export_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
+  // Filter students based on search term
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.course.toLowerCase().includes(searchTerm.toLowerCase())
+    student.student_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.courses?.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Calculate stats
+  const totalStudents = students.length;
+  const activeStudents = students.filter(s => s.status === 'active').length;
+  const pendingFees = students.filter(s => 
+    s.student_fees?.some(fee => fee.status === 'pending' || fee.status === 'partial')
+  ).length;
+  const newAdmissions = students.filter(s => {
+    const admissionDate = new Date(s.admission_date);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return admissionDate >= thirtyDaysAgo;
+  }).length;
+
+  // Helper functions
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active": return "bg-success text-success-foreground";
-      case "Inactive": return "bg-muted text-muted-foreground";
-      default: return "bg-muted text-muted-foreground";
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'inactive':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
     }
   };
 
   const getFeesStatusColor = (status: string) => {
-    switch (status) {
-      case "Paid": return "bg-success text-success-foreground";
-      case "Pending": return "bg-destructive text-destructive-foreground";
-      case "Partial": return "bg-warning text-warning-foreground";
-      default: return "bg-muted text-muted-foreground";
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'partial':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'overdue':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
     }
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Student Management</h1>
-          <p className="text-muted-foreground">Manage student admissions, profiles, and records with document upload</p>
-        </div>
-        <div className="flex gap-2">
-          <ViewStudentsDialog />
-          <AddStudentDialog />
-        </div>
-      </div>
-
-      {/* Quick Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Students</p>
-                <p className="text-2xl font-bold">{students.length}</p>
-              </div>
-              <Eye className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Students</p>
-                <p className="text-2xl font-bold">{students.filter(s => s.status === "Active").length}</p>
-              </div>
-              <Badge className="bg-green-500/10 text-green-500">Active</Badge>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending Fees</p>
-                <p className="text-2xl font-bold">{students.filter(s => s.feesStatus === "Pending").length}</p>
-              </div>
-              <Badge className="bg-red-500/10 text-red-500">Due</Badge>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">New Admissions</p>
-                <p className="text-2xl font-bold">15</p>
-              </div>
-              <Badge className="bg-blue-500/10 text-blue-500">This Month</Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Course-wise Summary */}
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>Quick Access</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="h-20 flex-col">
-              <Search className="h-6 w-6 mb-2" />
-              Search Students
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col"
-              onClick={handleExportRecords}
-            >
-              <Download className="h-6 w-6 mb-2" />
-              Export Records
-            </Button>
-            <Button variant="outline" className="h-20 flex-col">
-              <Filter className="h-6 w-6 mb-2" />
-              Advanced Filters
-            </Button>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Student Management</h1>
+            <p className="text-muted-foreground">Manage student admissions, profiles, and records</p>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          <div className="flex gap-2">
+            <ViewStudentsDialog />
+            <AddStudentDialog />
+          </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalStudents}</div>
+              <p className="text-xs text-muted-foreground">Enrolled students</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Students</CardTitle>
+              <UserCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeStudents}</div>
+              <p className="text-xs text-muted-foreground">
+                {totalStudents > 0 ? ((activeStudents / totalStudents) * 100).toFixed(1) : 0}% of total
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Fees</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingFees}</div>
+              <p className="text-xs text-muted-foreground">
+                {totalStudents > 0 ? ((pendingFees / totalStudents) * 100).toFixed(1) : 0}% of students
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">New Admissions</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{newAdmissions}</div>
+              <p className="text-xs text-muted-foreground">Last 30 days</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Access Buttons */}
+        <div className="flex flex-wrap gap-2">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search students, ID, course..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          <Button variant="outline" onClick={handleExportRecords}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+          
+          <Button variant="outline">
+            <Filter className="mr-2 h-4 w-4" />
+            Filter
+          </Button>
+        </div>
+
+        {/* Students Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Student Records</CardTitle>
+            <CardDescription>
+              Manage all student information and records
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="ml-2">Loading students...</span>
+              </div>
+            ) : filteredStudents.length === 0 ? (
+              <div className="text-center p-8">
+                <p className="text-muted-foreground">
+                  {searchTerm ? "No students found matching your search." : "No students found."}
+                </p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Student ID</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Course</TableHead>
+                    <TableHead>Year/Sem</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Fees Status</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredStudents.map((student) => {
+                    const feeStatus = student.student_fees?.[0]?.status || 'pending';
+                    const balanceAmount = student.student_fees?.[0]?.balance_amount || 0;
+                    
+                    return (
+                      <TableRow key={student.id}>
+                        <TableCell className="font-medium">{student.student_id}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{student.name}</div>
+                            <div className="text-sm text-muted-foreground">{student.email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{student.courses?.code || 'N/A'}</div>
+                            <div className="text-sm text-muted-foreground">{student.courses?.name || 'No course'}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div>Year {student.year}</div>
+                            <div className="text-muted-foreground">Sem {student.semester}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(student.status)}>
+                            {student.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <Badge className={getFeesStatusColor(feeStatus)}>
+                              {feeStatus}
+                            </Badge>
+                            {balanceAmount > 0 && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Due: ₹{balanceAmount}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div>{student.mobile_number}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
   );
 }
