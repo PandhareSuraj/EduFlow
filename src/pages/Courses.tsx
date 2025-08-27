@@ -35,32 +35,54 @@ export default function Courses() {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      
-      // Get user's college ID first
-      const { data: collegeId, error: collegeError } = await supabase
-        .rpc('get_user_college');
 
+      // 1) Get user's college ID (null for super_admins)
+      const { data: collegeId, error: collegeError } = await supabase.rpc('get_user_college');
       if (collegeError) {
         throw new Error('Unable to fetch user college information');
       }
 
-      // Query courses filtered by college
-      const { data, error } = await supabase
+      // 2) Fetch courses (filter by college when available)
+      let coursesQuery = supabase
         .from('courses')
-        .select(`
-          *,
-          students(id)
-        `)
-        .eq('college_id', collegeId)
+        .select('*')
         .order('name', { ascending: true });
 
-      if (error) {
-        throw error;
+      if (collegeId) {
+        coursesQuery = coursesQuery.eq('college_id', collegeId);
       }
 
-      const coursesData = (data || []).map(course => ({
+      const { data: courseRows, error: coursesError } = await coursesQuery;
+      if (coursesError) throw coursesError;
+
+      // 3) Fetch student counts separately to avoid ambiguous embeds
+      const courseIds = (courseRows || []).map((c: any) => c.id);
+      let countsMap: Record<number, number> = {};
+
+      if (courseIds.length > 0) {
+        let studentsQuery = supabase
+          .from('students')
+          .select('id, course_id')
+          .in('course_id', courseIds);
+
+        if (collegeId) {
+          studentsQuery = studentsQuery.eq('college_id', collegeId);
+        }
+
+        const { data: studentsRows, error: studentsError } = await studentsQuery;
+        if (studentsError) {
+          console.warn('Warning: failed to fetch student counts', studentsError);
+        } else {
+          (studentsRows || []).forEach((s: any) => {
+            const cid = s.course_id as number | null;
+            if (cid != null) countsMap[cid] = (countsMap[cid] || 0) + 1;
+          });
+        }
+      }
+
+      const coursesData = (courseRows || []).map((course: any) => ({
         ...course,
-        students: [{ count: course.students?.length || 0 }]
+        students: [{ count: countsMap[course.id] || 0 }],
       }));
 
       setCourses(coursesData);
@@ -68,9 +90,9 @@ export default function Courses() {
     } catch (error: any) {
       console.error('Error fetching courses:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to fetch courses data",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to fetch courses data',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
