@@ -43,7 +43,11 @@ interface StudentDocument {
   uploaded_at: string;
 }
 
-export function AddStudentDialog() {
+interface AddStudentDialogProps {
+  onStudentAdded?: () => void;
+}
+
+export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {}) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -278,6 +282,9 @@ export function AddStudentDialog() {
       });
       setDocuments({});
       setOpen(false);
+
+      // Call the callback to refresh parent component
+      onStudentAdded?.();
     } catch (error: any) {
       console.error('Error adding student:', error);
       toast({

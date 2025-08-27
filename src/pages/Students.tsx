@@ -193,7 +193,7 @@ export default function Students() {
           <h1 className="text-3xl font-bold">Students</h1>
           <p className="text-muted-foreground">Manage student records and information</p>
         </div>
-        <AddStudentDialog />
+        <AddStudentDialog onStudentAdded={fetchStudents} />
       </div>
 
       {/* Summary Cards */}
