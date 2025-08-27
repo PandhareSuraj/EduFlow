@@ -35,12 +35,23 @@ export default function Courses() {
   const fetchCourses = async () => {
     try {
       setLoading(true);
+      
+      // Get user's college ID first
+      const { data: collegeId, error: collegeError } = await supabase
+        .rpc('get_user_college');
+
+      if (collegeError) {
+        throw new Error('Unable to fetch user college information');
+      }
+
+      // Query courses filtered by college
       const { data, error } = await supabase
         .from('courses')
         .select(`
           *,
           students(id)
         `)
+        .eq('college_id', collegeId)
         .order('name', { ascending: true });
 
       if (error) {
@@ -55,9 +66,10 @@ export default function Courses() {
       setCourses(coursesData);
       setFilteredCourses(coursesData);
     } catch (error: any) {
+      console.error('Error fetching courses:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch courses data",
+        description: error.message || "Failed to fetch courses data",
         variant: "destructive",
       });
     } finally {
