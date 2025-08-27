@@ -33,8 +33,58 @@ export function AddStudentDialog({ trigger }: AddStudentDialogProps) {
     qualification: ""
   });
 
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+
+  // Mobile number validation function
+  const validateMobileNumber = (phone: string): string | null => {
+    if (!phone) return "Phone number is required";
+    
+    // Remove all non-digit characters for validation
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // Accept 10-12 digit numbers
+    if (cleanPhone.length < 10 || cleanPhone.length > 12) {
+      return "Phone number must be 10-12 digits long";
+    }
+    
+    // Additional format validation
+    const phoneRegex = /^[+]?[\d\s\-\(\)]{10,15}$/;
+    if (!phoneRegex.test(phone)) {
+      return "Please enter a valid phone number";
+    }
+    
+    return null;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    const newErrors: {[key: string]: string} = {};
+    
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    if (!formData.course) newErrors.course = "Course is required";
+    if (!formData.batch) newErrors.batch = "Batch is required";
+    
+    // Validate phone number
+    const phoneError = validateMobileNumber(formData.phone);
+    if (phoneError) newErrors.phone = phoneError;
+    
+    // Validate emergency contact if provided
+    if (formData.emergencyContact) {
+      const emergencyError = validateMobileNumber(formData.emergencyContact);
+      if (emergencyError) newErrors.emergencyContact = emergencyError.replace("Phone number", "Emergency contact");
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    
+    // Clear any existing errors
+    setErrors({});
+    
     // Here you would typically save to database
     toast({
       title: "Student Added",
@@ -50,11 +100,32 @@ export function AddStudentDialog({ trigger }: AddStudentDialogProps) {
       emergencyContact: "",
       qualification: ""
     });
+    setErrors({});
     setOpen(false);
   };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
+    
+    // Real-time validation for phone fields
+    if (field === "phone" || field === "emergencyContact") {
+      const error = validateMobileNumber(value);
+      if (field === "emergencyContact" && !value) {
+        // Emergency contact is optional, so don't show error if empty
+        setErrors(prev => ({ ...prev, [field]: "" }));
+      } else if (error && value) {
+        // Only show error if there's a value being typed
+        const errorMessage = field === "emergencyContact" 
+          ? error.replace("Phone number", "Emergency contact")
+          : error;
+        setErrors(prev => ({ ...prev, [field]: errorMessage }));
+      }
+    }
   };
 
   return (
@@ -81,7 +152,9 @@ export function AddStudentDialog({ trigger }: AddStudentDialogProps) {
                 onChange={(e) => handleChange("name", e.target.value)}
                 placeholder="Enter full name"
                 required
+                className={errors.name ? "border-destructive" : ""}
               />
+              {errors.name && <p className="text-sm text-destructive mt-1">{errors.name}</p>}
             </div>
             <div>
               <Label htmlFor="email">Email *</Label>
@@ -92,31 +165,39 @@ export function AddStudentDialog({ trigger }: AddStudentDialogProps) {
                 onChange={(e) => handleChange("email", e.target.value)}
                 placeholder="Enter email address"
                 required
+                className={errors.email ? "border-destructive" : ""}
               />
+              {errors.email && <p className="text-sm text-destructive mt-1">{errors.email}</p>}
             </div>
             <div>
               <Label htmlFor="phone">Phone Number *</Label>
               <Input
                 id="phone"
+                type="tel"
                 value={formData.phone}
                 onChange={(e) => handleChange("phone", e.target.value)}
-                placeholder="Enter phone number"
+                placeholder="e.g., 9876543210 or +91-9876543210"
                 required
+                className={errors.phone ? "border-destructive" : ""}
               />
+              {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone}</p>}
             </div>
             <div>
               <Label htmlFor="emergencyContact">Emergency Contact</Label>
               <Input
                 id="emergencyContact"
+                type="tel"
                 value={formData.emergencyContact}
                 onChange={(e) => handleChange("emergencyContact", e.target.value)}
-                placeholder="Emergency contact number"
+                placeholder="e.g., 9876543210 or +91-9876543210"
+                className={errors.emergencyContact ? "border-destructive" : ""}
               />
+              {errors.emergencyContact && <p className="text-sm text-destructive mt-1">{errors.emergencyContact}</p>}
             </div>
             <div>
               <Label htmlFor="course">Course *</Label>
               <Select value={formData.course} onValueChange={(value) => handleChange("course", value)}>
-                <SelectTrigger>
+                <SelectTrigger className={errors.course ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select course" />
                 </SelectTrigger>
                 <SelectContent>
@@ -126,11 +207,12 @@ export function AddStudentDialog({ trigger }: AddStudentDialogProps) {
                   <SelectItem value="Hospital Management">Hospital Management</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.course && <p className="text-sm text-destructive mt-1">{errors.course}</p>}
             </div>
             <div>
               <Label htmlFor="batch">Batch *</Label>
               <Select value={formData.batch} onValueChange={(value) => handleChange("batch", value)}>
-                <SelectTrigger>
+                <SelectTrigger className={errors.batch ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select batch" />
                 </SelectTrigger>
                 <SelectContent>
@@ -139,6 +221,7 @@ export function AddStudentDialog({ trigger }: AddStudentDialogProps) {
                   <SelectItem value="2023-A">2023-A</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.batch && <p className="text-sm text-destructive mt-1">{errors.batch}</p>}
             </div>
             <div>
               <Label htmlFor="qualification">Previous Qualification</Label>
