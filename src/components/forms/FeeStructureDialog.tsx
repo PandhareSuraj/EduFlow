@@ -146,14 +146,11 @@ export function FeeStructureDialog({ trigger, onSuccess }: FeeStructureDialogPro
     setLoading(true);
 
     try {
-      // Get user's college_id
-      const { data: userRoleData } = await supabase
-        .from('user_roles')
-        .select('college_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+      // Get user's college using RPC function
+      const { data: collegeId, error: collegeError } = await supabase
+        .rpc('get_user_college');
 
-      if (!userRoleData?.college_id) {
+      if (collegeError || !collegeId) {
         toast({
           title: "Error",
           description: "Unable to determine your college association",
@@ -168,7 +165,7 @@ export function FeeStructureDialog({ trigger, onSuccess }: FeeStructureDialogPro
         .select('id')
         .eq('course_id', parseInt(formData.course_id))
         .eq('semester', parseInt(formData.semester))
-        .eq('college_id', userRoleData.college_id)
+        .eq('college_id', collegeId)
         .maybeSingle();
 
       if (existingStructure) {
@@ -193,7 +190,7 @@ export function FeeStructureDialog({ trigger, onSuccess }: FeeStructureDialogPro
           library_fee: parseFloat(formData.library_fee) || 0,
           other_fees: parseFloat(formData.other_fees) || 0,
           due_date: formData.due_date ? format(formData.due_date, 'yyyy-MM-dd') : null,
-          college_id: userRoleData.college_id,
+          college_id: collegeId,
         }]);
 
       if (error) {

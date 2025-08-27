@@ -50,12 +50,35 @@ export function AddCourseDialog({ trigger, onSuccess }: AddCourseDialogProps) {
 
     setLoading(true);
     try {
-      // Get user's college
-      const { data: userCollegeData } = await supabase
-        .from('user_roles')
-        .select('college_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+      // Get user's college using RPC function
+      const { data: collegeId, error: collegeError } = await supabase
+        .rpc('get_user_college');
+
+      if (collegeError || !collegeId) {
+        toast({
+          title: "Error",
+          description: "Unable to determine your college association",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if course code already exists in this college
+      const { data: existingCourse } = await supabase
+        .from('courses')
+        .select('id')
+        .eq('code', formData.code)
+        .eq('college_id', collegeId)
+        .maybeSingle();
+
+      if (existingCourse) {
+        toast({
+          title: "Error", 
+          description: "A course with this code already exists in your college",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const durationMap: { [key: string]: number } = {
         "6 Months": 6,
@@ -73,7 +96,7 @@ export function AddCourseDialog({ trigger, onSuccess }: AddCourseDialogProps) {
           fees_per_semester: parseFloat(formData.fees.replace(/[^\d.]/g, '')) || 0,
           description: formData.description,
           status: formData.status.toLowerCase(),
-          college_id: userCollegeData?.college_id
+          college_id: collegeId
         });
 
       if (error) throw error;
