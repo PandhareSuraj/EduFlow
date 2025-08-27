@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -57,16 +57,40 @@ export function AddStudentDialog() {
     admission_date: new Date().toISOString().split('T')[0]
   });
   const [documents, setDocuments] = useState<{[key: string]: File}>({});
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const { toast } = useToast();
 
-  // Mock courses data - replace with actual Supabase query
-  const courses: Course[] = [
-    { id: 1, name: "Radiologic Technology", code: "RT" },
-    { id: 2, name: "Medical Laboratory Technology", code: "MLT" },
-    { id: 3, name: "Pharmacy Technology", code: "PT" },
-    { id: 4, name: "Nursing", code: "BSN" }
-  ];
+  // Load courses from Supabase
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('courses')
+          .select('id, name, code')
+          .eq('status', 'active')
+          .order('name');
+
+        if (error) {
+          console.error('Error loading courses:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load courses",
+            variant: "destructive",
+          });
+        } else {
+          setCourses(data || []);
+        }
+      } catch (error) {
+        console.error('Error loading courses:', error);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    loadCourses();
+  }, [toast]);
 
   const handleFileUpload = (documentType: string, file: File) => {
     setDocuments(prev => ({
@@ -149,12 +173,12 @@ export function AddStudentDialog() {
       return;
     }
 
-    // Phone number validation (10 digits)
-    const phoneRegex = /^\d{10}$/;
-    if (!phoneRegex.test(formData.mobile_number.replace(/\D/g, ''))) {
+    // Phone number validation (10-12 digits)
+    const cleanedPhone = formData.mobile_number.replace(/\D/g, '');
+    if (cleanedPhone.length < 10 || cleanedPhone.length > 12) {
       toast({
         title: "Validation Error",
-        description: "Please enter a valid 10-digit mobile number",
+        description: "Please enter a valid mobile number (10-12 digits)",
         variant: "destructive",
       });
       return;
@@ -172,17 +196,15 @@ export function AddStudentDialog() {
     setLoading(true);
 
     try {
-      // Get user's college_id
-      const { data: userRoleData } = await supabase
-        .from('user_roles')
-        .select('college_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+      // Get user's college_id using RPC function
+      const { data: collegeId, error: collegeError } = await supabase
+        .rpc('get_user_college');
 
-      if (!userRoleData?.college_id) {
+      if (collegeError || !collegeId) {
+        console.error('Error getting user college:', collegeError);
         toast({
           title: "Error",
-          description: "Unable to determine your college association",
+          description: "Unable to determine your college association. Please contact support.",
           variant: "destructive",
         });
         return;
@@ -214,7 +236,7 @@ export function AddStudentDialog() {
           course_id: parseInt(formData.course_id),
           year: formData.year || 1,
           semester: formData.semester || 1,
-          college_id: userRoleData.college_id,
+          college_id: collegeId,
           status: 'active'
         }])
         .select()
@@ -318,16 +340,18 @@ export function AddStudentDialog() {
                   <Label htmlFor="mobile">Mobile Number *</Label>
                   <Input
                     id="mobile"
+                    type="tel"
                     value={formData.mobile_number}
                     onChange={(e) => setFormData({...formData, mobile_number: e.target.value})}
+                    placeholder="Enter 10-12 digit mobile number"
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="course">Course *</Label>
-                  <Select value={formData.course_id} onValueChange={(value) => setFormData({...formData, course_id: value})}>
+                  <Select value={formData.course_id} onValueChange={(value) => setFormData({...formData, course_id: value})} disabled={loadingCourses}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select course" />
+                      <SelectValue placeholder={loadingCourses ? "Loading courses..." : "Select course"} />
                     </SelectTrigger>
                     <SelectContent>
                       {courses.map((course) => (
