@@ -67,6 +67,7 @@ export default function Students() {
 
   const fetchStudents = async () => {
     try {
+      console.log('Fetching students with relationships...');
       const { data, error } = await supabase
         .from('students')
         .select(`
@@ -81,11 +82,11 @@ export default function Students() {
           admission_date,
           status,
           class,
-          courses!students_course_id_fkey (
+          courses (
             name,
             code
           ),
-          student_fees!student_fees_student_id_fkey (
+          student_fees (
             status,
             balance_amount
           )
@@ -102,14 +103,8 @@ export default function Students() {
         return;
       }
 
-      // Type assertion and null checks to handle the Supabase response
-      const studentsData = (data as any[])?.map(student => ({
-        ...student,
-        courses: student.courses || null,
-        student_fees: Array.isArray(student.student_fees) ? student.student_fees : null
-      })) || [];
-      
-      setStudents(studentsData);
+      console.log('Students data received:', data);
+      setStudents(data || []);
     } catch (error) {
       console.error('Error fetching students:', error);
       toast({

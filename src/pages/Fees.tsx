@@ -73,6 +73,7 @@ export default function Fees() {
 
   const fetchFeeRecords = async () => {
     try {
+      console.log('Fetching fee records with relationships...');
       const { data, error } = await supabase
         .from('student_fees')
         .select(`
@@ -83,17 +84,17 @@ export default function Fees() {
           balance_amount,
           status,
           due_date,
-          students!student_fees_student_id_fkey (
+          students (
             student_id,
             name,
             email,
             mobile_number,
-            courses!students_course_id_fkey (
+            courses (
               name,
               code
             )
           ),
-          fee_payments!fee_payments_student_fee_id_fkey (
+          fee_payments (
             amount,
             payment_date,
             payment_method,
@@ -112,8 +113,8 @@ export default function Fees() {
         return;
       }
 
-      // Type assertion to handle the Supabase response
-      setFeeRecords((data as any) || []);
+      console.log('Fee records data received:', data);
+      setFeeRecords(data || []);
     } catch (error) {
       console.error('Error fetching fee records:', error);
       toast({
