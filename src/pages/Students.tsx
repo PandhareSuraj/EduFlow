@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -82,11 +81,11 @@ export default function Students() {
           admission_date,
           status,
           class,
-          courses (
+          courses!students_course_id_fkey (
             name,
             code
           ),
-          student_fees (
+          student_fees!student_fees_student_id_fkey (
             status,
             balance_amount
           )
