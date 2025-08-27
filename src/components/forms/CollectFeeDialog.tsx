@@ -234,14 +234,11 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
     setLoading(true);
 
     try {
-      // Get user's college_id
-      const { data: userRoleData } = await supabase
-        .from('user_roles')
-        .select('college_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+      // Get user's college_id using RPC function
+      const { data: collegeId, error: collegeError } = await supabase
+        .rpc('get_user_college');
 
-      if (!userRoleData?.college_id) {
+      if (collegeError || !collegeId) {
         toast({
           title: "Error",
           description: "Unable to determine your college association",
@@ -267,7 +264,7 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
           payment_date: format(formData.paymentDate, 'yyyy-MM-dd'),
           remarks: formData.remarks || null,
           receipt_number: receiptNumber,
-          college_id: userRoleData.college_id,
+          college_id: collegeId,
         }])
         .select()
         .single();
@@ -289,7 +286,7 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
       const { data: collegeData } = await supabase
         .from('colleges')
         .select('*')
-        .eq('id', userRoleData.college_id)
+        .eq('id', collegeId)
         .single();
 
       // Generate receipt data

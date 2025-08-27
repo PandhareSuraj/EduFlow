@@ -54,12 +54,18 @@ export function AddFacultyDialog({ trigger, onSuccess }: AddFacultyDialogProps) 
 
     setLoading(true);
     try {
-      // Get user's college
-      const { data: userCollegeData } = await supabase
-        .from('user_roles')
-        .select('college_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+      // Get user's college using RPC function
+      const { data: collegeId, error: collegeError } = await supabase
+        .rpc('get_user_college');
+
+      if (collegeError || !collegeId) {
+        toast({
+          title: "Error",
+          description: "Unable to determine your college association",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const { error } = await supabase
         .from('faculty')
@@ -74,7 +80,7 @@ export function AddFacultyDialog({ trigger, onSuccess }: AddFacultyDialogProps) 
           subjects: formData.subjects ? formData.subjects.split(',').map(s => s.trim()) : [],
           address: formData.address || null,
           status: formData.status.toLowerCase(),
-          college_id: userCollegeData?.college_id
+          college_id: collegeId
         });
 
       if (error) throw error;
