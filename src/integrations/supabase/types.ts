@@ -65,7 +65,7 @@ export type Database = {
           faculty_id: string
           id: string
           present_count: number | null
-          schedule_id: string
+          schedule_id: string | null
           session_date: string
           start_time: string
           status: string
@@ -84,7 +84,7 @@ export type Database = {
           faculty_id: string
           id?: string
           present_count?: number | null
-          schedule_id: string
+          schedule_id?: string | null
           session_date?: string
           start_time: string
           status?: string
@@ -103,7 +103,7 @@ export type Database = {
           faculty_id?: string
           id?: string
           present_count?: number | null
-          schedule_id?: string
+          schedule_id?: string | null
           session_date?: string
           start_time?: string
           status?: string

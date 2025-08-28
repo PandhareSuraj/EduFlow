@@ -13,6 +13,7 @@ interface Student {
   name: string;
   student_id: string;
   email: string;
+  class?: string;
 }
 
 interface Course {
@@ -215,6 +216,9 @@ export function AttendanceMarkingDialog() {
       setSaving(true);
       const { data: collegeId } = await supabase.rpc('get_user_college');
 
+      // Get current user for marked_by field
+      const { data: { user } } = await supabase.auth.getUser();
+      
       // Create attendance session
       const { data: session, error: sessionError } = await supabase
         .from('attendance_sessions')
@@ -238,7 +242,7 @@ export function AttendanceMarkingDialog() {
         session_id: session.id,
         student_id: record.student_id,
         status: record.status,
-        marked_by: (await supabase.auth.getUser()).data.user?.id,
+        marked_by: user?.id,
         college_id: collegeId
       }));
 

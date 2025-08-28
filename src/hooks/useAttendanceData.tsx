@@ -69,35 +69,42 @@ export function useAttendanceData() {
       const { data: collegeId } = await supabase.rpc('get_user_college');
       const today = new Date().toISOString().split('T')[0];
       
-      let query = supabase
+      // Fetch attendance sessions
+      let sessionQuery = supabase
         .from('attendance_sessions')
-        .select(`
-          id,
-          class_name,
-          start_time,
-          total_students,
-          present_count,
-          absent_count,
-          attendance_percentage,
-          status,
-          subjects!inner(name),
-          faculty!inner(name)
-        `)
+        .select('*')
         .eq('session_date', today)
         .order('start_time');
         
       if (collegeId) {
-        query = query.eq('college_id', collegeId);
+        sessionQuery = sessionQuery.eq('college_id', collegeId);
       }
       
-      const { data, error } = await query;
-      if (error) throw error;
+      const { data: sessionsData, error: sessionsError } = await sessionQuery;
+      if (sessionsError) throw sessionsError;
       
-      const sessions: TodaySession[] = (data || []).map(session => ({
+      if (!sessionsData || sessionsData.length === 0) {
+        setTodaySessions([]);
+        return;
+      }
+      
+      // Fetch subject and faculty info separately
+      const subjectIds = [...new Set(sessionsData.map(s => s.subject_id))];
+      const facultyIds = [...new Set(sessionsData.map(s => s.faculty_id))];
+      
+      const [subjectsResponse, facultyResponse] = await Promise.all([
+        supabase.from('subjects').select('id, name').in('id', subjectIds),
+        supabase.from('faculty').select('id, name').in('id', facultyIds)
+      ]);
+      
+      const subjectsMap = new Map((subjectsResponse.data || []).map(s => [s.id, s.name]));
+      const facultyMap = new Map((facultyResponse.data || []).map(f => [f.id, f.name]));
+      
+      const sessions: TodaySession[] = sessionsData.map(session => ({
         id: session.id,
         class_name: session.class_name,
-        subject_name: session.subjects?.name || 'Unknown Subject',
-        faculty_name: session.faculty?.name || 'Unknown Faculty',
+        subject_name: subjectsMap.get(session.subject_id) || 'Unknown Subject',
+        faculty_name: facultyMap.get(session.faculty_id) || 'Unknown Faculty',
         start_time: session.start_time,
         total_students: session.total_students || 0,
         present_count: session.present_count || 0,
@@ -170,57 +177,77 @@ export function useAttendanceData() {
     try {
       const { data: collegeId } = await supabase.rpc('get_user_college');
       
-      // Get attendance records with student and course info
-      let query = supabase
+      // Get attendance records
+      let recordsQuery = supabase
         .from('attendance_records')
-        .select(`
-          student_id,
-          status,
-          students!inner(name, student_id, course_id),
-          courses!inner(name)
-        `);
+        .select('student_id, status');
         
       if (collegeId) {
-        query = query.eq('college_id', collegeId);
+        recordsQuery = recordsQuery.eq('college_id', collegeId);
       }
       
-      const { data, error } = await query;
-      if (error) throw error;
+      const { data: recordsData, error: recordsError } = await recordsQuery;
+      if (recordsError) throw recordsError;
       
-      // Group by student and calculate stats
-      const studentMap = new Map<number, {
-        name: string;
-        student_number: string;
-        course_name: string;
-        records: string[];
-      }>();
+      if (!recordsData || recordsData.length === 0) {
+        setStudentSummaries([]);
+        return;
+      }
       
-      (data || []).forEach(record => {
+      // Get unique student IDs
+      const studentIds = [...new Set(recordsData.map(r => r.student_id))];
+      
+      // Fetch student info
+      let studentsQuery = supabase
+        .from('students')
+        .select('id, name, student_id, course_id')
+        .in('id', studentIds);
+        
+      if (collegeId) {
+        studentsQuery = studentsQuery.eq('college_id', collegeId);
+      }
+      
+      const { data: studentsData, error: studentsError } = await studentsQuery;
+      if (studentsError) throw studentsError;
+      
+      // Fetch course info
+      const courseIds = [...new Set(studentsData?.map(s => s.course_id) || [])];
+      const { data: coursesData } = await supabase
+        .from('courses')
+        .select('id, name')
+        .in('id', courseIds);
+      
+      // Create maps for quick lookup
+      const studentsMap = new Map(studentsData?.map(s => [s.id, s]) || []);
+      const coursesMap = new Map(coursesData?.map(c => [c.id, c.name]) || []);
+      
+      // Group records by student and calculate stats
+      const studentRecordsMap = new Map<number, string[]>();
+      
+      recordsData.forEach(record => {
         const studentId = record.student_id;
-        if (!studentMap.has(studentId)) {
-          studentMap.set(studentId, {
-            name: record.students?.name || 'Unknown',
-            student_number: record.students?.student_id || 'N/A',
-            course_name: record.courses?.name || 'Unknown Course',
-            records: []
-          });
+        if (!studentRecordsMap.has(studentId)) {
+          studentRecordsMap.set(studentId, []);
         }
-        studentMap.get(studentId)?.records.push(record.status);
+        studentRecordsMap.get(studentId)?.push(record.status);
       });
       
       // Calculate summaries
-      const summaries: StudentAttendanceSummary[] = Array.from(studentMap.entries()).map(([studentId, data]) => {
-        const totalSessions = data.records.length;
-        const presentCount = data.records.filter(status => status === 'present').length;
-        const absentCount = data.records.filter(status => status === 'absent').length;
-        const lateCount = data.records.filter(status => status === 'late').length;
+      const summaries: StudentAttendanceSummary[] = Array.from(studentRecordsMap.entries()).map(([studentId, records]) => {
+        const student = studentsMap.get(studentId);
+        const courseName = student ? coursesMap.get(student.course_id) || 'Unknown Course' : 'Unknown Course';
+        
+        const totalSessions = records.length;
+        const presentCount = records.filter(status => status === 'present').length;
+        const absentCount = records.filter(status => status === 'absent').length;
+        const lateCount = records.filter(status => status === 'late').length;
         const attendancePercentage = totalSessions > 0 ? (presentCount / totalSessions) * 100 : 0;
         
         return {
           student_id: studentId,
-          student_name: data.name,
-          student_number: data.student_number,
-          course_name: data.course_name,
+          student_name: student?.name || 'Unknown',
+          student_number: student?.student_id || 'N/A',
+          course_name: courseName,
           total_sessions: totalSessions,
           present_count: presentCount,
           absent_count: absentCount,
