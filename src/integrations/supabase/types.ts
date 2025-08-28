@@ -14,6 +14,156 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_records: {
+        Row: {
+          college_id: string | null
+          created_at: string
+          id: string
+          marked_at: string | null
+          marked_by: string | null
+          remarks: string | null
+          session_id: string
+          status: string
+          student_id: number
+          updated_at: string
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string
+          id?: string
+          marked_at?: string | null
+          marked_by?: string | null
+          remarks?: string | null
+          session_id: string
+          status?: string
+          student_id: number
+          updated_at?: string
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string
+          id?: string
+          marked_at?: string | null
+          marked_by?: string | null
+          remarks?: string | null
+          session_id?: string
+          status?: string
+          student_id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      attendance_sessions: {
+        Row: {
+          absent_count: number | null
+          attendance_percentage: number | null
+          class_name: string
+          college_id: string | null
+          course_id: number
+          created_at: string
+          end_time: string | null
+          faculty_id: string
+          id: string
+          present_count: number | null
+          schedule_id: string
+          session_date: string
+          start_time: string
+          status: string
+          subject_id: string
+          total_students: number | null
+          updated_at: string
+        }
+        Insert: {
+          absent_count?: number | null
+          attendance_percentage?: number | null
+          class_name: string
+          college_id?: string | null
+          course_id: number
+          created_at?: string
+          end_time?: string | null
+          faculty_id: string
+          id?: string
+          present_count?: number | null
+          schedule_id: string
+          session_date?: string
+          start_time: string
+          status?: string
+          subject_id: string
+          total_students?: number | null
+          updated_at?: string
+        }
+        Update: {
+          absent_count?: number | null
+          attendance_percentage?: number | null
+          class_name?: string
+          college_id?: string | null
+          course_id?: number
+          created_at?: string
+          end_time?: string | null
+          faculty_id?: string
+          id?: string
+          present_count?: number | null
+          schedule_id?: string
+          session_date?: string
+          start_time?: string
+          status?: string
+          subject_id?: string
+          total_students?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      class_schedules: {
+        Row: {
+          class_name: string
+          college_id: string | null
+          course_id: number
+          created_at: string
+          day_of_week: number
+          end_time: string
+          faculty_id: string
+          id: string
+          room_number: string | null
+          semester: number | null
+          start_time: string
+          status: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_name: string
+          college_id?: string | null
+          course_id: number
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          faculty_id: string
+          id?: string
+          room_number?: string | null
+          semester?: number | null
+          start_time: string
+          status?: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_name?: string
+          college_id?: string | null
+          course_id?: number
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          faculty_id?: string
+          id?: string
+          room_number?: string | null
+          semester?: number | null
+          start_time?: string
+          status?: string
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       colleges: {
         Row: {
           address: string | null
