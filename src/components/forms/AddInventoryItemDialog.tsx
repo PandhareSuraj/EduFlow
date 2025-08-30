@@ -56,7 +56,7 @@ export function AddInventoryItemDialog({ onAdd, suppliers }: AddInventoryItemDia
     try {
       await onAdd({
         ...data,
-        supplier_id: data.supplier_id || undefined,
+        supplier_id: data.supplier_id === "none" ? undefined : data.supplier_id,
         status: 'active'
       } as any);
       form.reset();
@@ -278,7 +278,7 @@ export function AddInventoryItemDialog({ onAdd, suppliers }: AddInventoryItemDia
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">No Supplier</SelectItem>
+                        <SelectItem value="none">No Supplier</SelectItem>
                         {suppliers.map((supplier) => (
                           <SelectItem key={supplier.id} value={supplier.id}>
                             {supplier.name}
