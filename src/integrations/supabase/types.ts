@@ -538,6 +538,130 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_items: {
+        Row: {
+          category: string
+          college_id: string | null
+          created_at: string
+          current_stock: number
+          description: string | null
+          id: string
+          item_code: string
+          last_restocked: string | null
+          max_stock: number
+          min_stock: number
+          name: string
+          price_per_unit: number
+          status: string
+          supplier_id: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          college_id?: string | null
+          created_at?: string
+          current_stock?: number
+          description?: string | null
+          id?: string
+          item_code: string
+          last_restocked?: string | null
+          max_stock?: number
+          min_stock?: number
+          name: string
+          price_per_unit?: number
+          status?: string
+          supplier_id?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          college_id?: string | null
+          created_at?: string
+          current_stock?: number
+          description?: string | null
+          id?: string
+          item_code?: string
+          last_restocked?: string | null
+          max_stock?: number
+          min_stock?: number
+          name?: string
+          price_per_unit?: number
+          status?: string
+          supplier_id?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transactions: {
+        Row: {
+          college_id: string | null
+          created_at: string
+          department: string | null
+          id: string
+          issued_to: string | null
+          item_id: string
+          processed_by: string | null
+          purpose: string | null
+          quantity: number
+          remarks: string | null
+          transaction_code: string
+          transaction_date: string
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string
+          department?: string | null
+          id?: string
+          issued_to?: string | null
+          item_id: string
+          processed_by?: string | null
+          purpose?: string | null
+          quantity: number
+          remarks?: string | null
+          transaction_code?: string
+          transaction_date?: string
+          transaction_type: string
+          updated_at?: string
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string
+          department?: string | null
+          id?: string
+          issued_to?: string | null
+          item_id?: string
+          processed_by?: string | null
+          purpose?: string | null
+          quantity?: number
+          remarks?: string | null
+          transaction_code?: string
+          transaction_date?: string
+          transaction_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -866,6 +990,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          college_id: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          college_id?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          college_id?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

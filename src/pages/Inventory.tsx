@@ -1,103 +1,49 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Package, AlertTriangle, TrendingUp, TrendingDown } from "lucide-react";
-
-const inventory = [
-  {
-    id: "INV001",
-    name: "X-Ray Film",
-    category: "Radiology Supplies",
-    currentStock: 150,
-    minStock: 50,
-    maxStock: 500,
-    unit: "Sheets",
-    pricePerUnit: 25,
-    supplier: "MedTech Supplies",
-    lastRestocked: "2024-01-15",
-    status: "In Stock"
-  },
-  {
-    id: "INV002",
-    name: "Blood Collection Tubes",
-    category: "Lab Equipment",
-    currentStock: 25,
-    minStock: 100,
-    maxStock: 1000,
-    unit: "Pieces",
-    pricePerUnit: 5,
-    supplier: "LabCorp India",
-    lastRestocked: "2024-01-10",
-    status: "Low Stock"
-  },
-  {
-    id: "INV003",
-    name: "Microscope Slides",
-    category: "Lab Equipment",
-    currentStock: 300,
-    minStock: 200,
-    maxStock: 800,
-    unit: "Pieces",
-    pricePerUnit: 2,
-    supplier: "Scientific Instruments",
-    lastRestocked: "2024-01-20",
-    status: "In Stock"
-  },
-  {
-    id: "INV004",
-    name: "Ultrasound Gel",
-    category: "Radiology Supplies", 
-    currentStock: 8,
-    minStock: 20,
-    maxStock: 100,
-    unit: "Bottles",
-    pricePerUnit: 150,
-    supplier: "MedTech Supplies",
-    lastRestocked: "2023-12-25",
-    status: "Critical"
-  }
-];
-
-const transactions = [
-  {
-    id: "TXN001",
-    type: "Issue",
-    item: "X-Ray Film",
-    quantity: 25,
-    department: "Radiology Lab",
-    issuedTo: "Dr. Rajesh Sharma",
-    date: "2024-01-22",
-    purpose: "Student Practical"
-  },
-  {
-    id: "TXN002",
-    type: "Return",
-    item: "Microscope Slides",
-    quantity: 10,
-    department: "DMLT Lab",
-    issuedTo: "Prof. Priya Patil",
-    date: "2024-01-21",
-    purpose: "Unused Stock"
-  },
-  {
-    id: "TXN003",
-    type: "Issue",
-    item: "Blood Collection Tubes",
-    quantity: 50,
-    department: "DMLT Lab",
-    issuedTo: "Mrs. Sunita Desai",
-    date: "2024-01-20",
-    purpose: "Lab Practice"
-  }
-];
+import { Search, Plus, Package, AlertTriangle, TrendingUp, TrendingDown, Edit, RefreshCw } from "lucide-react";
+import { useInventoryData } from "@/hooks/useInventoryData";
+import { AddInventoryItemDialog } from "@/components/forms/AddInventoryItemDialog";
+import { AddTransactionDialog } from "@/components/forms/AddTransactionDialog";
+import { format } from "date-fns";
 
 export default function Inventory() {
-  const totalItems = inventory.length;
-  const lowStockItems = inventory.filter(item => item.status === 'Low Stock' || item.status === 'Critical').length;
-  const totalValue = inventory.reduce((sum, item) => sum + (item.currentStock * item.pricePerUnit), 0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { 
+    items, 
+    transactions, 
+    suppliers, 
+    stats, 
+    loading, 
+    addItem, 
+    addTransaction,
+    refreshData 
+  } = useInventoryData();
+
+  const filteredItems = items.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.item_code.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getStockStatus = (item: any) => {
+    if (item.current_stock === 0) return { status: 'Out of Stock', variant: 'destructive' as const };
+    if (item.current_stock <= item.min_stock) return { status: 'Critical', variant: 'destructive' as const };
+    if (item.current_stock <= item.min_stock * 1.5) return { status: 'Low Stock', variant: 'secondary' as const };
+    return { status: 'In Stock', variant: 'default' as const };
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="text-center">Loading inventory data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -107,10 +53,13 @@ export default function Inventory() {
           <h1 className="text-3xl font-bold text-foreground">Inventory Management</h1>
           <p className="text-muted-foreground">Manage lab equipment and supplies</p>
         </div>
-        <Button className="shadow-elegant">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Item
-        </Button>
+        <div className="flex gap-2">
+          <AddInventoryItemDialog onAdd={addItem} suppliers={suppliers} />
+          <Button variant="outline" onClick={refreshData}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -121,7 +70,7 @@ export default function Inventory() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalItems}</div>
+            <div className="text-2xl font-bold">{stats.totalItems}</div>
           </CardContent>
         </Card>
         
@@ -131,7 +80,7 @@ export default function Inventory() {
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{lowStockItems}</div>
+            <div className="text-2xl font-bold text-red-600">{stats.lowStockItems}</div>
           </CardContent>
         </Card>
 
@@ -141,7 +90,7 @@ export default function Inventory() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">₹{totalValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-primary">₹{stats.totalValue.toLocaleString()}</div>
           </CardContent>
         </Card>
 
@@ -151,7 +100,7 @@ export default function Inventory() {
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{transactions.length}</div>
+            <div className="text-2xl font-bold">{stats.recentTransactions}</div>
           </CardContent>
         </Card>
       </div>
@@ -171,9 +120,14 @@ export default function Inventory() {
               <div className="flex gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input placeholder="Search inventory..." className="pl-10" />
+                  <Input 
+                    placeholder="Search inventory..." 
+                    className="pl-10" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-                <Button variant="outline">Filter</Button>
+                <AddTransactionDialog onAdd={addTransaction} items={items} />
               </div>
             </CardContent>
           </Card>
@@ -199,42 +153,51 @@ export default function Inventory() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {inventory.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.id}</TableCell>
-                      <TableCell>{item.name}</TableCell>
-                      <TableCell>{item.category}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className={
-                            item.currentStock <= item.minStock ? 'text-red-600 font-medium' : ''
-                          }>
-                            {item.currentStock}
-                          </span>
-                          <span className="text-muted-foreground text-sm">{item.unit}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {item.minStock} / {item.maxStock}
-                      </TableCell>
-                      <TableCell>₹{item.pricePerUnit}</TableCell>
-                      <TableCell>{item.supplier}</TableCell>
-                      <TableCell>
-                        <Badge variant={
-                          item.status === 'Critical' ? 'destructive' :
-                          item.status === 'Low Stock' ? 'secondary' : 'default'
-                        }>
-                          {item.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">Edit</Button>
-                          <Button size="sm">Restock</Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredItems.map((item) => {
+                    const stockStatus = getStockStatus(item);
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">{item.item_code}</TableCell>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className={
+                              item.current_stock <= item.min_stock ? 'text-red-600 font-medium' : ''
+                            }>
+                              {item.current_stock}
+                            </span>
+                            <span className="text-muted-foreground text-sm">{item.unit}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {item.min_stock} / {item.max_stock}
+                        </TableCell>
+                        <TableCell>₹{item.price_per_unit}</TableCell>
+                        <TableCell>{item.supplier?.name || 'N/A'}</TableCell>
+                        <TableCell>
+                          <Badge variant={stockStatus.variant}>
+                            {stockStatus.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                            <AddTransactionDialog 
+                              onAdd={addTransaction} 
+                              items={items}
+                              triggerButton={
+                                <Button size="sm">Restock</Button>
+                              }
+                            />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
@@ -278,18 +241,22 @@ export default function Inventory() {
                 <TableBody>
                   {transactions.map((transaction) => (
                     <TableRow key={transaction.id}>
-                      <TableCell className="font-medium">{transaction.id}</TableCell>
+                      <TableCell className="font-medium">{transaction.transaction_code}</TableCell>
                       <TableCell>
-                        <Badge variant={transaction.type === 'Issue' ? 'secondary' : 'outline'}>
-                          {transaction.type}
+                        <Badge variant={
+                          transaction.transaction_type === 'issue' ? 'secondary' : 
+                          transaction.transaction_type === 'return' ? 'outline' :
+                          transaction.transaction_type === 'restock' ? 'default' : 'destructive'
+                        }>
+                          {transaction.transaction_type.charAt(0).toUpperCase() + transaction.transaction_type.slice(1)}
                         </Badge>
                       </TableCell>
-                      <TableCell>{transaction.item}</TableCell>
+                      <TableCell>{transaction.item.name}</TableCell>
                       <TableCell>{transaction.quantity}</TableCell>
-                      <TableCell>{transaction.department}</TableCell>
-                      <TableCell>{transaction.issuedTo}</TableCell>
-                      <TableCell>{transaction.date}</TableCell>
-                      <TableCell>{transaction.purpose}</TableCell>
+                      <TableCell>{transaction.department || 'N/A'}</TableCell>
+                      <TableCell>{transaction.issued_to || 'N/A'}</TableCell>
+                      <TableCell>{format(new Date(transaction.transaction_date), 'MMM dd, yyyy')}</TableCell>
+                      <TableCell>{transaction.purpose || 'N/A'}</TableCell>
                       <TableCell>
                         <Button variant="outline" size="sm">View</Button>
                       </TableCell>
