@@ -21,6 +21,7 @@ import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useDashboardNotifications } from "@/hooks/useDashboardNotifications";
 import StudentDashboard from './StudentDashboard';
 
 interface DashboardStats {
@@ -54,6 +55,7 @@ export default function Dashboard() {
   });
   const [collegeAMCData, setCollegeAMCData] = useState<CollegeAMCData[]>([]);
   const [loading, setLoading] = useState(true);
+  const { notifications, loading: notificationsLoading } = useDashboardNotifications();
 
   // Render student dashboard for student users
   if (userRole === 'student') {
@@ -380,18 +382,54 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
-                  <p className="font-medium text-warning">Fee Reminders</p>
-                  <p className="text-sm text-muted-foreground">45 students have pending fees</p>
-                </div>
-                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                  <p className="font-medium text-destructive">Low Attendance</p>
-                  <p className="text-sm text-muted-foreground">12 students below 75% attendance</p>
-                </div>
-                <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
-                  <p className="font-medium text-primary">Certificates Pending</p>
-                  <p className="text-sm text-muted-foreground">8 course completion certificates</p>
-                </div>
+                {notificationsLoading ? (
+                  <div className="space-y-3">
+                    <div className="p-3 bg-muted/50 rounded-lg animate-pulse">
+                      <div className="h-4 bg-muted rounded mb-2"></div>
+                      <div className="h-3 bg-muted rounded w-3/4"></div>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-lg animate-pulse">
+                      <div className="h-4 bg-muted rounded mb-2"></div>
+                      <div className="h-3 bg-muted rounded w-2/3"></div>
+                    </div>
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="text-center py-6">
+                    <p className="text-muted-foreground">No pending actions at the moment</p>
+                    <p className="text-sm text-muted-foreground mt-1">All systems are running smoothly</p>
+                  </div>
+                ) : (
+                  notifications.map((notification) => (
+                    <div 
+                      key={notification.id}
+                      className={`p-3 border rounded-lg cursor-pointer hover:shadow-sm transition-shadow ${
+                        notification.type === 'warning' ? 'bg-warning/10 border-warning/20' :
+                        notification.type === 'error' ? 'bg-destructive/10 border-destructive/20' :
+                        notification.type === 'info' ? 'bg-primary/10 border-primary/20' :
+                        'bg-success/10 border-success/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className={`font-medium ${
+                            notification.type === 'warning' ? 'text-warning' :
+                            notification.type === 'error' ? 'text-destructive' :
+                            notification.type === 'info' ? 'text-primary' :
+                            'text-success'
+                          }`}>
+                            {notification.title}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium">{notification.count}</span> {notification.message}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {notification.action}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
