@@ -262,6 +262,54 @@ export type Database = {
           },
         ]
       }
+      enquiries: {
+        Row: {
+          assigned_to: string | null
+          college_id: string | null
+          course: string
+          created_at: string
+          email: string | null
+          follow_up_date: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          college_id?: string | null
+          course: string
+          created_at?: string
+          email?: string | null
+          follow_up_date?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          college_id?: string | null
+          course?: string
+          created_at?: string
+          email?: string | null
+          follow_up_date?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       exams: {
         Row: {
           college_id: string | null

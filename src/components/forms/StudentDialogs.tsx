@@ -5,42 +5,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Plus, Upload, FileText, Eye, Edit, Download, User, Phone, Mail, Calendar, Upload as UploadIcon } from "lucide-react";
+import { Plus, FileText, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Student {
-  id: number;
-  student_id: string;
-  name: string;
-  email: string;
-  mobile_number: string;
-  course_id: number;
-  class: string;
-  semester: number;
-  year: number;
-  admission_date: string;
-  status: 'active' | 'left' | 'completed';
-  course_name?: string;
-}
+// Export the individual dialog components
+export { ViewStudentDialog } from "./ViewStudentDialog";
+export { EditStudentDialog } from "./EditStudentDialog";
+export { DeleteStudentDialog } from "./DeleteStudentDialog";
 
 interface Course {
   id: number;
   name: string;
   code: string;
-}
-
-interface StudentDocument {
-  id: string;
-  document_type: 'aadhar' | 'marksheet' | 'photo' | 'other';
-  file_name: string;
-  file_url: string;
-  file_size: number;
-  uploaded_at: string;
 }
 
 interface AddStudentDialogProps {
@@ -477,227 +455,6 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-interface ViewStudentDialogProps {
-  student: Student;
-  trigger?: React.ReactNode;
-}
-
-export function ViewStudentDialog({ student, trigger }: ViewStudentDialogProps) {
-  const [open, setOpen] = useState(false);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'left': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      case 'completed': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="outline" size="sm">
-            <Eye className="mr-2 h-4 w-4" />
-            View
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Student Profile - {student.student_id}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-6">
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-20 w-20">
-              <AvatarFallback className="text-lg">
-                {student.name.split(' ').map(n => n[0]).join('')}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="text-xl font-semibold">{student.name}</h3>
-              <p className="text-muted-foreground">{student.student_id}</p>
-              <div className="flex gap-2 mt-2">
-                <Badge className={getStatusColor(student.status)}>
-                  {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
-                </Badge>
-              </div>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm font-medium">Course</Label>
-              <p className="mt-1">{student.course_name || `Course ID: ${student.course_id}`}</p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium">Class</Label>
-              <p className="mt-1">{student.class || 'Not assigned'}</p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium">Year / Semester</Label>
-              <p className="mt-1">Year {student.year}, Semester {student.semester}</p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium">Email</Label>
-              <p className="mt-1">{student.email}</p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium">Mobile Number</Label>
-              <p className="mt-1">{student.mobile_number}</p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium">Admission Date</Label>
-              <p className="mt-1">{new Date(student.admission_date).toLocaleDateString()}</p>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export function ViewStudentsDialog() {
-  const [open, setOpen] = useState(false);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  // Mock data - replace with Supabase query
-  const mockStudents: Student[] = [
-    {
-      id: 1,
-      student_id: "STU000001",
-      name: "John Doe",
-      email: "john.doe@email.com",
-      mobile_number: "9876543210",
-      course_id: 1,
-      class: "A",
-      semester: 1,
-      year: 1,
-      admission_date: "2024-08-01",
-      status: "active",
-      course_name: "Radiologic Technology"
-    },
-    {
-      id: 2,
-      student_id: "STU000002",
-      name: "Jane Smith",
-      email: "jane.smith@email.com",
-      mobile_number: "9876543211",
-      course_id: 2,
-      class: "B",
-      semester: 2,
-      year: 1,
-      admission_date: "2024-08-01",
-      status: "active",
-      course_name: "Medical Laboratory Technology"
-    }
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'left': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      case 'completed': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Eye className="h-4 w-4 mr-2" />
-          View Students
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[1000px] max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle>Student Management</DialogTitle>
-          <DialogDescription>
-            View and manage all registered students.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-            </div>
-            <AddStudentDialog />
-          </div>
-
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student ID</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Course</TableHead>
-                  <TableHead>Year/Semester</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockStudents.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="font-medium">{student.student_id}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{student.name}</div>
-                        <div className="text-sm text-muted-foreground">{student.email}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{student.course_name}</div>
-                        <div className="text-sm text-muted-foreground">Class: {student.class}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-center">
-                        <div className="font-medium">Year {student.year}</div>
-                        <div className="text-sm text-muted-foreground">Sem {student.semester}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Phone className="h-3 w-3" />
-                        {student.mobile_number}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(student.status)}>
-                        {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <ViewStudentDialog student={student} />
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <FileText className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
       </DialogContent>
     </Dialog>
   );

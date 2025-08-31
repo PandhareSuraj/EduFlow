@@ -15,7 +15,7 @@ import {
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { AddStudentDialog } from "@/components/forms/AddStudentDialog";
+import { AddStudentDialog } from "@/components/forms/StudentDialogs";
 import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
@@ -247,28 +247,32 @@ export default function Dashboard() {
                 </>
               ) : (
                 <>
-                  <AddStudentDialog 
-                    trigger={
-                      <button className="flex items-center p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors text-left w-full">
-                        <Users className="mr-3 h-4 w-4 text-primary" />
-                        <div>
-                          <p className="font-medium">Add New Student</p>
-                          <p className="text-sm text-muted-foreground">Register a new student</p>
-                        </div>
-                      </button>
-                    }
-                  />
-                  <CollectFeeDialog 
-                    trigger={
-                      <button className="flex items-center p-3 bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors text-left w-full">
-                        <DollarSign className="mr-3 h-4 w-4 text-accent" />
-                        <div>
-                          <p className="font-medium">Collect Fee</p>
-                          <p className="text-sm text-muted-foreground">Process fee payment</p>
-                        </div>
-                      </button>
-                    }
-                  />
+                  <button 
+                    className="flex items-center p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors text-left w-full"
+                    onClick={() => document.querySelector('[data-add-student-trigger]')?.click()}
+                  >
+                    <Users className="mr-3 h-4 w-4 text-primary" />
+                    <div>
+                      <p className="font-medium">Add New Student</p>
+                      <p className="text-sm text-muted-foreground">Register a new student</p>
+                    </div>
+                  </button>
+                  <div className="hidden">
+                    <AddStudentDialog />
+                  </div>
+                  <button 
+                    className="flex items-center p-3 bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors text-left w-full"
+                    onClick={() => document.querySelector('[data-collect-fee-trigger]')?.click()}
+                  >
+                    <DollarSign className="mr-3 h-4 w-4 text-accent" />
+                    <div>
+                      <p className="font-medium">Collect Fee</p>
+                      <p className="text-sm text-muted-foreground">Process fee payment</p>
+                    </div>
+                  </button>
+                  <div className="hidden">
+                    <CollectFeeDialog />
+                  </div>
                   <button className="flex items-center p-3 bg-warning/10 hover:bg-warning/20 rounded-lg transition-colors text-left">
                     <ClipboardCheck className="mr-3 h-4 w-4 text-warning" />
                     <div>

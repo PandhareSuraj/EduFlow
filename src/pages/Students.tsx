@@ -31,7 +31,7 @@ import {
   Trash2,
   Loader2
 } from "lucide-react";
-import { AddStudentDialog } from "@/components/forms/StudentDialogs";
+import { ViewStudentDialog, EditStudentDialog, DeleteStudentDialog, AddStudentDialog } from "@/components/forms/StudentDialogs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -57,10 +57,17 @@ interface Student {
   }[] | null;
 }
 
+interface Course {
+  id: number;
+  name: string;
+  code: string;
+}
+
 export default function Students() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [students, setStudents] = useState<Student[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -116,9 +123,33 @@ export default function Students() {
     }
   };
 
+  const fetchCourses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('id, name, code')
+        .eq('status', 'active')
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching courses:', error);
+        return;
+      }
+
+      setCourses(data || []);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
+
   useEffect(() => {
     fetchStudents();
+    fetchCourses();
   }, []);
+
+  const refreshData = () => {
+    fetchStudents();
+  };
 
   // Filter students based on search term and status
   const filteredStudents = students.filter(student => {
@@ -193,7 +224,7 @@ export default function Students() {
           <h1 className="text-3xl font-bold">Students</h1>
           <p className="text-muted-foreground">Manage student records and information</p>
         </div>
-        <AddStudentDialog onStudentAdded={fetchStudents} />
+        <AddStudentDialog onStudentAdded={refreshData} />
       </div>
 
       {/* Summary Cards */}
@@ -345,15 +376,33 @@ export default function Students() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <ViewStudentDialog 
+                            student={{...student, course: courses.find(c => c.id === student.course_id)}}
+                            trigger={
+                              <Button variant="ghost" size="sm">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
+                          <EditStudentDialog
+                            student={student}
+                            courses={courses}
+                            onUpdate={refreshData}
+                            trigger={
+                              <Button variant="ghost" size="sm">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
+                          <DeleteStudentDialog
+                            student={student}
+                            onDelete={refreshData}
+                            trigger={
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
                         </div>
                       </TableCell>
                     </TableRow>
