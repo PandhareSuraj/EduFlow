@@ -314,28 +314,48 @@ export function ViewResultsDialog({ course }: ViewResultsDialogProps) {
 
       const studentIds = studentsData.map(s => s.id);
 
-      // Fetch results with related data
-      const { data, error } = await supabase
+      // Fetch results first
+      const { data: resultsData, error: resultsError } = await supabase
         .from('results')
-        .select(`
-          id,
-          student_id,
-          exam_id,
-          subject_id,
-          marks_obtained,
-          total_marks,
-          percentage,
-          grade,
-          created_at,
-          students!inner (name, student_id),
-          exams!inner (name),
-          subjects!inner (name, code)
-        `)
+        .select('*')
         .in('student_id', studentIds)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setResults(data || []);
+      if (resultsError) throw resultsError;
+
+      if (!resultsData || resultsData.length === 0) {
+        setResults([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get related data
+      const { data: allStudents } = await supabase
+        .from('students')
+        .select('id, name, student_id')
+        .in('id', studentIds);
+
+      const examIds = [...new Set(resultsData.map(r => r.exam_id))];
+      const { data: allExams } = await supabase
+        .from('exams')
+        .select('id, name')
+        .in('id', examIds);
+
+      const subjectIds = [...new Set(resultsData.map(r => r.subject_id))];
+      const { data: allSubjects } = await supabase
+        .from('subjects')
+        .select('id, name, code')
+        .in('id', subjectIds);
+
+      // Map the data together
+      const mappedResults: Result[] = resultsData.map(result => ({
+        ...result,
+        students: allStudents?.find(s => s.id === result.student_id),
+        exams: allExams?.find(e => e.id === result.exam_id),
+        subjects: allSubjects?.find(s => s.id === result.subject_id)
+      }));
+
+      setResults(mappedResults);
     } catch (error: any) {
       toast({
         title: "Error",

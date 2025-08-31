@@ -782,6 +782,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_results_exam_id"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_results_student_id"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_results_subject_id"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "results_college_id_fkey"
             columns: ["college_id"]
             isOneToOne: false
