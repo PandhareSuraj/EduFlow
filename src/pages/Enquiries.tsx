@@ -1,71 +1,98 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Phone, Mail, MessageSquare } from "lucide-react";
+import { Search, Phone, Mail, MessageSquare, Loader2 } from "lucide-react";
 import { AddEnquiryDialog } from "@/components/forms/AddEnquiryDialog";
 import { ViewEnquiryDialog, EditEnquiryDialog } from "@/components/forms/EnquiryDialogs";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-const enquiries = [
-  {
-    id: "ENQ001",
-    name: "Sneha Patil",
-    phone: "+91 98765 12345",
-    email: "sneha.patil@email.com",
-    course: "DMLT",
-    source: "Website",
-    status: "New",
-    followUpDate: "2024-01-25",
-    assignedTo: "Priya Sharma",
-    createdDate: "2024-01-20"
-  },
-  {
-    id: "ENQ002", 
-    name: "Rahul Kumar",
-    phone: "+91 98765 12346",
-    email: "rahul.kumar@email.com",
-    course: "Radiology Technician",
-    source: "Walk-in",
-    status: "Contacted",
-    followUpDate: "2024-01-26",
-    assignedTo: "Amit Desai",
-    createdDate: "2024-01-18"
-  },
-  {
-    id: "ENQ003",
-    name: "Kavita Sharma",
-    phone: "+91 98765 12347", 
-    email: "kavita.sharma@email.com",
-    course: "Hospital Management",
-    source: "Referral",
-    status: "Interested",
-    followUpDate: "2024-01-27",
-    assignedTo: "Priya Sharma",
-    createdDate: "2024-01-15"
-  },
-  {
-    id: "ENQ004",
-    name: "Manoj Patil",
-    phone: "+91 98765 12348",
-    email: "manoj.patil@email.com", 
-    course: "PGDMLT",
-    source: "Facebook",
-    status: "Converted",
-    followUpDate: "-",
-    assignedTo: "Amit Desai",
-    createdDate: "2024-01-10"
-  }
-];
-
-const stats = {
-  total: enquiries.length,
-  new: enquiries.filter(e => e.status === 'New').length,
-  contacted: enquiries.filter(e => e.status === 'Contacted').length,
-  converted: enquiries.filter(e => e.status === 'Converted').length
-};
+interface Enquiry {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  course: string;
+  source: string;
+  status: string;
+  followUpDate: string;
+  assignedTo: string;
+  createdDate: string;
+  notes?: string;
+}
 
 export default function Enquiries() {
+  const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
+  const [filteredEnquiries, setFilteredEnquiries] = useState<Enquiry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
+
+  const fetchEnquiries = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('enquiries')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const enquiryData: Enquiry[] = (data || []).map(enquiry => ({
+        id: enquiry.id,
+        name: enquiry.name,
+        phone: enquiry.phone,
+        email: enquiry.email || '',
+        course: enquiry.course,
+        source: enquiry.source,
+        status: enquiry.status,
+        followUpDate: enquiry.follow_up_date || '',
+        assignedTo: enquiry.assigned_to || '',
+        createdDate: new Date(enquiry.created_at).toLocaleDateString(),
+        notes: enquiry.notes
+      }));
+
+      setEnquiries(enquiryData);
+      setFilteredEnquiries(enquiryData);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch enquiries",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEnquiries();
+  }, []);
+
+  useEffect(() => {
+    let filtered = enquiries;
+
+    if (searchTerm) {
+      filtered = filtered.filter(enquiry =>
+        enquiry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        enquiry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        enquiry.phone.includes(searchTerm) ||
+        enquiry.course.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setFilteredEnquiries(filtered);
+  }, [enquiries, searchTerm]);
+
+  const stats = {
+    total: enquiries.length,
+    new: enquiries.filter(e => e.status === 'new').length,
+    contacted: enquiries.filter(e => e.status === 'contacted').length,
+    converted: enquiries.filter(e => e.status === 'converted').length
+  };
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -74,7 +101,7 @@ export default function Enquiries() {
           <h1 className="text-3xl font-bold text-foreground">Enquiries & Leads</h1>
           <p className="text-muted-foreground">Manage admission enquiries and follow-ups</p>
         </div>
-        <AddEnquiryDialog />
+        <AddEnquiryDialog onSuccess={fetchEnquiries} />
       </div>
 
       {/* Stats Cards */}
@@ -126,7 +153,12 @@ export default function Enquiries() {
           <div className="flex gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input placeholder="Search enquiries..." className="pl-10" />
+              <Input 
+                placeholder="Search enquiries..." 
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
             <Button variant="outline">Filter</Button>
           </div>
@@ -140,68 +172,75 @@ export default function Enquiries() {
           <CardDescription>Track and manage all admission enquiries</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Enquiry ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Follow Up</TableHead>
-                <TableHead>Assigned To</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {enquiries.map((enquiry) => (
-                <TableRow key={enquiry.id}>
-                  <TableCell className="font-medium">{enquiry.id}</TableCell>
-                  <TableCell>{enquiry.name}</TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1 text-sm">
-                        <Phone className="h-3 w-3" />
-                        {enquiry.phone}
-                      </div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Mail className="h-3 w-3" />
-                        {enquiry.email}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{enquiry.course}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{enquiry.source}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={
-                      enquiry.status === 'New' ? 'default' :
-                      enquiry.status === 'Contacted' ? 'secondary' :
-                      enquiry.status === 'Interested' ? 'outline' :
-                      'default'
-                    }>
-                      {enquiry.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{enquiry.followUpDate}</TableCell>
-                  <TableCell>{enquiry.assignedTo}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <ViewEnquiryDialog enquiry={enquiry} />
-                      <EditEnquiryDialog 
-                        enquiry={enquiry}
-                        trigger={
-                          <Button size="sm">Follow Up</Button>
-                        }
-                      />
-                    </div>
-                  </TableCell>
+          {loading ? (
+            <div className="flex justify-center items-center min-h-64">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Course</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Follow Up</TableHead>
+                  <TableHead>Assigned To</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredEnquiries.map((enquiry) => (
+                  <TableRow key={enquiry.id}>
+                    <TableCell>{enquiry.name}</TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 text-sm">
+                          <Phone className="h-3 w-3" />
+                          {enquiry.phone}
+                        </div>
+                        {enquiry.email && (
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Mail className="h-3 w-3" />
+                            {enquiry.email}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{enquiry.course}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{enquiry.source}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        enquiry.status === 'new' ? 'default' :
+                        enquiry.status === 'contacted' ? 'secondary' :
+                        enquiry.status === 'interested' ? 'outline' :
+                        'default'
+                      }>
+                        {enquiry.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{enquiry.followUpDate}</TableCell>
+                    <TableCell>{enquiry.assignedTo}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <ViewEnquiryDialog enquiry={enquiry} />
+                        <EditEnquiryDialog 
+                          enquiry={enquiry}
+                          onSuccess={fetchEnquiries}
+                          trigger={
+                            <Button size="sm">Follow Up</Button>
+                          }
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

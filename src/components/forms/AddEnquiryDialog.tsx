@@ -13,13 +13,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AddEnquiryDialogProps {
   trigger?: React.ReactNode;
+  onSuccess?: () => void;
 }
 
-export function AddEnquiryDialog({ trigger }: AddEnquiryDialogProps) {
+export function AddEnquiryDialog({ trigger, onSuccess }: AddEnquiryDialogProps) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -33,23 +36,54 @@ export function AddEnquiryDialog({ trigger }: AddEnquiryDialogProps) {
     followUpDate: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Enquiry Added",
-      description: `New enquiry from ${formData.name} has been recorded.`,
-    });
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      course: "",
-      source: "",
-      assignedTo: "",
-      notes: "",
-      followUpDate: ""
-    });
-    setOpen(false);
+    setLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('enquiries')
+        .insert([{
+          name: formData.name,
+          email: formData.email || null,
+          phone: formData.phone,
+          course: formData.course,
+          source: formData.source,
+          status: 'new',
+          assigned_to: formData.assignedTo || null,
+          follow_up_date: formData.followUpDate || null,
+          notes: formData.notes || null
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Enquiry Added",
+        description: `New enquiry from ${formData.name} has been recorded.`,
+      });
+      
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        course: "",
+        source: "",
+        assignedTo: "",
+        notes: "",
+        followUpDate: ""
+      });
+      
+      setOpen(false);
+      onSuccess?.();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add enquiry",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -166,10 +200,12 @@ export function AddEnquiryDialog({ trigger }: AddEnquiryDialogProps) {
             />
           </div>
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit">Add Enquiry</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Adding..." : "Add Enquiry"}
+            </Button>
           </div>
         </form>
       </DialogContent>

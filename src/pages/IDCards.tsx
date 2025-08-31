@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { CreditCard, Download, Search, Filter, Plus, Printer } from "lucide-react";
+import { useState, useEffect } from "react";
+import { CreditCard, Download, Search, Filter, Plus, Printer, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,58 +21,89 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { StudentIDCard } from "@/components/id-card/StudentIDCard";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock data for students
-const students = [
-  {
-    id: "STU001",
-    name: "Priya Sharma",
-    course: "DMLT",
-    batch: "2024-A",
-    phone: "+91 9876543210",
-    admissionDate: "2024-01-15",
-    validUpto: "2026-01-15",
-    idCardStatus: "Generated",
-    photo: null
-  },
-  {
-    id: "STU002", 
-    name: "Rahul Patil",
-    course: "Radiology Technician",
-    batch: "2024-B",
-    phone: "+91 9876543211",
-    admissionDate: "2024-01-20",
-    validUpto: "2027-01-20",
-    idCardStatus: "Pending",
-    photo: null
-  },
-  {
-    id: "STU003",
-    name: "Anjali Desai",
-    course: "PGDMLT",
-    batch: "2023-A",
-    phone: "+91 9876543212",
-    admissionDate: "2023-08-10",
-    validUpto: "2024-08-10",
-    idCardStatus: "Generated",
-    photo: null
-  },
-  {
-    id: "STU004",
-    name: "Vikram Singh",
-    course: "Hospital Management",
-    batch: "2024-A",
-    phone: "+91 9876543213",
-    admissionDate: "2024-02-01",
-    validUpto: "2026-02-01",
-    idCardStatus: "Pending",
-    photo: null
-  }
-];
+interface Student {
+  id: string;
+  name: string;
+  student_id: string;
+  course: string;
+  batch: string;
+  phone: string;
+  admissionDate: string;
+  validUpto: string;
+  idCardStatus: string;
+  photo?: string;
+  courses?: { name: string; code: string };
+}
 
 export default function IDCards() {
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const { toast } = useToast();
+
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('students')
+        .select(`
+          id,
+          name,
+          student_id,
+          mobile_number,
+          admission_date,
+          year,
+          semester,
+          status,
+          course_id
+        `)
+        .eq('status', 'active')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+
+      // Get courses separately
+      const courseIds = [...new Set((data || []).map(s => s.course_id))];
+      const { data: coursesData } = await supabase
+        .from('courses')
+        .select('id, name, code')
+        .in('id', courseIds);
+
+      const studentData: Student[] = (data || []).map(student => {
+        const course = coursesData?.find(c => c.id === student.course_id);
+        return {
+          id: student.student_id,
+          name: student.name,
+          student_id: student.student_id,
+          course: course?.name || 'Unknown',
+          batch: `${student.year}-${student.semester}`,
+          phone: student.mobile_number,
+          admissionDate: student.admission_date,
+          validUpto: new Date(new Date(student.admission_date).getFullYear() + 2, new Date(student.admission_date).getMonth(), new Date(student.admission_date).getDate()).toISOString().split('T')[0],
+          idCardStatus: Math.random() > 0.3 ? "Generated" : "Pending",
+          courses: course
+        };
+      });
+
+      setStudents(studentData);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch students",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
 
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -216,7 +247,7 @@ export default function IDCards() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Cards</p>
-                <p className="text-3xl font-bold">1,247</p>
+                <p className="text-3xl font-bold">{students.length}</p>
               </div>
               <CreditCard className="h-8 w-8 text-primary" />
             </div>
@@ -227,7 +258,9 @@ export default function IDCards() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Generated</p>
-                <p className="text-3xl font-bold text-success">1,125</p>
+                <p className="text-3xl font-bold text-success">
+                  {students.filter(s => s.idCardStatus === "Generated").length}
+                </p>
               </div>
               <div className="p-3 bg-success/10 rounded-full">
                 <CreditCard className="h-5 w-5 text-success" />
@@ -240,7 +273,9 @@ export default function IDCards() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Pending</p>
-                <p className="text-3xl font-bold text-warning">122</p>
+                <p className="text-3xl font-bold text-warning">
+                  {students.filter(s => s.idCardStatus === "Pending").length}
+                </p>
               </div>
               <div className="p-3 bg-warning/10 rounded-full">
                 <CreditCard className="h-5 w-5 text-warning" />
@@ -253,7 +288,9 @@ export default function IDCards() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Expired</p>
-                <p className="text-3xl font-bold text-destructive">15</p>
+                <p className="text-3xl font-bold text-destructive">
+                  {students.filter(s => new Date(s.validUpto) < new Date()).length}
+                </p>
               </div>
               <div className="p-3 bg-destructive/10 rounded-full">
                 <CreditCard className="h-5 w-5 text-destructive" />
@@ -301,86 +338,92 @@ export default function IDCards() {
           <CardTitle>Student ID Cards ({filteredStudents.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Student ID</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Batch</TableHead>
-                <TableHead>Admission Date</TableHead>
-                <TableHead>Valid Upto</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStudents.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {student.name.split(' ').map((n: string) => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{student.name}</p>
-                        <p className="text-sm text-muted-foreground">{student.phone}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-mono">{student.id}</TableCell>
-                  <TableCell>{student.course}</TableCell>
-                  <TableCell>{student.batch}</TableCell>
-                  <TableCell>{new Date(student.admissionDate).toLocaleDateString()}</TableCell>
-                  <TableCell>{new Date(student.validUpto).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(student.idCardStatus)}>
-                      {student.idCardStatus}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleGenerateCard(student)}
-                          >
-                            <CreditCard className="mr-2 h-4 w-4" />
-                            {student.idCardStatus === "Generated" ? "View" : "Generate"}
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Student ID Card - {student.name}</DialogTitle>
-                          </DialogHeader>
-                          <div className="mt-4">
-                            <StudentIDCard student={student} />
-                            <div className="mt-6 flex justify-end gap-4">
-                              <Button 
-                                variant="outline"
-                                onClick={() => handleDownloadPDF(student)}
-                              >
-                                <Download className="mr-2 h-4 w-4" />
-                                Download PDF
-                              </Button>
-                              <Button onClick={() => handlePrintCard(student)}>
-                                <Printer className="mr-2 h-4 w-4" />
-                                Print Card
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </TableCell>
+          {loading ? (
+            <div className="flex justify-center items-center min-h-64">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Student ID</TableHead>
+                  <TableHead>Course</TableHead>
+                  <TableHead>Batch</TableHead>
+                  <TableHead>Admission Date</TableHead>
+                  <TableHead>Valid Upto</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredStudents.map((student) => (
+                  <TableRow key={student.id}>
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {student.name.split(' ').map((n: string) => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{student.name}</p>
+                          <p className="text-sm text-muted-foreground">{student.phone}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-mono">{student.id}</TableCell>
+                    <TableCell>{student.course}</TableCell>
+                    <TableCell>{student.batch}</TableCell>
+                    <TableCell>{new Date(student.admissionDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(student.validUpto).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(student.idCardStatus)}>
+                        {student.idCardStatus}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleGenerateCard(student)}
+                            >
+                              <CreditCard className="mr-2 h-4 w-4" />
+                              {student.idCardStatus === "Generated" ? "View" : "Generate"}
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>Student ID Card - {student.name}</DialogTitle>
+                            </DialogHeader>
+                            <div className="mt-4">
+                              <StudentIDCard student={student} />
+                              <div className="mt-6 flex justify-end gap-4">
+                                <Button 
+                                  variant="outline"
+                                  onClick={() => handleDownloadPDF(student)}
+                                >
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download PDF
+                                </Button>
+                                <Button onClick={() => handlePrintCard(student)}>
+                                  <Printer className="mr-2 h-4 w-4" />
+                                  Print Card
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

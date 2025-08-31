@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Faculty {
   id: string;
@@ -26,6 +27,8 @@ interface Faculty {
   subjects: string[];
   experience: string;
   status: string;
+  qualification?: string;
+  address?: string;
 }
 
 interface ViewFacultyDialogProps {
@@ -104,10 +107,12 @@ export function ViewFacultyDialog({ faculty, trigger }: ViewFacultyDialogProps) 
 interface EditFacultyDialogProps {
   faculty: Faculty;
   trigger?: React.ReactNode;
+  onSuccess?: () => void;
 }
 
-export function EditFacultyDialog({ faculty, trigger }: EditFacultyDialogProps) {
+export function EditFacultyDialog({ faculty, trigger, onSuccess }: EditFacultyDialogProps) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -118,16 +123,53 @@ export function EditFacultyDialog({ faculty, trigger }: EditFacultyDialogProps) 
     department: faculty.department,
     experience: faculty.experience,
     subjects: faculty.subjects.join(", "),
-    status: faculty.status
+    status: faculty.status,
+    qualification: faculty.qualification || "",
+    address: faculty.address || ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Faculty Updated",
-      description: `${formData.name}'s profile has been successfully updated.`,
-    });
-    setOpen(false);
+    setLoading(true);
+
+    try {
+      const subjectsArray = formData.subjects ? formData.subjects.split(",").map(s => s.trim()).filter(s => s) : [];
+      
+      const { error } = await supabase
+        .from('faculty')
+        .update({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          designation: formData.designation,
+          department: formData.department,
+          experience: formData.experience,
+          subjects: subjectsArray,
+          status: formData.status,
+          qualification: formData.qualification,
+          address: formData.address,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', faculty.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Faculty Updated",
+        description: `${formData.name}'s profile has been successfully updated.`,
+      });
+      
+      setOpen(false);
+      onSuccess?.();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update faculty",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -236,11 +278,31 @@ export function EditFacultyDialog({ faculty, trigger }: EditFacultyDialogProps) 
               placeholder="e.g., Medical Imaging, Radiography"
             />
           </div>
+          <div>
+            <Label htmlFor="qualification">Qualification</Label>
+            <Input
+              id="qualification"
+              value={formData.qualification}
+              onChange={(e) => handleChange("qualification", e.target.value)}
+              placeholder="e.g., M.Sc, Ph.D"
+            />
+          </div>
+          <div>
+            <Label htmlFor="address">Address</Label>
+            <Textarea
+              id="address"
+              value={formData.address}
+              onChange={(e) => handleChange("address", e.target.value)}
+              placeholder="Enter address"
+            />
+          </div>
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit">Update Faculty</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Updating..." : "Update Faculty"}
+            </Button>
           </div>
         </form>
       </DialogContent>

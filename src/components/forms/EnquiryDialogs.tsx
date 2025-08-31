@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Enquiry {
   id: string;
@@ -26,6 +27,7 @@ interface Enquiry {
   followUpDate: string;
   assignedTo: string;
   createdDate: string;
+  notes?: string;
 }
 
 interface ViewEnquiryDialogProps {
@@ -128,10 +130,12 @@ export function ViewEnquiryDialog({ enquiry, trigger }: ViewEnquiryDialogProps) 
 interface EditEnquiryDialogProps {
   enquiry: Enquiry;
   trigger?: React.ReactNode;
+  onSuccess?: () => void;
 }
 
-export function EditEnquiryDialog({ enquiry, trigger }: EditEnquiryDialogProps) {
+export function EditEnquiryDialog({ enquiry, trigger, onSuccess }: EditEnquiryDialogProps) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -142,16 +146,49 @@ export function EditEnquiryDialog({ enquiry, trigger }: EditEnquiryDialogProps) 
     source: enquiry.source,
     status: enquiry.status,
     assignedTo: enquiry.assignedTo,
-    followUpDate: enquiry.followUpDate
+    followUpDate: enquiry.followUpDate,
+    notes: enquiry.notes || ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Enquiry Updated",
-      description: `Enquiry for ${formData.name} has been successfully updated.`,
-    });
-    setOpen(false);
+    setLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('enquiries')
+        .update({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          course: formData.course,
+          source: formData.source,
+          status: formData.status,
+          assigned_to: formData.assignedTo,
+          follow_up_date: formData.followUpDate || null,
+          notes: formData.notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', enquiry.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Enquiry Updated",
+        description: `Enquiry for ${formData.name} has been successfully updated.`,
+      });
+      
+      setOpen(false);
+      onSuccess?.();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update enquiry",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -250,12 +287,23 @@ export function EditEnquiryDialog({ enquiry, trigger }: EditEnquiryDialogProps) 
                 onChange={(e) => handleChange("followUpDate", e.target.value)}
               />
             </div>
+            <div>
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => handleChange("notes", e.target.value)}
+                placeholder="Add any additional notes..."
+              />
+            </div>
           </div>
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit">Update Enquiry</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Updating..." : "Update Enquiry"}
+            </Button>
           </div>
         </form>
       </DialogContent>

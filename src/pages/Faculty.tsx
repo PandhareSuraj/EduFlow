@@ -212,7 +212,7 @@ export default function Faculty() {
 
               <div className="flex gap-2">
                 <ViewFacultyDialog faculty={member} />
-                <EditFacultyDialog faculty={member} />
+                <EditFacultyDialog faculty={member} onSuccess={fetchFaculty} />
               </div>
             </CardContent>
           </Card>
