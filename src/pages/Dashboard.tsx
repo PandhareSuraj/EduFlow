@@ -249,7 +249,7 @@ export default function Dashboard() {
                 <>
                   <button 
                     className="flex items-center p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors text-left w-full"
-                    onClick={() => document.querySelector('[data-add-student-trigger]')?.click()}
+                    onClick={() => (document.querySelector('[data-add-student-trigger]') as HTMLElement)?.click()}
                   >
                     <Users className="mr-3 h-4 w-4 text-primary" />
                     <div>
@@ -262,7 +262,7 @@ export default function Dashboard() {
                   </div>
                   <button 
                     className="flex items-center p-3 bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors text-left w-full"
-                    onClick={() => document.querySelector('[data-collect-fee-trigger]')?.click()}
+                    onClick={() => (document.querySelector('[data-collect-fee-trigger]') as HTMLElement)?.click()}
                   >
                     <DollarSign className="mr-3 h-4 w-4 text-accent" />
                     <div>
