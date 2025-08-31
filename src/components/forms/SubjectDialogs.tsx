@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, BookOpen, Edit, Eye, Users } from "lucide-react";
+import { Plus, BookOpen, Edit, Eye, Users, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Subject {
   id: string;
@@ -28,10 +29,12 @@ interface Course {
 
 interface AddSubjectDialogProps {
   course: Course;
+  onSubjectAdded?: () => void;
 }
 
-export function AddSubjectDialog({ course }: AddSubjectDialogProps) {
+export function AddSubjectDialog({ course, onSubjectAdded }: AddSubjectDialogProps) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     code: "",
@@ -40,15 +43,40 @@ export function AddSubjectDialog({ course }: AddSubjectDialogProps) {
   });
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement Supabase integration
-    toast({
-      title: "Subject Added",
-      description: `${formData.name} has been added to ${course.name}.`,
-    });
-    setOpen(false);
-    setFormData({ name: "", code: "", description: "", credits: 1 });
+    setLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('subjects')
+        .insert([{
+          course_id: course.id,
+          name: formData.name.trim(),
+          code: formData.code.trim().toUpperCase(),
+          description: formData.description.trim() || null,
+          credits: formData.credits
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Subject Added",
+        description: `${formData.name} has been added to ${course.name}.`,
+      });
+      
+      setFormData({ name: "", code: "", description: "", credits: 1 });
+      setOpen(false);
+      onSubjectAdded?.();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add subject",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -112,7 +140,12 @@ export function AddSubjectDialog({ course }: AddSubjectDialogProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Add Subject</Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Adding..." : "Add Subject"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -126,28 +159,41 @@ interface ViewSubjectsDialogProps {
 
 export function ViewSubjectsDialog({ course }: ViewSubjectsDialogProps) {
   const [open, setOpen] = useState(false);
-  
-  // Mock data - replace with Supabase query
-  const subjects: Subject[] = [
-    {
-      id: "1",
-      course_id: course.id,
-      name: "Anatomy & Physiology",
-      code: "AP101",
-      description: "Basic human anatomy and physiological processes",
-      credits: 4,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: "2", 
-      course_id: course.id,
-      name: "Medical Terminology",
-      code: "MT101",
-      description: "Medical terminology and healthcare communication",
-      credits: 2,
-      created_at: new Date().toISOString()
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const fetchSubjects = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('subjects')
+        .select('*')
+        .eq('course_id', course.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setSubjects(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to fetch subjects",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    if (open) {
+      fetchSubjects();
+    }
+  }, [open]);
+
+  const handleSubjectAdded = () => {
+    fetchSubjects();
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -170,10 +216,14 @@ export function ViewSubjectsDialog({ course }: ViewSubjectsDialogProps) {
               <h4 className="font-medium">Course Subjects</h4>
               <p className="text-sm text-muted-foreground">{subjects.length} subjects total</p>
             </div>
-            <AddSubjectDialog course={course} />
+            <AddSubjectDialog course={course} onSubjectAdded={handleSubjectAdded} />
           </div>
           
-          {subjects.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center items-center p-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : subjects.length > 0 ? (
             <div className="border rounded-lg">
               <Table>
                 <TableHeader>
@@ -222,7 +272,7 @@ export function ViewSubjectsDialog({ course }: ViewSubjectsDialogProps) {
                   <p className="text-muted-foreground mb-4">
                     Start by adding subjects to this course.
                   </p>
-                  <AddSubjectDialog course={course} />
+                  <AddSubjectDialog course={course} onSubjectAdded={handleSubjectAdded} />
                 </div>
               </CardContent>
             </Card>

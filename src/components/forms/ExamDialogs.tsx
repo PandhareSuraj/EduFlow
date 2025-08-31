@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Calendar, Edit, Eye, Clock, Users, FileText } from "lucide-react";
+import { Plus, Calendar, Edit, Eye, Clock, Users, FileText, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Exam {
   id: string;
@@ -30,10 +31,12 @@ interface Course {
 
 interface ScheduleExamDialogProps {
   course: Course;
+  onExamScheduled?: () => void;
 }
 
-export function ScheduleExamDialog({ course }: ScheduleExamDialogProps) {
+export function ScheduleExamDialog({ course, onExamScheduled }: ScheduleExamDialogProps) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     exam_date: "",
@@ -43,21 +46,47 @@ export function ScheduleExamDialog({ course }: ScheduleExamDialogProps) {
   });
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement Supabase integration
-    toast({
-      title: "Exam Scheduled",
-      description: `${formData.name} has been scheduled for ${course.name}.`,
-    });
-    setOpen(false);
-    setFormData({ 
-      name: "", 
-      exam_date: "", 
-      total_marks: 100, 
-      description: "", 
-      status: "scheduled" 
-    });
+    setLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('exams')
+        .insert([{
+          course_id: course.id,
+          name: formData.name.trim(),
+          exam_date: formData.exam_date,
+          total_marks: formData.total_marks,
+          description: formData.description.trim() || null,
+          status: formData.status
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Exam Scheduled",
+        description: `${formData.name} has been scheduled for ${course.name}.`,
+      });
+      
+      setFormData({ 
+        name: "", 
+        exam_date: "", 
+        total_marks: 100, 
+        description: "", 
+        status: "scheduled" 
+      });
+      setOpen(false);
+      onExamScheduled?.();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to schedule exam",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -135,7 +164,12 @@ export function ScheduleExamDialog({ course }: ScheduleExamDialogProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Schedule Exam</Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Scheduling..." : "Schedule Exam"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -149,30 +183,48 @@ interface ViewExamsDialogProps {
 
 export function ViewExamsDialog({ course }: ViewExamsDialogProps) {
   const [open, setOpen] = useState(false);
-  
-  // Mock data - replace with Supabase query
-  const exams: Exam[] = [
-    {
-      id: "1",
-      course_id: course.id,
-      name: "Mid-term Examination",
-      exam_date: "2024-08-15",
-      total_marks: 100,
-      description: "Mid-semester theoretical examination",
-      status: "scheduled",
-      created_at: new Date().toISOString()
-    },
-    {
-      id: "2",
-      course_id: course.id,
-      name: "Practical Assessment",
-      exam_date: "2024-09-20",
-      total_marks: 50,
-      description: "Hands-on practical examination",
-      status: "scheduled",
-      created_at: new Date().toISOString()
+  const [exams, setExams] = useState<Exam[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const fetchExams = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('exams')
+        .select('*')
+        .eq('course_id', course.id)
+        .order('exam_date', { ascending: true });
+
+      if (error) throw error;
+      
+      // Cast the data to match our interface
+      const examsData = (data || []).map(exam => ({
+        ...exam,
+        status: exam.status as 'scheduled' | 'ongoing' | 'completed' | 'cancelled'
+      }));
+      
+      setExams(examsData);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to fetch exams",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    if (open) {
+      fetchExams();
+    }
+  }, [open]);
+
+  const handleExamScheduled = () => {
+    fetchExams();
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -205,10 +257,14 @@ export function ViewExamsDialog({ course }: ViewExamsDialogProps) {
               <h4 className="font-medium">Course Exams</h4>
               <p className="text-sm text-muted-foreground">{exams.length} exams scheduled</p>
             </div>
-            <ScheduleExamDialog course={course} />
+            <ScheduleExamDialog course={course} onExamScheduled={handleExamScheduled} />
           </div>
           
-          {exams.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center items-center p-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : exams.length > 0 ? (
             <div className="border rounded-lg">
               <Table>
                 <TableHeader>
@@ -274,7 +330,7 @@ export function ViewExamsDialog({ course }: ViewExamsDialogProps) {
                   <p className="text-muted-foreground mb-4">
                     Start by scheduling exams for this course.
                   </p>
-                  <ScheduleExamDialog course={course} />
+                  <ScheduleExamDialog course={course} onExamScheduled={handleExamScheduled} />
                 </div>
               </CardContent>
             </Card>
