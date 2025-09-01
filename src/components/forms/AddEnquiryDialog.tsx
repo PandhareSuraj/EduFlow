@@ -41,6 +41,9 @@ export function AddEnquiryDialog({ trigger, onSuccess }: AddEnquiryDialogProps) 
     setLoading(true);
 
     try {
+      // Get user's college ID for RLS compliance
+      const { data: collegeId } = await supabase.rpc('get_user_college');
+      
       const { error } = await supabase
         .from('enquiries')
         .insert([{
@@ -52,7 +55,8 @@ export function AddEnquiryDialog({ trigger, onSuccess }: AddEnquiryDialogProps) 
           status: 'new',
           assigned_to: formData.assignedTo || null,
           follow_up_date: formData.followUpDate || null,
-          notes: formData.notes || null
+          notes: formData.notes || null,
+          college_id: collegeId
         }]);
 
       if (error) throw error;

@@ -41,7 +41,7 @@ export default function Enquiries() {
 
       if (error) throw error;
 
-      const enquiryData: Enquiry[] = (data || []).map(enquiry => ({
+      const enquiriesData = (data || []).map(enquiry => ({
         id: enquiry.id,
         name: enquiry.name,
         phone: enquiry.phone,
@@ -49,14 +49,14 @@ export default function Enquiries() {
         course: enquiry.course,
         source: enquiry.source,
         status: enquiry.status,
-        followUpDate: enquiry.follow_up_date || '',
-        assignedTo: enquiry.assigned_to || '',
+        followUpDate: enquiry.follow_up_date ? new Date(enquiry.follow_up_date).toLocaleDateString() : 'Not Set',
+        assignedTo: enquiry.assigned_to || 'Not Assigned',
         createdDate: new Date(enquiry.created_at).toLocaleDateString(),
-        notes: enquiry.notes
+        notes: enquiry.notes || ''
       }));
 
-      setEnquiries(enquiryData);
-      setFilteredEnquiries(enquiryData);
+      setEnquiries(enquiriesData);
+      setFilteredEnquiries(enquiriesData);
     } catch (error: any) {
       toast({
         title: "Error",

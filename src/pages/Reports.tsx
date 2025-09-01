@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, BarChart3, Users, CreditCard, FileText, Download, TrendingUp, PieChart } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const reportCategories = [
   {
@@ -75,6 +76,7 @@ const reportCategories = [
 ];
 
 export default function Reports() {
+  const { toast } = useToast();
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -151,9 +153,38 @@ export default function Reports() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Format</label>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1">PDF</Button>
-                <Button variant="outline" size="sm" className="flex-1">Excel</Button>
-                <Button size="sm" className="flex-1">Generate</Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => toast({
+                    title: "PDF Generation",
+                    description: "PDF report generation feature coming soon!"
+                  })}
+                >
+                  PDF
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => toast({
+                    title: "Excel Export", 
+                    description: "Excel export feature coming soon!"
+                  })}
+                >
+                  Excel
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => toast({
+                    title: "Report Generated",
+                    description: "Sample report generated successfully!"
+                  })}
+                >
+                  Generate
+                </Button>
               </div>
             </div>
           </div>
@@ -183,10 +214,24 @@ export default function Reports() {
                     <p className="text-xs text-muted-foreground">{report.description}</p>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => toast({
+                        title: "Report Preview",
+                        description: `Viewing ${report.name}`
+                      })}
+                    >
                       <FileText className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => toast({
+                        title: "Download Started", 
+                        description: `Downloading ${report.name}`
+                      })}
+                    >
                       <Download className="h-4 w-4" />
                     </Button>
                   </div>

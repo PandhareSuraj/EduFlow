@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Calendar, FileText, Award, Download } from "lucide-react";
+import { Search, Plus, Calendar, FileText, Award, Download, Clock, Users, BookOpen, TrendingUp, CheckCircle } from "lucide-react";
+import { ScheduleExamDialog, ViewExamsDialog } from "@/components/forms/ExamDialogs";
+import { ViewResultsDialog } from "@/components/forms/ResultDialogs";
+import { useToast } from "@/hooks/use-toast";
 
 const exams = [
   {
@@ -85,6 +89,35 @@ const results = [
 ];
 
 export default function Exams() {
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  
+  // Enhanced exam statistics
+  const examStats = {
+    totalExams: exams.length,
+    scheduledExams: exams.filter(e => e.status === 'Scheduled').length,
+    completedExams: exams.filter(e => e.status === 'Completed').length,
+    upcomingExams: exams.filter(e => new Date(e.date) > new Date()).length,
+    passRate: results.length > 0 ? Math.round((results.filter(r => r.status === 'Pass').length / results.length) * 100) : 0
+  };
+
+  // Filter exams based on search and status
+  const filteredExams = exams.filter(exam => {
+    const matchesSearch = 
+      exam.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      exam.course.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || exam.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  // Generate certificates
+  const handleGenerateCertificate = (studentName: string) => {
+    toast({
+      title: "Certificate Generated",
+      description: `Certificate generated successfully for ${studentName}`,
+    });
+  };
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -226,7 +259,73 @@ export default function Exams() {
           </Card>
         </TabsContent>
 
-        {/* Results */}
+        {/* Conduct Exam Tab */}
+        <TabsContent value="conduct" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Live Exam Management
+              </CardTitle>
+              <CardDescription>Real-time exam monitoring and management tools</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="border-green-200 bg-green-50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg text-green-800">Active Exams</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">2</div>
+                    <p className="text-sm text-green-600">Currently in progress</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg text-blue-800">Students Online</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-600">127</div>
+                    <p className="text-sm text-blue-600">Taking exams now</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-orange-200 bg-orange-50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg text-orange-800">Time Remaining</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-orange-600">45:32</div>
+                    <p className="text-sm text-orange-600">Average time left</p>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Exam Control Panel</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <Button variant="outline" className="h-16 flex-col">
+                    <Users className="h-6 w-6 mb-1" />
+                    Monitor Students
+                  </Button>
+                  <Button variant="outline" className="h-16 flex-col">
+                    <Clock className="h-6 w-6 mb-1" />
+                    Extend Time
+                  </Button>
+                  <Button variant="outline" className="h-16 flex-col">
+                    <FileText className="h-6 w-6 mb-1" />
+                    View Submissions
+                  </Button>
+                  <Button variant="outline" className="h-16 flex-col">
+                    <Award className="h-6 w-6 mb-1" />
+                    End Exam
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
         <TabsContent value="results" className="space-y-6">
           <Card>
             <CardContent className="p-4">

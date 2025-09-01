@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Calendar, Users, CheckCircle, XCircle, RefreshCw, Eye } from "lucide-react";
+import { Search, Calendar, Users, CheckCircle, XCircle, RefreshCw, Eye, Plus } from "lucide-react";
 import { AttendanceMarkingDialog } from "@/components/attendance/AttendanceMarkingDialog";
 import { useAttendanceData } from "@/hooks/useAttendanceData";
 import { format } from "date-fns";
@@ -42,7 +42,14 @@ export default function Attendance() {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <AttendanceMarkingDialog />
+          <AttendanceMarkingDialog 
+            trigger={
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Mark Attendance
+              </Button>
+            }
+          />
         </div>
       </div>
 

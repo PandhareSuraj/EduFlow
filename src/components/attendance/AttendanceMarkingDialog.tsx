@@ -38,7 +38,11 @@ interface AttendanceRecord {
   status: 'present' | 'absent' | 'late';
 }
 
-export function AttendanceMarkingDialog() {
+interface AttendanceMarkingDialogProps {
+  trigger?: React.ReactNode;
+}
+
+export function AttendanceMarkingDialog({ trigger }: AttendanceMarkingDialogProps = {}) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -285,10 +289,12 @@ export function AttendanceMarkingDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="shadow-elegant">
-          <Plus className="h-4 w-4 mr-2" />
-          Mark Attendance
-        </Button>
+        {trigger || (
+          <Button className="shadow-elegant">
+            <Plus className="h-4 w-4 mr-2" />
+            Mark Attendance
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
