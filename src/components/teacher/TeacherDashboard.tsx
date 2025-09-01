@@ -82,11 +82,7 @@ export function TeacherDashboard() {
       
       const { data: todayClasses } = await supabase
         .from('class_schedules')
-        .select(`
-          id, class_name, room_number, start_time, end_time,
-          course:courses(name, code),
-          subject:subjects(name, code)
-        `)
+        .select('id, class_name, room_number, start_time, end_time, course_id, subject_id')
         .eq('faculty_id', facultyData.id)
         .eq('day_of_week', currentDay);
 
@@ -125,8 +121,8 @@ export function TeacherDashboard() {
 
       const upcoming: UpcomingClass[] = (todayClasses || []).map(cls => ({
         id: cls.id,
-        subject: cls.subject?.name || 'Unknown Subject',
-        course: cls.course?.name || 'Unknown Course',
+        subject: cls.class_name || 'Unknown Subject',
+        course: 'Course', // Will be enhanced later with proper relations
         time: cls.start_time,
         duration: '60 min', // Calculate from start_time to end_time
         room: cls.room_number || 'TBA',

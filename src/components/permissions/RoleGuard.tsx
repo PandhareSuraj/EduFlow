@@ -128,8 +128,8 @@ export function usePermissions() {
   const hasPermission = (permission: keyof typeof PERMISSIONS): boolean => {
     if (userRole === 'super_admin') return true;
     
-    const allowedRoles = PERMISSIONS[permission] as string[];
-    return allowedRoles.includes(userRole as any || '');
+    const allowedRoles = [...PERMISSIONS[permission]] as string[];
+    return userRole ? allowedRoles.includes(userRole) : false;
   };
 
   const hasAnyPermission = (permissions: Array<keyof typeof PERMISSIONS>): boolean => {
@@ -164,8 +164,8 @@ export function useFeatureFlags() {
   const hasFeatureAccess = (feature: keyof typeof FEATURE_FLAGS): boolean => {
     if (userRole === 'super_admin') return true;
     
-    const allowedRoles = FEATURE_FLAGS[feature] as string[];
-    return allowedRoles.includes(userRole as any || '');
+    const allowedRoles = [...FEATURE_FLAGS[feature]] as string[];
+    return userRole ? allowedRoles.includes(userRole) : false;
   };
 
   return { hasFeatureAccess };

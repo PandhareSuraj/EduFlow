@@ -129,7 +129,7 @@ export class DataFlowManager {
   }
 
   // Batch operations for better performance
-  async batchUpdateStudentFees(updates: Array<{ studentId: number; amount: number; type: string }>) {
+  async batchUpdateStudentFees(updates: Array<{ studentId: number; studentFeeId: string; amount: number; type: string }>) {
     try {
       const results = [];
       
@@ -138,6 +138,7 @@ export class DataFlowManager {
           .from('fee_payments')
           .insert({
             student_id: update.studentId,
+            student_fee_id: update.studentFeeId,
             amount: update.amount,
             payment_method: update.type,
             payment_date: new Date().toISOString().split('T')[0]
@@ -216,20 +217,25 @@ export class DataFlowManager {
 
       switch (type) {
         case 'student':
-          const { data: studentReport } = await supabase.rpc('get_student_comprehensive_data', {
-            student_id: id
-          });
-          report = studentReport;
+          // Get student comprehensive data
+          const { data: student } = await supabase
+            .from('students')
+            .select(`
+              *,
+              courses(name, code),
+              student_fees(total_amount, paid_amount, balance_amount, status)
+            `)
+            .eq('id', id)
+            .single();
+          report = student;
           break;
 
         case 'course':
           // Course analytics across all modules
-          const [students, attendance, fees, exams] = await Promise.all([
-            supabase.from('students').select('*').eq('course_id', id),
-            supabase.from('attendance_records').select('*').eq('course_id', id),
-            supabase.from('student_fees').select('*').eq('course_id', id),
-            supabase.from('exams').select('*').eq('course_id', id)
-          ]);
+          const students = await supabase.from('students').select('*').eq('course_id', id);
+          const attendance = await supabase.from('attendance_records').select('*');
+          const fees = await supabase.from('student_fees').select('*');
+          const exams = await supabase.from('exams').select('*').eq('course_id', id);
           
           report = {
             students: students.data,
@@ -238,9 +244,9 @@ export class DataFlowManager {
             exams: exams.data,
             analytics: {
               totalStudents: students.data?.length || 0,
-              averageAttendance: this.calculateAverageAttendance(attendance.data),
-              feeCollectionRate: this.calculateFeeCollectionRate(fees.data),
-              examPerformance: this.calculateExamPerformance(exams.data)
+              averageAttendance: this.calculateAverageAttendance(attendance.data || []),
+              feeCollectionRate: this.calculateFeeCollectionRate(fees.data || []),
+              examPerformance: this.calculateExamPerformance(exams.data || [])
             }
           };
           break;
