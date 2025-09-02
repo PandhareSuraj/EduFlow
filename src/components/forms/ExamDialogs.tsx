@@ -27,6 +27,7 @@ interface Course {
   id: number;
   name: string;
   code: string;
+  college_id?: string;
 }
 
 interface ScheduleExamDialogProps {
@@ -51,10 +52,24 @@ export function ScheduleExamDialog({ course, onExamScheduled }: ScheduleExamDial
     setLoading(true);
 
     try {
+      // First get the course's college_id if not provided
+      let collegeId = course.college_id;
+      if (!collegeId) {
+        const { data: courseData, error: courseError } = await supabase
+          .from('courses')
+          .select('college_id')
+          .eq('id', course.id)
+          .single();
+        
+        if (courseError) throw courseError;
+        collegeId = courseData.college_id;
+      }
+
       const { error } = await supabase
         .from('exams')
         .insert([{
           course_id: course.id,
+          college_id: collegeId,
           name: formData.name.trim(),
           exam_date: formData.exam_date,
           total_marks: formData.total_marks,
