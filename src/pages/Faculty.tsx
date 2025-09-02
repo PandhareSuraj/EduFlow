@@ -8,6 +8,8 @@ import { Search, Edit, Eye, Mail, Phone, Filter, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddFacultyDialog } from "@/components/forms/AddFacultyDialog";
 import { ViewFacultyDialog, EditFacultyDialog } from "@/components/forms/FacultyDialogs";
+import { CreateFacultyLoginDialog } from "@/components/forms/CreateFacultyLoginDialog";
+import { ManageFacultyLoginDialog } from "@/components/forms/ManageFacultyLoginDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,6 +25,7 @@ interface Faculty {
   status: string;
   qualification?: string;
   address?: string;
+  user_id?: string;
 }
 
 export default function Faculty() {
@@ -37,9 +40,9 @@ export default function Faculty() {
   const fetchFaculty = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+    const { data, error } = await supabase
         .from('faculty')
-        .select('*')
+        .select('*, user_id')
         .order('name', { ascending: true });
 
       if (error) {
@@ -57,7 +60,8 @@ export default function Faculty() {
         experience: member.experience || '',
         status: member.status,
         qualification: member.qualification,
-        address: member.address
+        address: member.address,
+        user_id: member.user_id
       }));
 
       setFaculty(facultyData);
@@ -179,7 +183,14 @@ export default function Faculty() {
                   <CardTitle className="text-lg">{member.name}</CardTitle>
                   <CardDescription>{member.designation}</CardDescription>
                 </div>
-                <Badge variant="secondary">{member.status}</Badge>
+                <div className="flex gap-1">
+                  <Badge variant="secondary">{member.status}</Badge>
+                  {member.user_id ? (
+                    <Badge variant="default" className="text-xs">Has Login</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs">No Login</Badge>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -210,9 +221,14 @@ export default function Faculty() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <ViewFacultyDialog faculty={member} />
                 <EditFacultyDialog faculty={member} onSuccess={fetchFaculty} />
+                {member.user_id ? (
+                  <ManageFacultyLoginDialog faculty={member} onSuccess={fetchFaculty} />
+                ) : (
+                  <CreateFacultyLoginDialog faculty={member} onSuccess={fetchFaculty} />
+                )}
               </div>
             </CardContent>
           </Card>

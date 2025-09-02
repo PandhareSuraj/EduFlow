@@ -373,6 +373,7 @@ export type Database = {
           status: string
           subjects: string[] | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           address?: string | null
@@ -389,6 +390,7 @@ export type Database = {
           status?: string
           subjects?: string[] | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           address?: string | null
@@ -405,6 +407,7 @@ export type Database = {
           status?: string
           subjects?: string[] | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1147,6 +1150,10 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_faculty_login_status: {
+        Args: { faculty_id: string }
+        Returns: boolean
       }
       get_student_data: {
         Args: Record<PropertyKey, never>
