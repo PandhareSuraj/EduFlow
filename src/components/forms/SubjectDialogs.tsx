@@ -25,6 +25,7 @@ interface Course {
   id: number;
   name: string;
   code: string;
+  college_id?: string;
 }
 
 interface AddSubjectDialogProps {
@@ -48,10 +49,24 @@ export function AddSubjectDialog({ course, onSubjectAdded }: AddSubjectDialogPro
     setLoading(true);
 
     try {
+      // First get the course's college_id if not provided
+      let collegeId = course.college_id;
+      if (!collegeId) {
+        const { data: courseData, error: courseError } = await supabase
+          .from('courses')
+          .select('college_id')
+          .eq('id', course.id)
+          .single();
+        
+        if (courseError) throw courseError;
+        collegeId = courseData.college_id;
+      }
+
       const { error } = await supabase
         .from('subjects')
         .insert([{
           course_id: course.id,
+          college_id: collegeId,
           name: formData.name.trim(),
           code: formData.code.trim().toUpperCase(),
           description: formData.description.trim() || null,
