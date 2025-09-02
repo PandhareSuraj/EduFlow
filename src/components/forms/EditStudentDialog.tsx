@@ -42,9 +42,9 @@ export function EditStudentDialog({ student, courses, onUpdate, trigger }: EditS
     name: student.name,
     email: student.email,
     mobile_number: student.mobile_number,
-    course_id: student.course_id?.toString() || "",
-    year: student.year?.toString() || "",
-    semester: student.semester?.toString() || "",
+    course_id: student.course_id?.toString() || "none",
+    year: student.year?.toString() || "none",
+    semester: student.semester?.toString() || "none",
     status: student.status,
     class: student.class || ""
   });
@@ -59,9 +59,9 @@ export function EditStudentDialog({ student, courses, onUpdate, trigger }: EditS
         name: formData.name,
         email: formData.email,
         mobile_number: formData.mobile_number,
-        course_id: formData.course_id ? parseInt(formData.course_id) : null,
-        year: formData.year ? parseInt(formData.year) : null,
-        semester: formData.semester ? parseInt(formData.semester) : null,
+        course_id: formData.course_id && formData.course_id !== "none" ? parseInt(formData.course_id) : null,
+        year: formData.year && formData.year !== "none" ? parseInt(formData.year) : null,
+        semester: formData.semester && formData.semester !== "none" ? parseInt(formData.semester) : null,
         status: formData.status,
         class: formData.class || null
       };
@@ -152,7 +152,7 @@ export function EditStudentDialog({ student, courses, onUpdate, trigger }: EditS
                   <SelectValue placeholder="Select course" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Course</SelectItem>
+                  <SelectItem value="none">No Course</SelectItem>
                   {courses.map((course) => (
                     <SelectItem key={course.id} value={course.id.toString()}>
                       {course.name} ({course.code})
@@ -172,7 +172,7 @@ export function EditStudentDialog({ student, courses, onUpdate, trigger }: EditS
                   <SelectValue placeholder="Select year" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select Year</SelectItem>
+                  <SelectItem value="none">Select Year</SelectItem>
                   <SelectItem value="1">1st Year</SelectItem>
                   <SelectItem value="2">2nd Year</SelectItem>
                   <SelectItem value="3">3rd Year</SelectItem>
@@ -191,7 +191,7 @@ export function EditStudentDialog({ student, courses, onUpdate, trigger }: EditS
                   <SelectValue placeholder="Select semester" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select Semester</SelectItem>
+                  <SelectItem value="none">Select Semester</SelectItem>
                   {[1,2,3,4,5,6,7,8].map(sem => (
                     <SelectItem key={sem} value={sem.toString()}>
                       Semester {sem}
