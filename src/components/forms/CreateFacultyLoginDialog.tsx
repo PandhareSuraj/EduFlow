@@ -52,24 +52,6 @@ export function CreateFacultyLoginDialog({ faculty, trigger, onSuccess }: Create
     setLoading(true);
 
     try {
-      // Create user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: faculty.name
-          }
-        }
-      });
-
-      if (authError) throw authError;
-
-      if (!authData.user) {
-        throw new Error("Failed to create user account");
-      }
-
       // Get the user's college
       const { data: collegeId, error: collegeError } = await supabase
         .rpc('get_user_college');
@@ -78,24 +60,24 @@ export function CreateFacultyLoginDialog({ faculty, trigger, onSuccess }: Create
         throw new Error("Unable to determine college association");
       }
 
-      // Update faculty record with user_id
-      const { error: facultyError } = await supabase
-        .from('faculty')
-        .update({ user_id: authData.user.id })
-        .eq('id', faculty.id);
-
-      if (facultyError) throw facultyError;
-
-      // Assign role to the user
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .upsert({
-          user_id: authData.user.id,
+      // Use edge function to create faculty user with confirmed email
+      const { data, error } = await supabase.functions.invoke('create-faculty-user', {
+        body: {
+          email: formData.email,
+          password: formData.password,
+          facultyId: faculty.id,
           role: formData.role,
-          college_id: collegeId
-        });
+          collegeId: collegeId
+        }
+      });
 
-      if (roleError) throw roleError;
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to create user account');
+      }
 
       toast({
         title: "Login Created Successfully",

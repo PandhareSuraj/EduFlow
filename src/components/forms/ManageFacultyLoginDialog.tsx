@@ -108,12 +108,35 @@ export function ManageFacultyLoginDialog({ faculty, trigger, onSuccess }: Manage
       return;
     }
 
+    if (!faculty.user_id) {
+      toast({
+        title: "Error",
+        description: "No user account found for this faculty member",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      // Note: This would typically require admin privileges in Supabase
-      // For now, we'll just show a message to manually share the password
+      // Use edge function to reset password
+      const { data, error } = await supabase.functions.invoke('reset-faculty-password', {
+        body: {
+          userId: faculty.user_id,
+          newPassword: newPassword
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to reset password');
+      }
+
       toast({
-        title: "Password Generated",
+        title: "Password Reset Successfully",
         description: `New password for ${faculty.name}: ${newPassword}. Please share securely.`,
       });
       
