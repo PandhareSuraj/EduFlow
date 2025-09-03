@@ -14,6 +14,7 @@ import Fees from "./pages/Fees";
 import Enquiries from "./pages/Enquiries";
 import Attendance from "./pages/Attendance";
 import Exams from "./pages/Exams";
+import Library from "./pages/Library";
 import IDCards from "./pages/IDCards";
 import Inventory from "./pages/Inventory";
 import Reports from "./pages/Reports";
@@ -92,6 +93,13 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <Exams />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/library" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Library />
                 </Layout>
               </ProtectedRoute>
             } />

@@ -19,7 +19,8 @@ import {
   Shield,
   Database,
   TrendingUp,
-  Globe
+  Globe,
+  BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ export function Sidebar() {
         { name: "My Course", href: "/student-course", icon: GraduationCap },
         { name: "My Results", href: "/student-results", icon: FileText },
         { name: "MCQ Tests", href: "/student-tests", icon: ClipboardCheck },
+        { name: "Library", href: "/library", icon: BookOpen },
         { name: "Settings", href: "/settings", icon: Settings },
       ];
     } else {
@@ -63,6 +65,7 @@ export function Sidebar() {
         { name: "Enquiries", href: "/enquiries", icon: MessageSquare },
         { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
         { name: "Exams", href: "/exams", icon: FileText },
+        { name: "Library", href: "/library", icon: BookOpen },
         { name: "ID Cards", href: "/id-cards", icon: IdCard },
         { name: "Inventory", href: "/inventory", icon: Package },
         { name: "Reports", href: "/reports", icon: BarChart3 },
