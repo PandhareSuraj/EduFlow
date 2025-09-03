@@ -220,7 +220,7 @@ export default function Courses() {
                 <div className="space-y-3">
                   <div className="flex gap-2">
                     <ViewCourseDialog course={course} />
-                    <EditCourseDialog course={course} />
+                    <EditCourseDialog course={course} onSuccess={fetchCourses} />
                   </div>
                   
                   <div className="border-t pt-3">

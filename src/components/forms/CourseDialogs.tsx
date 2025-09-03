@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Course {
   id: number;
@@ -104,10 +105,12 @@ export function ViewCourseDialog({ course, trigger }: ViewCourseDialogProps) {
 interface EditCourseDialogProps {
   course: Course;
   trigger?: React.ReactNode;
+  onSuccess?: () => void;
 }
 
-export function EditCourseDialog({ course, trigger }: EditCourseDialogProps) {
+export function EditCourseDialog({ course, trigger, onSuccess }: EditCourseDialogProps) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const formatDurationForSelect = (months: number) => {
@@ -127,13 +130,64 @@ export function EditCourseDialog({ course, trigger }: EditCourseDialogProps) {
     status: course.status
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const parseDurationToMonths = (duration: string): number => {
+    switch (duration) {
+      case "6 Months": return 6;
+      case "1 Year": return 12;
+      case "2 Years": return 24;
+      case "3 Years": return 36;
+      default: return 24;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Course Updated",
-      description: `${formData.name} course has been successfully updated.`,
-    });
-    setOpen(false);
+    setLoading(true);
+
+    try {
+      // Convert form data to database format
+      const updateData = {
+        name: formData.name.trim(),
+        code: formData.code.trim().toUpperCase(),
+        duration_months: parseDurationToMonths(formData.duration),
+        fees_per_semester: formData.fees ? parseFloat(formData.fees) : null,
+        description: formData.description.trim() || null,
+        status: formData.status.toLowerCase(),
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('courses')
+        .update(updateData)
+        .eq('id', course.id);
+
+      if (error) {
+        console.error('Error updating course:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update course. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Course Updated",
+        description: `${formData.name} course has been successfully updated.`,
+      });
+      
+      setOpen(false);
+      onSuccess?.();
+    } catch (error) {
+      console.error('Error updating course:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update course. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -217,10 +271,12 @@ export function EditCourseDialog({ course, trigger }: EditCourseDialogProps) {
             />
           </div>
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit">Update Course</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Updating..." : "Update Course"}
+            </Button>
           </div>
         </form>
       </DialogContent>
