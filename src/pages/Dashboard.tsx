@@ -17,6 +17,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { AddStudentDialog } from "@/components/forms/StudentDialogs";
 import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,7 +58,9 @@ export default function Dashboard() {
   });
   const [collegeAMCData, setCollegeAMCData] = useState<CollegeAMCData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [clearingData, setClearingData] = useState(false);
   const { notifications, loading: notificationsLoading } = useDashboardNotifications();
+  const { toast } = useToast();
 
   // Render student dashboard for student users
   if (userRole === 'student') {
@@ -143,6 +148,42 @@ export default function Dashboard() {
       console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClearData = async (collegeId: string, collegeName: string) => {
+    if (!confirm(`Are you sure you want to clear all data for ${collegeName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setClearingData(true);
+    try {
+      const { error } = await supabase.functions.invoke('clean-college-data', {
+        body: {
+          collegeId: collegeId,
+          modules: ['all']
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Data cleared successfully",
+        description: `All data for ${collegeName} has been cleared.`,
+      });
+
+      // Refresh dashboard data
+      await fetchDashboardData();
+    } catch (error: any) {
+      toast({
+        title: "Error clearing data",
+        description: error.message || "Failed to clear college data.",
+        variant: "destructive",
+      });
+    } finally {
+      setClearingData(false);
     }
   };
 
@@ -339,8 +380,20 @@ export default function Dashboard() {
                     </div>
                   </div>
                   
-                  <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-                    AMC Calculation: Base ₹{AMC_BASE_FEE.toLocaleString()} + Students (₹{AMC_PER_STUDENT} × {college.studentCount}) + Users (₹{AMC_PER_USER} × {college.userCount})
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded flex-1 mr-3">
+                      AMC Calculation: Base ₹{AMC_BASE_FEE.toLocaleString()} + Students (₹{AMC_PER_STUDENT} × {college.studentCount}) + Users (₹{AMC_PER_USER} × {college.userCount})
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleClearData(college.id, college.name)}
+                      disabled={clearingData}
+                      className="flex items-center gap-2"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      {clearingData ? 'Clearing...' : 'Clear Data'}
+                    </Button>
                   </div>
                 </div>
               ))}
