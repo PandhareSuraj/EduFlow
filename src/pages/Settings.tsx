@@ -12,6 +12,7 @@ import { Settings as SettingsIcon, User, Bell, Shield, Database as DatabaseIcon,
 import { DatabaseManagementDialog } from '@/components/database/DatabaseManagementDialog';
 import { RoleGuard } from '@/components/permissions/RoleGuard';
 import { DepartmentManagement } from '@/components/forms/DepartmentManagement';
+import { SubjectManagement } from '@/components/forms/SubjectManagement';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -210,10 +211,11 @@ export default function Settings() {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="departments">Departments</TabsTrigger>
+          <TabsTrigger value="subjects">Subjects</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
@@ -401,6 +403,22 @@ export default function Settings() {
             </CardHeader>
             <CardContent>
               <DepartmentManagement />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Subject Management */}
+        <TabsContent value="subjects" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Subject Management
+              </CardTitle>
+              <CardDescription>Manage subjects across all courses</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SubjectManagement />
             </CardContent>
           </Card>
         </TabsContent>
