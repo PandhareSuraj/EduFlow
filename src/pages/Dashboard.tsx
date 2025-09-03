@@ -25,6 +25,7 @@ import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useDashboardNotifications } from "@/hooks/useDashboardNotifications";
+import { UpcomingEventsCard } from "@/components/dashboard/UpcomingEventsCard";
 import StudentDashboard from './StudentDashboard';
 
 interface DashboardStats {
@@ -176,16 +177,22 @@ export default function Dashboard() {
         });
       } else {
         // Fetch data for user's specific college
-        const [studentsResult, coursesResult, facultyResult] = await Promise.all([
+        const [studentsResult, coursesResult, facultyResult, feePaymentsResult] = await Promise.all([
           supabase.from('students').select('id', { count: 'exact' }),
           supabase.from('courses').select('id', { count: 'exact' }),
-          supabase.from('profiles').select('id', { count: 'exact' })
+          supabase.from('faculty').select('id', { count: 'exact' }),
+          supabase.from('fee_payments').select('amount, payment_date')
+            .gte('payment_date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
+            .lte('payment_date', new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0])
         ]);
+
+        // Calculate monthly revenue from actual payments
+        const monthlyRevenue = feePaymentsResult.data?.reduce((total, payment) => total + (payment.amount || 0), 0) || 0;
 
         setStats({
           totalStudents: studentsResult.count || 0,
           activeCourses: coursesResult.count || 0,
-          monthlyRevenue: "₹5,67,890",
+          monthlyRevenue: `₹${monthlyRevenue.toLocaleString()}`,
           facultyMembers: facultyResult.count || 0,
         });
       }
@@ -447,36 +454,7 @@ export default function Dashboard() {
         </Card>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Calendar className="mr-2 h-5 w-5" />
-                Upcoming Events
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center p-3 bg-muted/50 rounded-lg">
-                  <div className="bg-primary text-primary-foreground rounded-lg p-2 mr-3">
-                    <Calendar className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="font-medium">DMLT Practical Exam</p>
-                    <p className="text-sm text-muted-foreground">Tomorrow, 10:00 AM</p>
-                  </div>
-                </div>
-                <div className="flex items-center p-3 bg-muted/50 rounded-lg">
-                  <div className="bg-accent text-accent-foreground rounded-lg p-2 mr-3">
-                    <GraduationCap className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="font-medium">New Batch Orientation</p>
-                    <p className="text-sm text-muted-foreground">March 15, 2024</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <UpcomingEventsCard />
 
           <Card className="shadow-card">
             <CardHeader>
