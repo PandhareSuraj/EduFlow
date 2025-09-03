@@ -84,6 +84,7 @@ export function useSubjects() {
     course_id: number;
   }) => {
     try {
+      // The college_id will be auto-populated by the database trigger
       const { data, error } = await supabase
         .from('subjects')
         .insert([subjectData])
@@ -92,9 +93,20 @@ export function useSubjects() {
 
       if (error) {
         console.error('Error adding subject:', error);
+        let errorMessage = "Failed to add subject";
+        
+        // Provide more specific error messages
+        if (error.code === '42501') {
+          errorMessage = "You don't have permission to add subjects";
+        } else if (error.code === '23505') {
+          errorMessage = "A subject with this code already exists";
+        } else if (error.message?.includes('RLS')) {
+          errorMessage = "Access denied - check your permissions";
+        }
+        
         toast({
           title: "Error",
-          description: "Failed to add subject",
+          description: errorMessage,
           variant: "destructive",
         });
         return false;
@@ -110,7 +122,7 @@ export function useSubjects() {
       console.error('Error adding subject:', error);
       toast({
         title: "Error",
-        description: "Failed to add subject",
+        description: "Failed to add subject. Please try again.",
         variant: "destructive",
       });
       return false;
