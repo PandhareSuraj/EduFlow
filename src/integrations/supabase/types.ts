@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          college_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          college_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          college_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_records: {
         Row: {
           college_id: string | null
@@ -1418,6 +1453,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      analyze_college_data: {
+        Args: { college_uuid: string }
+        Returns: Json
+      }
+      clean_college_data: {
+        Args: {
+          college_uuid: string
+          modules?: string[]
+          preserve_structure?: boolean
+        }
+        Returns: Json
+      }
+      export_college_data: {
+        Args: { college_uuid: string }
+        Returns: Json
+      }
       finalize_demo_setup: {
         Args: { demo: Json }
         Returns: undefined
