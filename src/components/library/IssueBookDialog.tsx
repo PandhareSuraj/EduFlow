@@ -13,7 +13,7 @@ interface IssueBookDialogProps {
 }
 
 export function IssueBookDialog({ open, onOpenChange }: IssueBookDialogProps) {
-  const { books, libraryMembers, issueBook, isIssuingBook } = useLibraryData();
+  const { books, libraryMembers, issueBook, isIssuingBook, autoCreateMembers, isCreatingMembers } = useLibraryData();
   
   const [formData, setFormData] = useState({
     book_id: '',
@@ -77,11 +77,24 @@ export function IssueBookDialog({ open, onOpenChange }: IssueBookDialogProps) {
                 <SelectValue placeholder="Select a member" />
               </SelectTrigger>
               <SelectContent>
-                {libraryMembers?.map((member) => (
-                  <SelectItem key={member.id} value={member.id}>
-                    {member.membership_number} ({member.member_type})
-                  </SelectItem>
-                ))}
+                {libraryMembers?.length === 0 ? (
+                  <div className="p-4 text-center">
+                    <p className="text-sm text-muted-foreground mb-2">No library members found</p>
+                    <Button 
+                      size="sm" 
+                      onClick={() => autoCreateMembers()}
+                      disabled={isCreatingMembers}
+                    >
+                      {isCreatingMembers ? 'Creating...' : 'Create Members from Students/Faculty'}
+                    </Button>
+                  </div>
+                ) : (
+                  libraryMembers?.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.member_name || 'Unknown'} - {member.membership_number} ({member.member_type})
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>

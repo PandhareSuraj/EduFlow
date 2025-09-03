@@ -12,6 +12,7 @@ import { IssueBookDialog } from '@/components/library/IssueBookDialog';
 import { ReturnBookDialog } from '@/components/library/ReturnBookDialog';
 import { AddCategoryDialog } from '@/components/library/AddCategoryDialog';
 import { LibraryStatsCard } from '@/components/library/LibraryStatsCard';
+import { LibraryMemberManagement } from '@/components/library/LibraryMemberManagement';
 import { useLibraryData } from '@/hooks/useLibraryData';
 import { format } from 'date-fns';
 
@@ -109,6 +110,7 @@ export default function Library() {
       <Tabs defaultValue="books" className="space-y-6">
         <TabsList>
           <TabsTrigger value="books">Book Catalog</TabsTrigger>
+          {isLibrarian && <TabsTrigger value="members">Library Members</TabsTrigger>}
           {isLibrarian && <TabsTrigger value="issues">Book Issues</TabsTrigger>}
           {isLibrarian && <TabsTrigger value="overdue">Overdue Books</TabsTrigger>}
           {isLibrarian && <TabsTrigger value="fines">Fines</TabsTrigger>}
@@ -196,6 +198,12 @@ export default function Library() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {isLibrarian && (
+          <TabsContent value="members">
+            <LibraryMemberManagement />
+          </TabsContent>
+        )}
 
         {isLibrarian && (
           <TabsContent value="issues">
