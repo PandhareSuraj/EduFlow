@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, BarChart3, Users, CreditCard, FileText, Download, TrendingUp, PieChart } from "lucide-react";
+import { Calendar, BarChart3, Users, CreditCard, FileText, Download, PieChart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useReportData } from "@/hooks/useReportData";
+import { ReportGenerator, ReportConfigs } from "@/utils/reportGenerator";
+import { ReportFilters, FilterValues } from "@/components/reports/ReportFilters";
+import { ReportHistory } from "@/components/reports/ReportHistory";
+import { format as formatDate } from "date-fns";
 
 const reportCategories = [
   {
@@ -77,6 +81,119 @@ const reportCategories = [
 
 export default function Reports() {
   const { toast } = useToast();
+  const { data, loading, fetchData } = useReportData();
+  const [currentFilters, setCurrentFilters] = useState<FilterValues | null>(null);
+
+  const handleFiltersChange = (filters: FilterValues) => {
+    setCurrentFilters(filters);
+    fetchData({
+      reportType: filters.reportType,
+      courseId: filters.courseId,
+      dateRange: filters.dateRange
+    });
+  };
+
+  const generateReport = async (format: 'pdf' | 'excel') => {
+    if (!currentFilters || !currentFilters.reportType) {
+      toast({
+        title: "Error",
+        description: "Please select a report type first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      let reportData: any[] = [];
+      let config;
+
+      switch (currentFilters.reportType) {
+        case 'student_enrollment':
+          reportData = data.students;
+          config = ReportConfigs.studentEnrollment(reportData, currentFilters);
+          break;
+        case 'fees_collection':
+          reportData = data.fees;
+          config = ReportConfigs.feesCollection(reportData, currentFilters);
+          break;
+        case 'attendance_summary':
+          reportData = data.attendance;
+          config = ReportConfigs.attendanceSummary(reportData, currentFilters);
+          break;
+        case 'exam_results':
+          reportData = data.exams;
+          config = {
+            title: 'Exam Results Report',
+            type: 'academic' as const,
+            data: reportData,
+            columns: [
+              { key: 'name', label: 'Exam Name' },
+              { key: 'courses.name', label: 'Course' },
+              { key: 'exam_date', label: 'Date', formatter: (value: any) => value ? formatDate(new Date(value), 'PPP') : '' },
+              { key: 'total_marks', label: 'Total Marks' },
+              { key: 'status', label: 'Status' }
+            ],
+            filters: currentFilters,
+            summary: {
+              totalRecords: reportData.length,
+              additionalInfo: {
+                'Completed Exams': reportData.filter(e => e.status === 'completed').length,
+                'Scheduled Exams': reportData.filter(e => e.status === 'scheduled').length
+              }
+            }
+          };
+          break;
+        case 'enquiry_report':
+          reportData = data.enquiries;
+          config = {
+            title: 'Enquiry Report',
+            type: 'operational' as const,
+            data: reportData,
+            columns: [
+              { key: 'name', label: 'Name' },
+              { key: 'phone', label: 'Phone' },
+              { key: 'email', label: 'Email' },
+              { key: 'course', label: 'Course' },
+              { key: 'source', label: 'Source' },
+              { key: 'status', label: 'Status' },
+              { key: 'created_at', label: 'Date', formatter: (value: any) => value ? formatDate(new Date(value), 'PPP') : '' }
+            ],
+            filters: currentFilters,
+            summary: {
+              totalRecords: reportData.length,
+              additionalInfo: {
+                'New Enquiries': reportData.filter(e => e.status === 'new').length,
+                'Converted': reportData.filter(e => e.status === 'converted').length,
+                'Follow-up Required': reportData.filter(e => e.status === 'follow_up').length
+              }
+            }
+          };
+          break;
+        default:
+          throw new Error('Invalid report type');
+      }
+
+      if (format === 'pdf') {
+        ReportGenerator.generatePDF(config);
+      } else {
+        ReportGenerator.generateExcel(config);
+      }
+
+      toast({
+        title: "Report Generated",
+        description: `${config.title} has been downloaded successfully`
+      });
+
+    } catch (error) {
+      console.error('Error generating report:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate report. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -85,111 +202,14 @@ export default function Reports() {
           <h1 className="text-3xl font-bold text-foreground">Reports & Analytics</h1>
           <p className="text-muted-foreground">Generate comprehensive reports and insights</p>
         </div>
-        <Button className="shadow-elegant">
-          <Download className="h-4 w-4 mr-2" />
-          Export Report
-        </Button>
       </div>
 
-      {/* Quick Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Quick Report Generator
-          </CardTitle>
-          <CardDescription>Select parameters to generate instant reports</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Report Type</label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Student Reports</SelectItem>
-                  <SelectItem value="financial">Financial Reports</SelectItem>
-                  <SelectItem value="attendance">Attendance Reports</SelectItem>
-                  <SelectItem value="academic">Academic Reports</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Course</label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="All courses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Courses</SelectItem>
-                  <SelectItem value="dmlt">DMLT</SelectItem>
-                  <SelectItem value="rt">Radiology Technician</SelectItem>
-                  <SelectItem value="pgdmlt">PGDMLT</SelectItem>
-                  <SelectItem value="hm">Hospital Management</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Date Range</label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="week">This Week</SelectItem>
-                  <SelectItem value="month">This Month</SelectItem>
-                  <SelectItem value="quarter">This Quarter</SelectItem>
-                  <SelectItem value="year">This Year</SelectItem>
-                  <SelectItem value="custom">Custom Range</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Format</label>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => toast({
-                    title: "PDF Generation",
-                    description: "PDF report generation feature coming soon!"
-                  })}
-                >
-                  PDF
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => toast({
-                    title: "Excel Export", 
-                    description: "Excel export feature coming soon!"
-                  })}
-                >
-                  Excel
-                </Button>
-                <Button 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => toast({
-                    title: "Report Generated",
-                    description: "Sample report generated successfully!"
-                  })}
-                >
-                  Generate
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Report Filters */}
+      <ReportFilters 
+        onFiltersChange={handleFiltersChange}
+        onGenerate={generateReport}
+        loading={loading}
+      />
 
       {/* Report Categories */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -242,42 +262,80 @@ export default function Reports() {
         ))}
       </div>
 
-      {/* Recent Reports */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recently Generated Reports</CardTitle>
-          <CardDescription>Your latest report downloads and exports</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[
-              { name: "Monthly Fees Collection Report", date: "2024-01-22", type: "Financial", format: "PDF", size: "2.3 MB" },
-              { name: "Student Attendance Summary", date: "2024-01-21", type: "Attendance", format: "Excel", size: "1.8 MB" },
-              { name: "Course Enrollment Report", date: "2024-01-20", type: "Student", format: "PDF", size: "3.1 MB" },
-              { name: "Exam Results Analysis", date: "2024-01-19", type: "Academic", format: "Excel", size: "2.7 MB" }
-            ].map((report, index) => (
-              <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <h4 className="font-medium">{report.name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Generated on {report.date} • {report.size}
-                    </p>
+      {/* Data Preview */}
+      {currentFilters?.reportType && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Data Preview</CardTitle>
+            <CardDescription>
+              Preview of data for {currentFilters.reportType.replace('_', ' ')} report
+              {currentFilters.courseId !== 'all' && ` (Course: ${data.courses.find(c => c.id.toString() === currentFilters.courseId)?.name})`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <div className="text-2xl font-bold text-primary">
+                      {currentFilters.reportType === 'student_enrollment' && data.students.length}
+                      {currentFilters.reportType === 'fees_collection' && data.fees.length}
+                      {currentFilters.reportType === 'attendance_summary' && data.attendance.length}
+                      {currentFilters.reportType === 'exam_results' && data.exams.length}
+                      {currentFilters.reportType === 'enquiry_report' && data.enquiries.length}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Total Records</div>
+                  </div>
+                  
+                  {currentFilters.reportType === 'fees_collection' && (
+                    <div className="p-3 bg-muted/30 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">
+                        ₹{data.fees.reduce((sum, fee) => sum + (fee.amount || 0), 0).toLocaleString()}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Total Collected</div>
+                    </div>
+                  )}
+                  
+                  {currentFilters.reportType === 'attendance_summary' && data.attendance.length > 0 && (
+                    <div className="p-3 bg-muted/30 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {(data.attendance.reduce((sum, session) => sum + (session.attendance_percentage || 0), 0) / data.attendance.length).toFixed(1)}%
+                      </div>
+                      <div className="text-sm text-muted-foreground">Avg Attendance</div>
+                    </div>
+                  )}
+                  
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <div className="text-2xl font-bold text-orange-600">
+                      {formatDate(currentFilters.dateRange.from, 'MMM d')} - {formatDate(currentFilters.dateRange.to, 'MMM d')}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Date Range</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline">{report.type}</Badge>
-                  <Badge variant="secondary">{report.format}</Badge>
-                  <Button variant="ghost" size="sm">
-                    <Download className="h-4 w-4" />
-                  </Button>
+                
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Ready to generate report with {' '}
+                    {currentFilters.reportType === 'student_enrollment' && data.students.length}
+                    {currentFilters.reportType === 'fees_collection' && data.fees.length}
+                    {currentFilters.reportType === 'attendance_summary' && data.attendance.length}
+                    {currentFilters.reportType === 'exam_results' && data.exams.length}
+                    {currentFilters.reportType === 'enquiry_report' && data.enquiries.length}
+                    {' '} records
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Report History */}
+      <ReportHistory />
     </div>
   );
 }
