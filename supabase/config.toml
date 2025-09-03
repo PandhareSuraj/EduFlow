@@ -4,7 +4,7 @@ project_id = "velhefqnjmevluskffzp"
 verify_jwt = true
 
 [functions.reset-faculty-password]
-verify_jwt = true
+verify_jwt = false
 
 [functions.clean-college-data]
 verify_jwt = true

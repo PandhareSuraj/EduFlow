@@ -10,6 +10,7 @@ import { Eye, EyeOff, GraduationCap, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { createDemoUsers } from '@/utils/createDemoUsers';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -18,6 +19,10 @@ export default function Auth() {
   const navigate = useNavigate();
   const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
+  
+  // Check for admin setup mode
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdminSetup = urlParams.get('adminSetup') === '1';
 
   // Demo accounts (super admin credentials removed for security)
   const demoAccounts = [
@@ -158,6 +163,42 @@ export default function Auth() {
     }
   };
 
+  const handleFinalizeSuperAdmin = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke('reset-faculty-password', {
+        body: {
+          userId: 'a61f615c-e3a3-4cfa-970e-0f324b9aecb4',
+          newPassword: '7588351751'
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Super Admin Setup Complete!",
+        description: "Password has been set. You can now login with: a61f615c-e3a3-4cfa-970e-0f324b9aecb4 / 7588351751",
+      });
+
+      // Auto-fill the login form
+      setLoginForm({
+        email: 'a61f615c-e3a3-4cfa-970e-0f324b9aecb4',
+        password: '7588351751'
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Error setting up super admin",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -262,10 +303,30 @@ export default function Auth() {
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground mt-3">
-                    Click "Use" to auto-fill login credentials, then click "Sign In"
-                  </p>
-                </div>
-              </TabsContent>
+                     Click "Use" to auto-fill login credentials, then click "Sign In"
+                   </p>
+                 </div>
+
+                 {/* Admin Setup Section - Only show with ?adminSetup=1 */}
+                 {isAdminSetup && (
+                   <div className="mt-4 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                     <h3 className="text-sm font-medium text-destructive mb-2">Super Admin Setup</h3>
+                     <p className="text-xs text-muted-foreground mb-3">
+                       Finalize the super admin account password setup.
+                     </p>
+                     <Button
+                       type="button"
+                       variant="destructive"
+                       size="sm"
+                       onClick={handleFinalizeSuperAdmin}
+                       disabled={isLoading}
+                       className="w-full"
+                     >
+                       {isLoading ? 'Setting up...' : 'Finalize Super Admin'}
+                     </Button>
+                   </div>
+                 )}
+               </TabsContent>
 
               <TabsContent value="signup">
                 <form onSubmit={handleSignup} className="space-y-4">
