@@ -9,6 +9,7 @@ import { ReportGenerator, ReportConfigs } from "@/utils/reportGenerator";
 import { ReportFilters, FilterValues } from "@/components/reports/ReportFilters";
 import { ReportHistory } from "@/components/reports/ReportHistory";
 import { format as formatDate } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 const reportCategories = [
   {
@@ -16,10 +17,10 @@ const reportCategories = [
     icon: Users,
     description: "Comprehensive student data and analytics",
     reports: [
-      { name: "Student Enrollment Report", description: "Course-wise student enrollment statistics" },
-      { name: "Student Performance Report", description: "Academic performance and results analysis" },
-      { name: "Student Demographics Report", description: "Age, gender, and location distribution" },
-      { name: "Course Completion Report", description: "Students who completed courses successfully" }
+      { name: "Student Enrollment Report", description: "Course-wise student enrollment statistics", type: "student_enrollment" },
+      { name: "Student Performance Report", description: "Academic performance and results analysis", type: "student_enrollment" },
+      { name: "Student Demographics Report", description: "Age, gender, and location distribution", type: "student_enrollment" },
+      { name: "Course Completion Report", description: "Students who completed courses successfully", type: "student_enrollment" }
     ]
   },
   {
@@ -27,10 +28,10 @@ const reportCategories = [
     icon: CreditCard,
     description: "Fees collection and financial analysis",
     reports: [
-      { name: "Fees Collection Report", description: "Monthly and yearly fee collection summary" },
-      { name: "Pending Dues Report", description: "Outstanding payments and overdue accounts" },
-      { name: "Payment Method Analysis", description: "Breakdown by cash, online, installments" },
-      { name: "Revenue Trend Report", description: "Financial performance over time" }
+      { name: "Fees Collection Report", description: "Monthly and yearly fee collection summary", type: "fees_collection" },
+      { name: "Pending Dues Report", description: "Outstanding payments and overdue accounts", type: "fees_collection" },
+      { name: "Payment Method Analysis", description: "Breakdown by cash, online, installments", type: "fees_collection" },
+      { name: "Revenue Trend Report", description: "Financial performance over time", type: "fees_collection" }
     ]
   },
   {
@@ -38,10 +39,10 @@ const reportCategories = [
     icon: Calendar,
     description: "Student and faculty attendance tracking",
     reports: [
-      { name: "Daily Attendance Report", description: "Day-wise attendance for all courses" },
-      { name: "Monthly Attendance Summary", description: "Course-wise monthly attendance rates" },
-      { name: "Low Attendance Alert", description: "Students with attendance below 75%" },
-      { name: "Faculty Attendance Report", description: "Teaching staff attendance and schedules" }
+      { name: "Daily Attendance Report", description: "Day-wise attendance for all courses", type: "attendance_summary" },
+      { name: "Monthly Attendance Summary", description: "Course-wise monthly attendance rates", type: "attendance_summary" },
+      { name: "Low Attendance Alert", description: "Students with attendance below 75%", type: "attendance_summary" },
+      { name: "Faculty Attendance Report", description: "Teaching staff attendance and schedules", type: "attendance_summary" }
     ]
   },
   {
@@ -49,10 +50,10 @@ const reportCategories = [
     icon: BarChart3,
     description: "Examination and academic performance",
     reports: [
-      { name: "Exam Results Summary", description: "Pass rates and grade distribution" },
-      { name: "Course Performance Analysis", description: "Subject-wise student performance" },
-      { name: "Top Performers Report", description: "Merit list and distinction holders" },
-      { name: "Certificate Issuance Report", description: "Certificates and documents issued" }
+      { name: "Exam Results Summary", description: "Pass rates and grade distribution", type: "exam_results" },
+      { name: "Course Performance Analysis", description: "Subject-wise student performance", type: "exam_results" },
+      { name: "Top Performers Report", description: "Merit list and distinction holders", type: "exam_results" },
+      { name: "Certificate Issuance Report", description: "Certificates and documents issued", type: "exam_results" }
     ]
   },
   {
@@ -60,10 +61,10 @@ const reportCategories = [
     icon: FileText,
     description: "Day-to-day operations and management",
     reports: [
-      { name: "Enquiry Conversion Report", description: "Lead to admission conversion rates" },
-      { name: "Faculty Workload Report", description: "Teaching hours and subject allocation" },
-      { name: "Inventory Status Report", description: "Stock levels and equipment status" },
-      { name: "Facility Utilization Report", description: "Lab and classroom usage statistics" }
+      { name: "Enquiry Conversion Report", description: "Lead to admission conversion rates", type: "enquiry_report" },
+      { name: "Faculty Workload Report", description: "Teaching hours and subject allocation", type: "enquiry_report" },
+      { name: "Inventory Status Report", description: "Stock levels and equipment status", type: "enquiry_report" },
+      { name: "Facility Utilization Report", description: "Lab and classroom usage statistics", type: "enquiry_report" }
     ]
   },
   {
@@ -71,10 +72,10 @@ const reportCategories = [
     icon: PieChart,
     description: "Build your own custom reports",
     reports: [
-      { name: "Custom Query Builder", description: "Create reports with custom filters" },
-      { name: "Dashboard Analytics", description: "Real-time KPI and metrics dashboard" },
-      { name: "Comparative Analysis", description: "Year-over-year comparison reports" },
-      { name: "Export Templates", description: "Pre-built export formats for external use" }
+      { name: "Custom Query Builder", description: "Create reports with custom filters", type: "student_enrollment" },
+      { name: "Dashboard Analytics", description: "Real-time KPI and metrics dashboard", type: "student_enrollment" },
+      { name: "Comparative Analysis", description: "Year-over-year comparison reports", type: "student_enrollment" },
+      { name: "Export Templates", description: "Pre-built export formats for external use", type: "student_enrollment" }
     ]
   }
 ];
@@ -106,24 +107,29 @@ export default function Reports() {
     try {
       let reportData: any[] = [];
       let config;
+      let reportName = "";
 
       switch (currentFilters.reportType) {
         case 'student_enrollment':
           reportData = data.students;
+          reportName = "Student Enrollment Report";
           config = ReportConfigs.studentEnrollment(reportData, currentFilters);
           break;
         case 'fees_collection':
           reportData = data.fees;
+          reportName = "Fees Collection Report";
           config = ReportConfigs.feesCollection(reportData, currentFilters);
           break;
         case 'attendance_summary':
           reportData = data.attendance;
+          reportName = "Attendance Summary Report";
           config = ReportConfigs.attendanceSummary(reportData, currentFilters);
           break;
         case 'exam_results':
           reportData = data.exams;
+          reportName = "Exam Results Report";
           config = {
-            title: 'Exam Results Report',
+            title: reportName,
             type: 'academic' as const,
             data: reportData,
             columns: [
@@ -145,8 +151,9 @@ export default function Reports() {
           break;
         case 'enquiry_report':
           reportData = data.enquiries;
+          reportName = "Enquiry Report";
           config = {
-            title: 'Enquiry Report',
+            title: reportName,
             type: 'operational' as const,
             data: reportData,
             columns: [
@@ -179,9 +186,19 @@ export default function Reports() {
         ReportGenerator.generateExcel(config);
       }
 
+      // Log report generation to database
+      await supabase.from('report_history').insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        name: reportName,
+        report_type: currentFilters.reportType,
+        export_format: format.toUpperCase(),
+        size_bytes: null,
+        filters: currentFilters as any
+      });
+
       toast({
         title: "Report Generated",
-        description: `${config.title} has been downloaded successfully`
+        description: `${reportName} has been downloaded successfully`
       });
 
     } catch (error) {
@@ -192,6 +209,21 @@ export default function Reports() {
         variant: "destructive"
       });
     }
+  };
+
+  const handleReportCardClick = (reportType: string, reportName: string) => {
+    const newFilters = { 
+      ...currentFilters, 
+      reportType 
+    } as FilterValues;
+    
+    setCurrentFilters(newFilters);
+    handleFiltersChange(newFilters);
+    
+    toast({
+      title: "Report Selected",
+      description: `${reportName} data is being loaded...`
+    });
   };
 
   return (
@@ -237,20 +269,17 @@ export default function Reports() {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => toast({
-                        title: "Report Preview",
-                        description: `Viewing ${report.name}`
-                      })}
+                      onClick={() => handleReportCardClick(report.type, report.name)}
                     >
                       <FileText className="h-4 w-4" />
                     </Button>
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => toast({
-                        title: "Download Started", 
-                        description: `Downloading ${report.name}`
-                      })}
+                      onClick={() => {
+                        handleReportCardClick(report.type, report.name);
+                        setTimeout(() => generateReport('pdf'), 100);
+                      }}
                     >
                       <Download className="h-4 w-4" />
                     </Button>
@@ -334,8 +363,12 @@ export default function Reports() {
         </Card>
       )}
 
-      {/* Report History */}
-      <ReportHistory />
+        {/* Report History */}
+        <ReportHistory onRegenerateReport={(filters, format) => {
+          setCurrentFilters(filters);
+          handleFiltersChange(filters);
+          setTimeout(() => generateReport(format as 'pdf' | 'excel'), 100);
+        }} />
     </div>
   );
 }

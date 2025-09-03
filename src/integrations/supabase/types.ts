@@ -1057,6 +1057,45 @@ export type Database = {
         }
         Relationships: []
       }
+      report_history: {
+        Row: {
+          college_id: string | null
+          export_format: string
+          file_url: string | null
+          filters: Json | null
+          generated_at: string
+          id: string
+          name: string
+          report_type: string
+          size_bytes: number | null
+          user_id: string
+        }
+        Insert: {
+          college_id?: string | null
+          export_format: string
+          file_url?: string | null
+          filters?: Json | null
+          generated_at?: string
+          id?: string
+          name: string
+          report_type: string
+          size_bytes?: number | null
+          user_id: string
+        }
+        Update: {
+          college_id?: string | null
+          export_format?: string
+          file_url?: string | null
+          filters?: Json | null
+          generated_at?: string
+          id?: string
+          name?: string
+          report_type?: string
+          size_bytes?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       results: {
         Row: {
           college_id: string | null

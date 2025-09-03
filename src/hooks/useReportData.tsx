@@ -53,6 +53,12 @@ export const useReportData = () => {
       if (filters.courseId && filters.courseId !== 'all') {
         studentsQuery = studentsQuery.eq('course_id', parseInt(filters.courseId));
       }
+      if (filters.status) {
+        studentsQuery = studentsQuery.eq('status', filters.status);
+      }
+      if (filters.semester) {
+        studentsQuery = studentsQuery.eq('semester', filters.semester);
+      }
 
       promises.push(studentsQuery);
 
@@ -61,12 +67,12 @@ export const useReportData = () => {
         supabase.from('courses').select('*').eq('status', 'active')
       );
 
-      // Fetch fees data
+      // Fetch fees data with course filtering
       let feesQuery = supabase
         .from('fee_payments')
         .select(`
           *,
-          students!fee_payments_student_id_fkey(name, student_id),
+          students!fee_payments_student_id_fkey(name, student_id, course_id),
           student_fees!fee_payments_student_fee_id_fkey(total_amount)
         `);
 
@@ -78,7 +84,7 @@ export const useReportData = () => {
 
       promises.push(feesQuery);
 
-      // Fetch attendance data
+      // Fetch attendance data with course filtering
       let attendanceQuery = supabase
         .from('attendance_sessions')
         .select(`
@@ -86,6 +92,9 @@ export const useReportData = () => {
           courses!attendance_sessions_course_id_fkey(name, code)
         `);
 
+      if (filters.courseId && filters.courseId !== 'all') {
+        attendanceQuery = attendanceQuery.eq('course_id', parseInt(filters.courseId));
+      }
       if (filters.dateRange) {
         attendanceQuery = attendanceQuery
           .gte('session_date', filters.dateRange.from.toISOString().split('T')[0])
@@ -94,7 +103,7 @@ export const useReportData = () => {
 
       promises.push(attendanceQuery);
 
-      // Fetch exams data
+      // Fetch exams data with course filtering
       let examsQuery = supabase
         .from('exams')
         .select(`
@@ -110,6 +119,9 @@ export const useReportData = () => {
           )
         `);
 
+      if (filters.courseId && filters.courseId !== 'all') {
+        examsQuery = examsQuery.eq('course_id', parseInt(filters.courseId));
+      }
       if (filters.dateRange) {
         examsQuery = examsQuery
           .gte('exam_date', filters.dateRange.from.toISOString().split('T')[0])
@@ -123,7 +135,7 @@ export const useReportData = () => {
         supabase.from('faculty').select('*').eq('status', 'active')
       );
 
-      // Fetch enquiries data
+      // Fetch enquiries data with course filtering
       let enquiriesQuery = supabase.from('enquiries').select('*');
 
       if (filters.dateRange) {
@@ -136,14 +148,34 @@ export const useReportData = () => {
 
       const results = await Promise.all(promises);
 
+      // Apply additional filtering for course-based data
+      let filteredFees = results[2].data || [];
+      let filteredEnquiries = results[6].data || [];
+
+      if (filters.courseId && filters.courseId !== 'all') {
+        // Filter fees by course through student relationship
+        filteredFees = filteredFees.filter(fee => 
+          fee.students?.course_id === parseInt(filters.courseId)
+        );
+
+        // Filter enquiries by course name match
+        const courseName = results[1].data?.find(c => c.id === parseInt(filters.courseId))?.name;
+        if (courseName) {
+          filteredEnquiries = filteredEnquiries.filter(enquiry =>
+            enquiry.course?.toLowerCase().includes(courseName.toLowerCase()) ||
+            enquiry.course === courseName
+          );
+        }
+      }
+
       setData({
         students: results[0].data || [],
         courses: results[1].data || [],
-        fees: results[2].data || [],
+        fees: filteredFees,
         attendance: results[3].data || [],
         exams: results[4].data || [],
         faculty: results[5].data || [],
-        enquiries: results[6].data || []
+        enquiries: filteredEnquiries
       });
 
     } catch (error) {
