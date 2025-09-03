@@ -327,7 +327,22 @@ export function DatabaseManagementDialog({ trigger }: DatabaseManagementDialogPr
                     {dataAnalysis && (
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {MODULE_OPTIONS.map((module) => {
-                          const count = dataAnalysis[module.id as keyof DataAnalysis] as number;
+                          // Map module IDs to DataAnalysis keys
+                          const keyMapping: Record<string, keyof DataAnalysis> = {
+                            students: 'students',
+                            faculty: 'faculty', 
+                            courses: 'courses',
+                            exams: 'exams',
+                            attendance: 'attendance_records',
+                            fees: 'fee_records',
+                            library: 'library_books',
+                            inventory: 'inventory_items',
+                            enquiries: 'enquiries'
+                          };
+                          
+                          const dataKey = keyMapping[module.id];
+                          const count = dataKey ? (dataAnalysis[dataKey] as number) : 0;
+                          
                           return (
                             <div key={module.id} className="p-3 border rounded-lg">
                               <div className="flex items-center gap-2 mb-1">
