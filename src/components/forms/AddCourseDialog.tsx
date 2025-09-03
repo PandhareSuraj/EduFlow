@@ -50,16 +50,59 @@ export function AddCourseDialog({ trigger, onSuccess }: AddCourseDialogProps) {
 
     setLoading(true);
     try {
-      // Get user's college using RPC function
-      const { data: collegeId, error: collegeError } = await supabase
-        .rpc('get_user_college');
-
-      if (collegeError || !collegeId) {
+      // Check authentication state first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.error('Auth error:', authError);
         toast({
-          title: "Error",
-          description: "Unable to determine your college association",
+          title: "Authentication Error",
+          description: "Please sign in again to continue.",
           variant: "destructive",
         });
+        setLoading(false);
+        return;
+      }
+
+      // Get user's college with retry mechanism
+      let collegeId = null;
+      let collegeError = null;
+      
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const result = await supabase.rpc('get_user_college');
+        collegeId = result.data;
+        collegeError = result.error;
+        
+        if (!collegeError && collegeId) {
+          break;
+        }
+        
+        // Wait a bit before retry
+        if (attempt < 2) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+
+      if (collegeError || !collegeId) {
+        console.error('College fetch error:', collegeError);
+        console.error('User ID:', user.id);
+        
+        // Check if user has any roles at all
+        const { data: roles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role, college_id')
+          .eq('user_id', user.id);
+          
+        console.log('User roles:', roles);
+        
+        toast({
+          title: "College Association Error",
+          description: roles?.length === 0 
+            ? "Your account is not associated with any college. Please contact your administrator to set up your account."
+            : "Unable to determine your college association. Please contact your administrator.",
+          variant: "destructive",
+        });
+        setLoading(false);
         return;
       }
 
