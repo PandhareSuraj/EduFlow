@@ -17,6 +17,42 @@ export function useRecentActivity() {
 
   useEffect(() => {
     fetchRecentActivities();
+    
+    // Set up real-time subscriptions
+    const channel = supabase
+      .channel('dashboard-activity')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'students'
+        },
+        () => fetchRecentActivities()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'fee_payments'
+        },
+        () => fetchRecentActivities()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'attendance_sessions'
+        },
+        () => fetchRecentActivities()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchRecentActivities = async () => {
@@ -26,7 +62,7 @@ export function useRecentActivity() {
       // Fetch recent student admissions
       const { data: recentStudents } = await supabase
         .from('students')
-        .select('id, name, created_at, courses(name)')
+        .select('id, name, created_at, courses!students_course_id_fkey(name)')
         .order('created_at', { ascending: false })
         .limit(3);
 
@@ -47,7 +83,7 @@ export function useRecentActivity() {
       // Fetch recent fee payments
       const { data: recentPayments } = await supabase
         .from('fee_payments')
-        .select('id, created_at, amount, students(name, courses(name))')
+        .select('id, created_at, amount, students!fee_payments_student_id_fkey(name, courses!students_course_id_fkey(name))')
         .order('created_at', { ascending: false })
         .limit(3);
 
@@ -68,7 +104,7 @@ export function useRecentActivity() {
       // Fetch recent attendance sessions
       const { data: recentAttendance } = await supabase
         .from('attendance_sessions')
-        .select('id, created_at, class_name, courses(name), total_students')
+        .select('id, created_at, class_name, total_students')
         .order('created_at', { ascending: false })
         .limit(2);
 
@@ -78,7 +114,7 @@ export function useRecentActivity() {
             id: `attendance-${session.id}`,
             student: `${session.total_students || 0} students`,
             action: 'Attendance Marked',
-            course: session.courses?.name || session.class_name || 'Class',
+            course: session.class_name || 'Class',
             time: formatTimeAgo(session.created_at),
             type: 'attendance',
             created_at: session.created_at

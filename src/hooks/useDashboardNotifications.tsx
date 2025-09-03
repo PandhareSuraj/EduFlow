@@ -16,6 +16,42 @@ export function useDashboardNotifications() {
 
   useEffect(() => {
     fetchNotifications();
+    
+    // Set up real-time subscriptions
+    const channel = supabase
+      .channel('dashboard-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'student_fees'
+        },
+        () => fetchNotifications()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'attendance_records'
+        },
+        () => fetchNotifications()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'exams'
+        },
+        () => fetchNotifications()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchNotifications = async () => {
@@ -45,7 +81,7 @@ export function useDashboardNotifications() {
         .select(`
           id,
           name,
-          attendance_records(status)
+          attendance_records!attendance_records_student_id_fkey(status)
         `);
 
       let lowAttendanceCount = 0;

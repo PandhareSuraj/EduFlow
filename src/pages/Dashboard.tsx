@@ -74,6 +74,51 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    
+    // Set up real-time subscriptions for dashboard stats
+    const channel = supabase
+      .channel('dashboard-stats')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'students'
+        },
+        () => fetchDashboardData()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'courses'
+        },
+        () => fetchDashboardData()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'faculty'
+        },
+        () => fetchDashboardData()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'colleges'
+        },
+        () => fetchDashboardData()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userRole]);
 
   const fetchDashboardData = async () => {

@@ -47,6 +47,33 @@ export function useAttendanceData() {
 
   useEffect(() => {
     fetchAttendanceData();
+    
+    // Set up real-time subscriptions
+    const channel = supabase
+      .channel('attendance-data')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'attendance_sessions'
+        },
+        () => fetchAttendanceData()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'attendance_records'
+        },
+        () => fetchAttendanceData()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchAttendanceData = async () => {
