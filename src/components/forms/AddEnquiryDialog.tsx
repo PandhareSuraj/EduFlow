@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useFaculty } from "@/hooks/useFaculty";
+import { useCourses } from "@/hooks/useCourses";
 
 interface AddEnquiryDialogProps {
   trigger?: React.ReactNode;
@@ -24,6 +26,8 @@ export function AddEnquiryDialog({ trigger, onSuccess }: AddEnquiryDialogProps) 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { faculty, loading: facultyLoading } = useFaculty();
+  const { courses, loading: coursesLoading } = useCourses();
   
   const [formData, setFormData] = useState({
     name: "",
@@ -142,15 +146,16 @@ export function AddEnquiryDialog({ trigger, onSuccess }: AddEnquiryDialogProps) 
             </div>
             <div>
               <Label htmlFor="course">Interested Course *</Label>
-              <Select value={formData.course} onValueChange={(value) => handleChange("course", value)}>
+              <Select value={formData.course} onValueChange={(value) => handleChange("course", value)} disabled={coursesLoading}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select course" />
+                  <SelectValue placeholder={coursesLoading ? "Loading courses..." : "Select course"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="DMLT">DMLT</SelectItem>
-                  <SelectItem value="Radiology Technician">Radiology Technician</SelectItem>
-                  <SelectItem value="PGDMLT">PGDMLT</SelectItem>
-                  <SelectItem value="Hospital Management">Hospital Management</SelectItem>
+                  {courses.map((course) => (
+                    <SelectItem key={course.id} value={course.name}>
+                      {course.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -172,14 +177,16 @@ export function AddEnquiryDialog({ trigger, onSuccess }: AddEnquiryDialogProps) 
             </div>
             <div>
               <Label htmlFor="assignedTo">Assign To</Label>
-              <Select value={formData.assignedTo} onValueChange={(value) => handleChange("assignedTo", value)}>
+              <Select value={formData.assignedTo} onValueChange={(value) => handleChange("assignedTo", value)} disabled={facultyLoading}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select counselor" />
+                  <SelectValue placeholder={facultyLoading ? "Loading faculty..." : "Select counselor"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Priya Sharma">Priya Sharma</SelectItem>
-                  <SelectItem value="Amit Desai">Amit Desai</SelectItem>
-                  <SelectItem value="Rajesh Kumar">Rajesh Kumar</SelectItem>
+                  {faculty.map((member) => (
+                    <SelectItem key={member.id} value={member.name}>
+                      {member.name} - {member.designation}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
