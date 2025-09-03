@@ -10,6 +10,7 @@ import { ScheduleExamDialog, ViewExamsDialog } from "@/components/forms/ExamDial
 import { ViewResultsDialog } from "@/components/forms/ResultDialogs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ReportGenerator, ReportConfigs } from "@/utils/reportGenerator";
 import { LiveExamManagement } from "@/components/exams/LiveExamManagement";
 
 // Data interfaces
