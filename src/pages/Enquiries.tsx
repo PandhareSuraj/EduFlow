@@ -89,9 +89,9 @@ export default function Enquiries() {
 
   const stats = {
     total: enquiries.length,
-    new: enquiries.filter(e => e.status === 'new').length,
-    contacted: enquiries.filter(e => e.status === 'contacted').length,
-    converted: enquiries.filter(e => e.status === 'converted').length
+    new: enquiries.filter(e => e.status.toLowerCase() === 'new').length,
+    contacted: enquiries.filter(e => e.status.toLowerCase() === 'contacted').length,
+    converted: enquiries.filter(e => e.status.toLowerCase() === 'converted').length
   };
   return (
     <div className="p-6 space-y-6">

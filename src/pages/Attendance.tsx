@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Calendar, Users, CheckCircle, XCircle, RefreshCw, Eye, Plus } from "lucide-react";
 import { AttendanceMarkingDialog } from "@/components/attendance/AttendanceMarkingDialog";
+import { SessionDetailsDialog } from "@/components/attendance/SessionDetailsDialog";
+import { StudentDetailsDialog } from "@/components/attendance/StudentDetailsDialog";
 import { useAttendanceData } from "@/hooks/useAttendanceData";
 import { format } from "date-fns";
 
@@ -160,10 +162,16 @@ export default function Attendance() {
                             </div>
                           </div>
                           
-                          <Button size="sm" variant="outline" className="w-full">
-                            <Eye className="h-3 w-3 mr-2" />
-                            View Details
-                          </Button>
+                          <SessionDetailsDialog 
+                            sessionId={session.id} 
+                            sessionName={session.class_name}
+                            trigger={
+                              <Button size="sm" variant="outline" className="w-full">
+                                <Eye className="h-3 w-3 mr-2" />
+                                View Details
+                              </Button>
+                            }
+                          />
                         </div>
                       </Card>
                     ))}
@@ -203,10 +211,10 @@ export default function Attendance() {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <Button size="sm" variant="outline">
-                                <Eye className="h-3 w-3 mr-2" />
-                                View
-                              </Button>
+                              <SessionDetailsDialog 
+                                sessionId={session.id} 
+                                sessionName={session.class_name}
+                              />
                             </TableCell>
                           </TableRow>
                         ))}
@@ -284,9 +292,15 @@ export default function Attendance() {
                             }`}>
                               {student.attendance_percentage}%
                             </div>
-                            <Button variant="outline" size="sm">
-                              View Details
-                            </Button>
+                            <StudentDetailsDialog 
+                              studentId={student.student_id}
+                              studentName={student.student_name}
+                              trigger={
+                                <Button variant="outline" size="sm">
+                                  View Details
+                                </Button>
+                              }
+                            />
                           </div>
                         </div>
                       </Card>
@@ -328,7 +342,10 @@ export default function Attendance() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Button variant="outline" size="sm">View Details</Button>
+                              <StudentDetailsDialog 
+                                studentId={student.student_id}
+                                studentName={student.student_name}
+                              />
                             </TableCell>
                           </TableRow>
                         ))}
