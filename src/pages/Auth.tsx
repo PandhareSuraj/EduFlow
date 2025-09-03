@@ -19,9 +19,8 @@ export default function Auth() {
   const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
 
-  // Demo accounts
+  // Demo accounts (super admin credentials removed for security)
   const demoAccounts = [
-    { email: 'super@college.com', password: 'demo123', role: 'Super Admin', description: 'Manage multiple colleges' },
     { email: 'admin@college.com', password: 'demo123', role: 'Admin', description: 'Full system access' },
     { email: 'teacher@college.com', password: 'demo123', role: 'Teacher', description: 'Attendance, Study materials, Marks' },
     { email: 'student@college.com', password: 'demo123', role: 'Student', description: 'View profile, results, take tests' },
