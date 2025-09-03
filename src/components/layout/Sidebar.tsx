@@ -39,9 +39,9 @@ export function Sidebar() {
         { name: "College Management", href: "/colleges", icon: Building2 },
         { name: "AMC Revenue", href: "/amc-revenue", icon: IndianRupee },
         { name: "System Analytics", href: "/system-analytics", icon: TrendingUp },
-        { name: "Global Reports", href: "/global-reports", icon: Database },
+        { name: "Reports", href: "/reports", icon: FileText },
         { name: "User Management", href: "/user-management", icon: Shield },
-        { name: "System Settings", href: "/system-settings", icon: Settings },
+        { name: "Settings", href: "/settings", icon: Settings },
       ];
     } else if (userRole === 'student') {
       // Student Navigation - View own information and tests
