@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Settings as SettingsIcon, User, Bell, Shield, Database as DatabaseIcon, Mail, Globe, Users, Edit, Trash2 } from "lucide-react";
+import { DatabaseManagementDialog } from '@/components/database/DatabaseManagementDialog';
+import { RoleGuard } from '@/components/permissions/RoleGuard';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -207,13 +209,14 @@ export default function Settings() {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
           <TabsTrigger value="backup">Backup</TabsTrigger>
+          <TabsTrigger value="database">Database</TabsTrigger>
         </TabsList>
 
         {/* General Settings */}
@@ -618,6 +621,59 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Database Management - Super Admin Only */}
+        <TabsContent value="database" className="space-y-6">
+          <RoleGuard allowedRoles={['super_admin']}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DatabaseIcon className="h-5 w-5" />
+                  Database Management
+                </CardTitle>
+                <CardDescription>
+                  Safely clean college data while preserving user accounts and system structure. 
+                  Only super administrators can access this functionality.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-800 mb-2">Database Cleaning Features</h4>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• Analyze data before cleaning</li>
+                    <li>• Export full data backup</li>
+                    <li>• Selective module cleaning</li>
+                    <li>• User accounts preservation</li>
+                    <li>• College structure integrity</li>
+                    <li>• Complete audit trail</li>
+                  </ul>
+                </div>
+                
+                <DatabaseManagementDialog 
+                  trigger={
+                    <Button variant="outline" size="lg" className="w-full gap-2">
+                      <DatabaseIcon className="h-4 w-4" />
+                      Open Database Management
+                    </Button>
+                  } 
+                />
+                
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <Shield className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-yellow-800">Safety Features</h4>
+                      <p className="text-sm text-yellow-700 mt-1">
+                        All operations include multiple confirmation steps, data analysis previews, 
+                        and automatic backup suggestions to ensure safe data management.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </RoleGuard>
         </TabsContent>
       </Tabs>
 

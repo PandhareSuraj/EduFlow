@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.reset-faculty-password]
 verify_jwt = true
+
+[functions.clean-college-data]
+verify_jwt = true
