@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useDepartments } from "@/hooks/useDepartments";
 
 interface Faculty {
   id: string;
@@ -111,6 +112,7 @@ interface EditFacultyDialogProps {
 }
 
 export function EditFacultyDialog({ faculty, trigger, onSuccess }: EditFacultyDialogProps) {
+  const { departments, loading: departmentsLoading } = useDepartments();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -239,10 +241,15 @@ export function EditFacultyDialog({ faculty, trigger, onSuccess }: EditFacultyDi
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Radiology">Radiology</SelectItem>
-                  <SelectItem value="Laboratory Technology">Laboratory Technology</SelectItem>
-                  <SelectItem value="Hospital Management">Hospital Management</SelectItem>
-                  <SelectItem value="General Studies">General Studies</SelectItem>
+                  {departmentsLoading ? (
+                    <SelectItem value="" disabled>Loading departments...</SelectItem>
+                  ) : departments.length === 0 ? (
+                    <SelectItem value="" disabled>No departments available</SelectItem>
+                  ) : (
+                    departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>

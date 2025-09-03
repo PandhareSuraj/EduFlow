@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Package } from "lucide-react";
 import { InventoryItem } from "@/hooks/useInventoryData";
+import { useDepartments } from "@/hooks/useDepartments";
 
 const formSchema = z.object({
   item_id: z.string().min(1, "Item is required"),
@@ -30,6 +31,7 @@ interface AddTransactionDialogProps {
 }
 
 export function AddTransactionDialog({ onAdd, items, triggerButton }: AddTransactionDialogProps) {
+  const { departments } = useDepartments();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -64,16 +66,6 @@ export function AddTransactionDialog({ onAdd, items, triggerButton }: AddTransac
     { value: "return", label: "Return" },
     { value: "restock", label: "Restock" },
     { value: "adjustment", label: "Stock Adjustment" },
-  ];
-
-  const departments = [
-    "DMLT Lab",
-    "Radiology Lab", 
-    "OT Technology Lab",
-    "Library",
-    "Administration",
-    "Maintenance",
-    "Other"
   ];
 
   return (
@@ -177,8 +169,8 @@ export function AddTransactionDialog({ onAdd, items, triggerButton }: AddTransac
                       </FormControl>
                       <SelectContent>
                         {departments.map((dept) => (
-                          <SelectItem key={dept} value={dept}>
-                            {dept}
+                          <SelectItem key={dept.id} value={dept.name}>
+                            {dept.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

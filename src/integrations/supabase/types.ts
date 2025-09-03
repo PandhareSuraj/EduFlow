@@ -441,6 +441,47 @@ export type Database = {
           },
         ]
       }
+      departments: {
+        Row: {
+          code: string | null
+          college_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          college_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          college_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enquiries: {
         Row: {
           assigned_to: string | null

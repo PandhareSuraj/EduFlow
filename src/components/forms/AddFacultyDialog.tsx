@@ -21,7 +21,10 @@ interface AddFacultyDialogProps {
   onSuccess?: () => void;
 }
 
+import { useDepartments } from "@/hooks/useDepartments";
+
 export function AddFacultyDialog({ trigger, onSuccess }: AddFacultyDialogProps) {
+  const { departments, loading: departmentsLoading } = useDepartments();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -188,10 +191,15 @@ export function AddFacultyDialog({ trigger, onSuccess }: AddFacultyDialogProps) 
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Radiology">Radiology</SelectItem>
-                  <SelectItem value="Laboratory Technology">Laboratory Technology</SelectItem>
-                  <SelectItem value="Hospital Management">Hospital Management</SelectItem>
-                  <SelectItem value="General Studies">General Studies</SelectItem>
+                  {departmentsLoading ? (
+                    <SelectItem value="" disabled>Loading departments...</SelectItem>
+                  ) : departments.length === 0 ? (
+                    <SelectItem value="" disabled>No departments available</SelectItem>
+                  ) : (
+                    departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>

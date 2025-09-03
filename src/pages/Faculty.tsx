@@ -12,6 +12,7 @@ import { CreateFacultyLoginDialog } from "@/components/forms/CreateFacultyLoginD
 import { ManageFacultyLoginDialog } from "@/components/forms/ManageFacultyLoginDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useDepartments } from "@/hooks/useDepartments";
 
 interface Faculty {
   id: string;
@@ -29,6 +30,7 @@ interface Faculty {
 }
 
 export default function Faculty() {
+  const { departments } = useDepartments();
   const [faculty, setFaculty] = useState<Faculty[]>([]);
   const [filteredFaculty, setFilteredFaculty] = useState<Faculty[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,8 +106,8 @@ export default function Faculty() {
     setFilteredFaculty(filtered);
   }, [faculty, searchTerm, departmentFilter, statusFilter]);
 
-  const departments = [...new Set(faculty.map(member => member.department).filter(dept => dept && dept.trim() !== ""))];
   const statuses = [...new Set(faculty.map(member => member.status).filter(status => status && status.trim() !== ""))];
+  
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -137,7 +139,7 @@ export default function Faculty() {
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
                 {departments.map(dept => (
-                  <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                  <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
