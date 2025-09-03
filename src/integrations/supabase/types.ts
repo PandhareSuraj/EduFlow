@@ -113,6 +113,150 @@ export type Database = {
         }
         Relationships: []
       }
+      book_categories: {
+        Row: {
+          college_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      book_issues: {
+        Row: {
+          book_id: string
+          college_id: string | null
+          created_at: string
+          due_date: string
+          id: string
+          issue_date: string
+          issued_by: string | null
+          max_renewals: number | null
+          member_id: string
+          remarks: string | null
+          renewal_count: number | null
+          return_date: string | null
+          returned_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          book_id: string
+          college_id?: string | null
+          created_at?: string
+          due_date: string
+          id?: string
+          issue_date?: string
+          issued_by?: string | null
+          max_renewals?: number | null
+          member_id: string
+          remarks?: string | null
+          renewal_count?: number | null
+          return_date?: string | null
+          returned_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          book_id?: string
+          college_id?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          issue_date?: string
+          issued_by?: string | null
+          max_renewals?: number | null
+          member_id?: string
+          remarks?: string | null
+          renewal_count?: number | null
+          return_date?: string | null
+          returned_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      books: {
+        Row: {
+          author: string
+          available_copies: number
+          category_id: string | null
+          college_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          isbn: string | null
+          language: string | null
+          location: string | null
+          pages: number | null
+          price: number | null
+          publication_year: number | null
+          publisher: string | null
+          status: string
+          title: string
+          total_copies: number
+          updated_at: string
+        }
+        Insert: {
+          author: string
+          available_copies?: number
+          category_id?: string | null
+          college_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          isbn?: string | null
+          language?: string | null
+          location?: string | null
+          pages?: number | null
+          price?: number | null
+          publication_year?: number | null
+          publisher?: string | null
+          status?: string
+          title: string
+          total_copies?: number
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          available_copies?: number
+          category_id?: string | null
+          college_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          isbn?: string | null
+          language?: string | null
+          location?: string | null
+          pages?: number | null
+          price?: number | null
+          publication_year?: number | null
+          publisher?: string | null
+          status?: string
+          title?: string
+          total_copies?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       class_schedules: {
         Row: {
           class_name: string
@@ -712,6 +856,141 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      library_fines: {
+        Row: {
+          balance_amount: number
+          college_id: string | null
+          created_at: string
+          days_overdue: number | null
+          fine_amount: number
+          fine_date: string
+          fine_per_day: number | null
+          id: string
+          issue_id: string
+          member_id: string
+          paid_amount: number | null
+          payment_date: string | null
+          status: string
+          updated_at: string
+          waived_by: string | null
+          waiver_reason: string | null
+        }
+        Insert: {
+          balance_amount?: number
+          college_id?: string | null
+          created_at?: string
+          days_overdue?: number | null
+          fine_amount?: number
+          fine_date?: string
+          fine_per_day?: number | null
+          id?: string
+          issue_id: string
+          member_id: string
+          paid_amount?: number | null
+          payment_date?: string | null
+          status?: string
+          updated_at?: string
+          waived_by?: string | null
+          waiver_reason?: string | null
+        }
+        Update: {
+          balance_amount?: number
+          college_id?: string | null
+          created_at?: string
+          days_overdue?: number | null
+          fine_amount?: number
+          fine_date?: string
+          fine_per_day?: number | null
+          id?: string
+          issue_id?: string
+          member_id?: string
+          paid_amount?: number | null
+          payment_date?: string | null
+          status?: string
+          updated_at?: string
+          waived_by?: string | null
+          waiver_reason?: string | null
+        }
+        Relationships: []
+      }
+      library_members: {
+        Row: {
+          college_id: string | null
+          created_at: string
+          faculty_id: string | null
+          id: string
+          max_books: number
+          member_type: string
+          membership_end_date: string | null
+          membership_number: string
+          membership_start_date: string
+          status: string
+          student_id: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string
+          faculty_id?: string | null
+          id?: string
+          max_books?: number
+          member_type: string
+          membership_end_date?: string | null
+          membership_number: string
+          membership_start_date?: string
+          status?: string
+          student_id?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string
+          faculty_id?: string | null
+          id?: string
+          max_books?: number
+          member_type?: string
+          membership_end_date?: string | null
+          membership_number?: string
+          membership_start_date?: string
+          status?: string
+          student_id?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      library_settings: {
+        Row: {
+          college_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: string
+          updated_at: string
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: string
+          updated_at?: string
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
