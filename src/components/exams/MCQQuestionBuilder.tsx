@@ -452,13 +452,13 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleEditQuestion(question)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditQuestion(question)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                               <Button 
                                 variant="ghost" 
                                 size="sm"

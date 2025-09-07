@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Calendar, Edit, Eye, Clock, Users, FileText, Loader2 } from "lucide-react";
+import { MCQQuestionBuilder } from "@/components/exams/MCQQuestionBuilder";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +22,9 @@ interface Exam {
   description?: string;
   status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
   created_at: string;
+  exam_type?: string;
+  duration_minutes?: number;
+  total_questions?: number;
 }
 
 interface Course {
@@ -326,6 +330,17 @@ export function ViewExamsDialog({ course }: ViewExamsDialogProps) {
                           <Button variant="ghost" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
+                          {exam.exam_type === 'mcq' && (
+                            <MCQQuestionBuilder 
+                              exam={{
+                                id: exam.id,
+                                name: exam.name,
+                                total_questions: exam.total_questions || 30,
+                                total_marks: exam.total_marks
+                              }}
+                              onQuestionsUpdated={fetchExams}
+                            />
+                          )}
                           <Button variant="ghost" size="sm">
                             <Users className="h-4 w-4" />
                           </Button>

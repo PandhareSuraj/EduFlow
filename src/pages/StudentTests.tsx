@@ -49,7 +49,7 @@ export default function StudentTests() {
           .eq('exam_type', 'mcq')
           .eq('status', 'scheduled');
 
-        if (exams) {
+        if (exams && exams.length > 0) {
           const formattedTests = exams.map(exam => ({
             id: exam.id,
             title: exam.name,
@@ -60,67 +60,76 @@ export default function StudentTests() {
             description: exam.description || 'Multiple choice examination'
           }));
           setTests(formattedTests);
+        } else {
+          // Use mock data when no real exams exist
+          setMockTests();
         }
+      } else {
+        // No student data, use mock tests
+        setMockTests();
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+      // Use mock data as fallback on error
+      setMockTests();
     } finally {
       setLoading(false);
     }
   };
 
-  // Keep existing mock data as fallback
-  const mockTests = [
-    {
-      id: '1',
-      title: 'Basic Anatomy Quiz',
-      subject: 'Anatomy',
-      duration: 30,
-      totalQuestions: 20,
-      status: 'available',
-      description: 'Test your knowledge of basic human anatomy'
-    },
-    {
-      id: '2',
-      title: 'Physiology Fundamentals',
-      subject: 'Physiology',
-      duration: 45,
-      totalQuestions: 30,
-      status: 'completed',
-      score: 85,
-      completedAt: '2024-01-15',
-      description: 'Comprehensive test on physiological processes'
-    },
-    {
-      id: '3',
-      title: 'Medical Terminology',
-      subject: 'Medical Terms',
-      duration: 25,
-      totalQuestions: 25,
-      status: 'completed',
-      score: 92,
-      completedAt: '2024-01-10',
-      description: 'Essential medical terminology and definitions'
-    },
-    {
-      id: '4',
-      title: 'Pathology Basics',
-      subject: 'Pathology',
-      duration: 40,
-      totalQuestions: 35,
-      status: 'locked',
-      description: 'Introduction to pathological conditions'
-    },
-    {
-      id: '5',
-      title: 'Laboratory Procedures',
-      subject: 'Lab Procedures',
-      duration: 50,
-      totalQuestions: 40,
-      status: 'available',
-      description: 'Standard laboratory procedures and safety protocols'
-    }
-  ]);
+  const setMockTests = () => {
+    setTests([
+      {
+        id: '1',
+        title: 'Basic Anatomy Quiz',
+        subject: 'Anatomy',
+        duration: 30,
+        totalQuestions: 20,
+        status: 'available',
+        description: 'Test your knowledge of basic human anatomy'
+      },
+      {
+        id: '2',
+        title: 'Physiology Fundamentals',
+        subject: 'Physiology',
+        duration: 45,
+        totalQuestions: 30,
+        status: 'completed',
+        score: 85,
+        completedAt: '2024-01-15',
+        description: 'Comprehensive test on physiological processes'
+      },
+      {
+        id: '3',
+        title: 'Medical Terminology',
+        subject: 'Medical Terms',
+        duration: 25,
+        totalQuestions: 25,
+        status: 'completed',
+        score: 92,
+        completedAt: '2024-01-10',
+        description: 'Essential medical terminology and definitions'
+      },
+      {
+        id: '4',
+        title: 'Pathology Basics',
+        subject: 'Pathology',
+        duration: 40,
+        totalQuestions: 35,
+        status: 'locked',
+        description: 'Introduction to pathological conditions'
+      },
+      {
+        id: '5',
+        title: 'Laboratory Procedures',
+        subject: 'Lab Procedures',
+        duration: 50,
+        totalQuestions: 40,
+        status: 'available',
+        description: 'Standard laboratory procedures and safety protocols'
+      }
+    ]);
+  };
 
   const getStatusBadge = (status: MCQTest['status']) => {
     switch (status) {
@@ -163,7 +172,7 @@ export default function StudentTests() {
     if (!studentData) {
       toast({
         title: "Error",
-        description: "Student data not found",
+        description: "Student data not found. Please log in as a student.",
         variant: "destructive"
       });
       return;
@@ -178,6 +187,12 @@ export default function StudentTests() {
       
       if (exam) {
         setCurrentExam({ ...exam, studentId: studentData.id });
+      } else {
+        // For mock tests, show alert
+        toast({
+          title: "Demo Mode",
+          description: "This is a demo test. Real MCQ functionality requires actual exam data.",
+        });
       }
     } catch (error: any) {
       toast({
@@ -189,9 +204,11 @@ export default function StudentTests() {
   };
 
   const handleViewResults = (testId: string) => {
-    // In real app, this would show detailed results
-    console.log('Viewing results for test:', testId);
-    alert('Detailed results view will be implemented soon!');
+    // For mock data, show placeholder
+    toast({
+      title: "Demo Mode",
+      description: "Detailed results view will show actual exam results when available.",
+    });
   };
 
   const completedTests = tests.filter(test => test.status === 'completed');
@@ -231,6 +248,17 @@ export default function StudentTests() {
             setShowResults(sessionId);
           }}
         />
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading tests...</span>
+        </div>
       </div>
     );
   }
