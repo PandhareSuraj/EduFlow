@@ -10,6 +10,7 @@ import { useInventoryData } from "@/hooks/useInventoryData";
 import { AddInventoryItemDialog } from "@/components/forms/AddInventoryItemDialog";
 import { AddTransactionDialog } from "@/components/forms/AddTransactionDialog";
 import { format } from "date-fns";
+import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 
 export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,7 +55,9 @@ export default function Inventory() {
           <p className="text-muted-foreground">Manage lab equipment and supplies</p>
         </div>
         <div className="flex gap-2">
-          <AddInventoryItemDialog onAdd={addItem} suppliers={suppliers} />
+          <PermissionWrapper permission="INVENTORY_MANAGE">
+            <AddInventoryItemDialog onAdd={addItem} suppliers={suppliers} />
+          </PermissionWrapper>
           <Button variant="outline" onClick={refreshData}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh

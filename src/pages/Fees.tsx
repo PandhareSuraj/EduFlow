@@ -36,6 +36,7 @@ import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
 import { FeeStructureDialog } from "@/components/forms/FeeStructureDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 
 interface StudentFeeData {
   id: string;
@@ -202,24 +203,28 @@ export default function Fees() {
           <p className="text-muted-foreground">Manage student fee collections and payments</p>
         </div>
         <div className="flex gap-2">
-          <FeeStructureDialog
-            trigger={
-              <Button variant="outline">
-                <Settings className="mr-2 h-4 w-4" />
-                Fee Structure
-              </Button>
-            }
-            onSuccess={fetchFeeRecords}
-          />
-          <CollectFeeDialog
-            trigger={
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Collect Payment
-              </Button>
-            }
-            onSuccess={fetchFeeRecords}
-          />
+          <PermissionWrapper permission="FEES_STRUCTURE">
+            <FeeStructureDialog
+              trigger={
+                <Button variant="outline">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Fee Structure
+                </Button>
+              }
+              onSuccess={fetchFeeRecords}
+            />
+          </PermissionWrapper>
+          <PermissionWrapper permission="FEES_COLLECT">
+            <CollectFeeDialog
+              trigger={
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Collect Payment
+                </Button>
+              }
+              onSuccess={fetchFeeRecords}
+            />
+          </PermissionWrapper>
         </div>
       </div>
 
@@ -371,15 +376,17 @@ export default function Fees() {
                           <Eye className="h-4 w-4" />
                         </Button>
                         {record.balance_amount > 0 && (
-                          <CollectFeeDialog
-                            studentId={record.student_id}
-                            onSuccess={fetchFeeRecords}
-                            trigger={
-                              <Button variant="ghost" size="sm">
-                                <CreditCard className="h-4 w-4" />
-                              </Button>
-                            }
-                          />
+                          <PermissionWrapper permission="FEES_COLLECT">
+                            <CollectFeeDialog
+                              studentId={record.student_id}
+                              onSuccess={fetchFeeRecords}
+                              trigger={
+                                <Button variant="ghost" size="sm">
+                                  <CreditCard className="h-4 w-4" />
+                                </Button>
+                              }
+                            />
+                          </PermissionWrapper>
                         )}
                       </div>
                     </TableCell>

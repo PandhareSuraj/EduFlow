@@ -69,7 +69,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/fees" element={
-              <ProtectedRoute requiredRole="clerk">
+              <ProtectedRoute allowedRoles={['admin', 'accountant', 'clerk']}>
                 <Layout>
                   <Fees />
                 </Layout>
@@ -83,42 +83,42 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/attendance" element={
-              <ProtectedRoute requiredRole="teacher">
+              <ProtectedRoute allowedRoles={['admin', 'teacher']}>
                 <Layout>
                   <Attendance />
                 </Layout>
               </ProtectedRoute>
             } />
             <Route path="/exams" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'teacher', 'clerk']}>
                 <Layout>
                   <Exams />
                 </Layout>
               </ProtectedRoute>
             } />
             <Route path="/library" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'teacher', 'librarian', 'student']}>
                 <Layout>
                   <Library />
                 </Layout>
               </ProtectedRoute>
             } />
             <Route path="/id-cards" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'clerk']}>
                 <Layout>
                   <IDCards />
                 </Layout>
               </ProtectedRoute>
             } />
             <Route path="/inventory" element={
-              <ProtectedRoute requiredRole="librarian">
+              <ProtectedRoute allowedRoles={['admin', 'clerk', 'librarian']}>
                 <Layout>
                   <Inventory />
                 </Layout>
               </ProtectedRoute>
             } />
             <Route path="/reports" element={
-              <ProtectedRoute requiredRole="clerk">
+              <ProtectedRoute allowedRoles={['admin', 'teacher', 'accountant']}>
                 <Layout>
                   <Reports />
                 </Layout>
