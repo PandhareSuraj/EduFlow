@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, BookOpen, Play, CheckCircle, AlertCircle } from "lucide-react";
+import { Clock, BookOpen, Play, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { StudentExamInterface } from "@/components/exams/StudentExamInterface";
+import { ExamResultsDisplay } from "@/components/exams/ExamResultsDisplay";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MCQTest {
   id: string;
@@ -17,8 +21,56 @@ interface MCQTest {
 }
 
 export default function StudentTests() {
-  // Mock data - in real app this would come from API
-  const [tests] = useState<MCQTest[]>([
+  const [tests, setTests] = useState<MCQTest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentExam, setCurrentExam] = useState<any>(null);
+  const [showResults, setShowResults] = useState<string | null>(null);
+  const [studentData, setStudentData] = useState<any>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchExamsAndStudent();
+  }, []);
+
+  const fetchExamsAndStudent = async () => {
+    try {
+      // Get current student data
+      const { data: student } = await supabase
+        .rpc('get_student_data')
+        .single();
+      
+      if (student) {
+        setStudentData(student);
+        
+        // Fetch available MCQ exams
+        const { data: exams } = await supabase
+          .from('exams')
+          .select('*')
+          .eq('exam_type', 'mcq')
+          .eq('status', 'scheduled');
+
+        if (exams) {
+          const formattedTests = exams.map(exam => ({
+            id: exam.id,
+            title: exam.name,
+            subject: 'MCQ Test',
+            duration: exam.duration_minutes,
+            totalQuestions: exam.total_questions,
+            status: 'available' as const,
+            description: exam.description || 'Multiple choice examination'
+          }));
+          setTests(formattedTests);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Keep existing mock data as fallback
+  const mockTests = [
     {
       id: '1',
       title: 'Basic Anatomy Quiz',
@@ -107,10 +159,33 @@ export default function StudentTests() {
     return 'text-red-600';
   };
 
-  const handleStartTest = (testId: string) => {
-    // In real app, this would navigate to test page or start test
-    console.log('Starting test:', testId);
-    alert('Test functionality will be implemented soon!');
+  const handleStartTest = async (testId: string) => {
+    if (!studentData) {
+      toast({
+        title: "Error",
+        description: "Student data not found",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { data: exam } = await supabase
+        .from('exams')
+        .select('*')
+        .eq('id', testId)
+        .single();
+      
+      if (exam) {
+        setCurrentExam({ ...exam, studentId: studentData.id });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to start exam",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleViewResults = (testId: string) => {
@@ -126,6 +201,39 @@ export default function StudentTests() {
   const averageScore = completedTests.length > 0 
     ? Math.round(completedTests.reduce((sum, test) => sum + (test.score || 0), 0) / completedTests.length)
     : 0;
+
+  if (showResults) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Button variant="outline" onClick={() => setShowResults(null)}>
+            ← Back to Tests
+          </Button>
+        </div>
+        <ExamResultsDisplay sessionId={showResults} />
+      </div>
+    );
+  }
+
+  if (currentExam) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Button variant="outline" onClick={() => setCurrentExam(null)}>
+            ← Back to Tests
+          </Button>
+        </div>
+        <StudentExamInterface 
+          exam={currentExam}
+          studentId={currentExam.studentId}
+          onExamComplete={(sessionId) => {
+            setCurrentExam(null);
+            setShowResults(sessionId);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, Calendar, FileText, Award, Download, Clock, Users, BookOpen, TrendingUp, CheckCircle, Loader2, AlertCircle } from "lucide-react";
+// Update existing ExamDialogs import and add MCQ components
 import { ScheduleExamDialog, ViewExamsDialog } from "@/components/forms/ExamDialogs";
+import { MCQExamCreationDialog } from "@/components/exams/MCQExamCreationDialog";
 import { ViewResultsDialog } from "@/components/forms/ResultDialogs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -430,10 +432,16 @@ export default function Exams() {
           <p className="text-muted-foreground">Manage examinations and student results</p>
         </div>
         {courses.length > 0 && (
-          <ScheduleExamDialog 
-            course={courses[0]} 
-            onExamScheduled={fetchData}
-          />
+          <div className="flex gap-2">
+            <MCQExamCreationDialog 
+              course={courses[0]} 
+              onExamCreated={fetchData}
+            />
+            <ScheduleExamDialog 
+              course={courses[0]} 
+              onExamScheduled={fetchData}
+            />
+          </div>
         )}
       </div>
 

@@ -536,11 +536,19 @@ export type Database = {
           course_id: number
           created_at: string
           description: string | null
+          duration_minutes: number | null
+          end_time: string | null
           exam_date: string
+          exam_type: string | null
           id: string
+          instructions: string | null
+          max_attempts: number | null
           name: string
+          passing_marks: number | null
+          start_time: string | null
           status: string
           total_marks: number
+          total_questions: number | null
           updated_at: string
         }
         Insert: {
@@ -548,11 +556,19 @@ export type Database = {
           course_id: number
           created_at?: string
           description?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
           exam_date: string
+          exam_type?: string | null
           id?: string
+          instructions?: string | null
+          max_attempts?: number | null
           name: string
+          passing_marks?: number | null
+          start_time?: string | null
           status?: string
           total_marks?: number
+          total_questions?: number | null
           updated_at?: string
         }
         Update: {
@@ -560,11 +576,19 @@ export type Database = {
           course_id?: number
           created_at?: string
           description?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
           exam_date?: string
+          exam_type?: string | null
           id?: string
+          instructions?: string | null
+          max_attempts?: number | null
           name?: string
+          passing_marks?: number | null
+          start_time?: string | null
           status?: string
           total_marks?: number
+          total_questions?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1068,6 +1092,59 @@ export type Database = {
         }
         Relationships: []
       }
+      mcq_questions: {
+        Row: {
+          college_id: string | null
+          correct_answer: string
+          created_at: string
+          difficulty: string | null
+          exam_id: string
+          explanation: string | null
+          id: string
+          marks: number
+          options: Json
+          question_number: number
+          question_text: string
+          updated_at: string
+        }
+        Insert: {
+          college_id?: string | null
+          correct_answer: string
+          created_at?: string
+          difficulty?: string | null
+          exam_id: string
+          explanation?: string | null
+          id?: string
+          marks?: number
+          options?: Json
+          question_number: number
+          question_text: string
+          updated_at?: string
+        }
+        Update: {
+          college_id?: string | null
+          correct_answer?: string
+          created_at?: string
+          difficulty?: string | null
+          exam_id?: string
+          explanation?: string | null
+          id?: string
+          marks?: number
+          options?: Json
+          question_number?: number
+          question_text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcq_questions_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1222,6 +1299,63 @@ export type Database = {
           },
         ]
       }
+      student_answers: {
+        Row: {
+          answered_at: string | null
+          college_id: string | null
+          created_at: string
+          id: string
+          is_correct: boolean | null
+          marks_obtained: number | null
+          question_id: string
+          selected_answer: string | null
+          session_id: string
+          time_spent_seconds: number | null
+          updated_at: string
+        }
+        Insert: {
+          answered_at?: string | null
+          college_id?: string | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          marks_obtained?: number | null
+          question_id: string
+          selected_answer?: string | null
+          session_id: string
+          time_spent_seconds?: number | null
+          updated_at?: string
+        }
+        Update: {
+          answered_at?: string | null
+          college_id?: string | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          marks_obtained?: number | null
+          question_id?: string
+          selected_answer?: string | null
+          session_id?: string
+          time_spent_seconds?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "mcq_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_answers_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "student_exam_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_documents: {
         Row: {
           college_id: string | null
@@ -1269,6 +1403,84 @@ export type Database = {
           },
           {
             foreignKeyName: "student_documents_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_exam_sessions: {
+        Row: {
+          answered_questions: number | null
+          attempt_number: number
+          college_id: string | null
+          created_at: string
+          duration_minutes: number | null
+          end_time: string | null
+          exam_id: string
+          grade: string | null
+          id: string
+          marks_obtained: number | null
+          percentage: number | null
+          start_time: string
+          status: string
+          student_id: number
+          submit_time: string | null
+          total_marks: number | null
+          total_questions: number | null
+          updated_at: string
+        }
+        Insert: {
+          answered_questions?: number | null
+          attempt_number?: number
+          college_id?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          end_time?: string | null
+          exam_id: string
+          grade?: string | null
+          id?: string
+          marks_obtained?: number | null
+          percentage?: number | null
+          start_time?: string
+          status?: string
+          student_id: number
+          submit_time?: string | null
+          total_marks?: number | null
+          total_questions?: number | null
+          updated_at?: string
+        }
+        Update: {
+          answered_questions?: number | null
+          attempt_number?: number
+          college_id?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          end_time?: string | null
+          exam_id?: string
+          grade?: string | null
+          id?: string
+          marks_obtained?: number | null
+          percentage?: number | null
+          start_time?: string
+          status?: string
+          student_id?: number
+          submit_time?: string | null
+          total_marks?: number | null
+          total_questions?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_exam_sessions_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_exam_sessions_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
