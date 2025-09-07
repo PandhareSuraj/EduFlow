@@ -7,6 +7,7 @@ import { StudentExamInterface } from "@/components/exams/StudentExamInterface";
 import { ExamResultsDisplay } from "@/components/exams/ExamResultsDisplay";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { RoleGuard } from "@/components/permissions/RoleGuard";
 
 interface MCQTest {
   id: string;

@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportGenerator, ReportConfigs } from "@/utils/reportGenerator";
 import { LiveExamManagement } from "@/components/exams/LiveExamManagement";
+import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 
 // Data interfaces
 interface Exam {
@@ -433,14 +434,18 @@ export default function Exams() {
         </div>
         {courses.length > 0 && (
           <div className="flex gap-2">
-            <MCQExamCreationDialog 
-              course={courses[0]} 
-              onExamCreated={fetchData}
-            />
-            <ScheduleExamDialog 
-              course={courses[0]} 
-              onExamScheduled={fetchData}
-            />
+            <PermissionWrapper permission="EXAMS_CREATE">
+              <MCQExamCreationDialog 
+                course={courses[0]} 
+                onExamCreated={fetchData}
+              />
+            </PermissionWrapper>
+            <PermissionWrapper permission="EXAMS_CREATE">
+              <ScheduleExamDialog 
+                course={courses[0]} 
+                onExamScheduled={fetchData}
+              />
+            </PermissionWrapper>
           </div>
         )}
       </div>
