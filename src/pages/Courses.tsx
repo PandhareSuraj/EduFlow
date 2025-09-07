@@ -10,6 +10,7 @@ import { ViewCourseDialog, EditCourseDialog } from "@/components/forms/CourseDia
 import { ViewSubjectsDialog } from "@/components/forms/SubjectDialogs";
 import { ViewExamsDialog } from "@/components/forms/ExamDialogs";
 import { ViewResultsDialog } from "@/components/forms/ResultDialogs";
+import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -144,7 +145,9 @@ export default function Courses() {
           <h1 className="text-3xl font-bold text-foreground">Courses</h1>
           <p className="text-muted-foreground">Manage college courses and programs</p>
         </div>
-        <AddCourseDialog onSuccess={fetchCourses} />
+        <PermissionWrapper permission="COURSES_CREATE">
+          <AddCourseDialog onSuccess={fetchCourses} />
+        </PermissionWrapper>
       </div>
 
       {/* Search and Filters */}

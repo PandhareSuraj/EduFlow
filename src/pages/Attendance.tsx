@@ -10,6 +10,7 @@ import { AttendanceMarkingDialog } from "@/components/attendance/AttendanceMarki
 import { SessionDetailsDialog } from "@/components/attendance/SessionDetailsDialog";
 import { StudentDetailsDialog } from "@/components/attendance/StudentDetailsDialog";
 import { useAttendanceData } from "@/hooks/useAttendanceData";
+import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { format } from "date-fns";
 
 export default function Attendance() {
@@ -44,14 +45,16 @@ export default function Attendance() {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <AttendanceMarkingDialog 
-            trigger={
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Mark Attendance
-              </Button>
-            }
-          />
+          <PermissionWrapper permission="ATTENDANCE_MARK">
+            <AttendanceMarkingDialog 
+              trigger={
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Mark Attendance
+                </Button>
+              }
+            />
+          </PermissionWrapper>
         </div>
       </div>
 
@@ -366,24 +369,26 @@ export default function Attendance() {
               <CardDescription>Generate comprehensive attendance analytics</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" className="h-20 flex-col hover-scale">
-                  <Calendar className="h-6 w-6 mb-2" />
-                  Daily Report
-                </Button>
-                <Button variant="outline" className="h-20 flex-col hover-scale">
-                  <Users className="h-6 w-6 mb-2" />
-                  Student Report
-                </Button>
-                <Button variant="outline" className="h-20 flex-col hover-scale">
-                  <CheckCircle className="h-6 w-6 mb-2" />
-                  Course-wise Report
-                </Button>
-                <Button variant="outline" className="h-20 flex-col hover-scale">
-                  <XCircle className="h-6 w-6 mb-2" />
-                  Low Attendance Alert
-                </Button>
-              </div>
+              <PermissionWrapper permission="REPORTS_VIEW">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button variant="outline" className="h-20 flex-col hover-scale">
+                    <Calendar className="h-6 w-6 mb-2" />
+                    Daily Report
+                  </Button>
+                  <Button variant="outline" className="h-20 flex-col hover-scale">
+                    <Users className="h-6 w-6 mb-2" />
+                    Student Report
+                  </Button>
+                  <Button variant="outline" className="h-20 flex-col hover-scale">
+                    <CheckCircle className="h-6 w-6 mb-2" />
+                    Course-wise Report
+                  </Button>
+                  <Button variant="outline" className="h-20 flex-col hover-scale">
+                    <XCircle className="h-6 w-6 mb-2" />
+                    Low Attendance Alert
+                  </Button>
+                </div>
+              </PermissionWrapper>
             </CardContent>
           </Card>
         </TabsContent>

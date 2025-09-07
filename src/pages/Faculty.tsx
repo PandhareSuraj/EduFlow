@@ -10,6 +10,7 @@ import { AddFacultyDialog } from "@/components/forms/AddFacultyDialog";
 import { ViewFacultyDialog, EditFacultyDialog } from "@/components/forms/FacultyDialogs";
 import { CreateFacultyLoginDialog } from "@/components/forms/CreateFacultyLoginDialog";
 import { ManageFacultyLoginDialog } from "@/components/forms/ManageFacultyLoginDialog";
+import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useDepartments } from "@/hooks/useDepartments";
@@ -116,7 +117,9 @@ export default function Faculty() {
           <h1 className="text-3xl font-bold text-foreground">Faculty & Staff</h1>
           <p className="text-muted-foreground">Manage teaching staff and faculty members</p>
         </div>
-        <AddFacultyDialog onSuccess={fetchFaculty} />
+        <PermissionWrapper permission="FACULTY_CREATE">
+          <AddFacultyDialog onSuccess={fetchFaculty} />
+        </PermissionWrapper>
       </div>
 
       {/* Search and Filters */}

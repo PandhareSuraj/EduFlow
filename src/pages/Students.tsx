@@ -32,6 +32,7 @@ import {
   Loader2
 } from "lucide-react";
 import { ViewStudentDialog, EditStudentDialog, DeleteStudentDialog, AddStudentDialog } from "@/components/forms/StudentDialogs";
+import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -224,7 +225,9 @@ export default function Students() {
           <h1 className="text-3xl font-bold">Students</h1>
           <p className="text-muted-foreground">Manage student records and information</p>
         </div>
-        <AddStudentDialog onStudentAdded={refreshData} />
+        <PermissionWrapper permission="STUDENTS_CREATE">
+          <AddStudentDialog onStudentAdded={refreshData} />
+        </PermissionWrapper>
       </div>
 
       {/* Summary Cards */}
