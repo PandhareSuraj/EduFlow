@@ -171,7 +171,7 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
     }));
   };
 
-  const uploadDocument = async (studentId: number, documentType: string, file: File) => {
+  const uploadDocument = async (studentId: number, documentType: string, file: File, collegeId: string) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${studentId}_${documentType}_${Date.now()}.${fileExt}`;
     const filePath = `${studentId}/${fileName}`;
@@ -195,7 +195,8 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
         document_type: documentType,
         file_name: fileName,
         file_url: publicUrl,
-        file_size: file.size
+        file_size: file.size,
+        college_id: collegeId
       });
 
     if (dbError) {
@@ -327,7 +328,7 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
       // Upload documents if any
       if (Object.keys(documents).length > 0 && studentData) {
         const documentPromises = Object.entries(documents).map(([docType, file]) =>
-          uploadDocument(studentData.id, docType, file)
+          uploadDocument(studentData.id, docType, file, collegeId)
         );
         await Promise.all(documentPromises);
       }
