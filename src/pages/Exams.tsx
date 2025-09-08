@@ -9,6 +9,7 @@ import { Search, Plus, Calendar, FileText, Award, Download, Clock, Users, BookOp
 // Update existing ExamDialogs import and add MCQ components
 import { ScheduleExamDialog, ViewExamsDialog } from "@/components/forms/ExamDialogs";
 import { MCQExamCreationDialog } from "@/components/exams/MCQExamCreationDialog";
+import { MCQQuestionBuilder } from "@/components/exams/MCQQuestionBuilder";
 import { ViewResultsDialog } from "@/components/forms/ResultDialogs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -424,6 +425,7 @@ export default function Exams() {
       });
     }
   };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -434,13 +436,23 @@ export default function Exams() {
         </div>
         {courses.length > 0 && (
           <div className="flex gap-2">
-            <PermissionWrapper permission="EXAMS_CREATE">
+            <PermissionWrapper 
+              permission="EXAMS_CREATE"
+              fallback={
+                <div className="text-sm text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
+                  Contact admin to create exams
+                </div>
+              }
+            >
               <MCQExamCreationDialog 
                 course={courses[0]} 
                 onExamCreated={fetchData}
               />
             </PermissionWrapper>
-            <PermissionWrapper permission="EXAMS_CREATE">
+            <PermissionWrapper 
+              permission="EXAMS_CREATE"
+              fallback={null}
+            >
               <ScheduleExamDialog 
                 course={courses[0]} 
                 onExamScheduled={fetchData}
@@ -588,6 +600,20 @@ export default function Exams() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
+                            <PermissionWrapper 
+                              permission="EXAMS_CONDUCT"
+                              fallback={null}
+                            >
+                              <MCQQuestionBuilder
+                                exam={{
+                                  id: exam.id,
+                                  name: exam.name,
+                                  total_questions: 0,
+                                  total_marks: exam.total_marks
+                                }}
+                                onQuestionsUpdated={fetchData}
+                              />
+                            </PermissionWrapper>
                             {courses.find(c => c.id === exam.course_id) && (
                               <ViewExamsDialog course={courses.find(c => c.id === exam.course_id)!} />
                             )}
@@ -620,6 +646,8 @@ export default function Exams() {
         <TabsContent value="conduct" className="space-y-6">
           <LiveExamManagement />
         </TabsContent>
+
+        {/* Results Tab */}
         <TabsContent value="results" className="space-y-6">
           <Card>
             <CardContent className="p-4">
@@ -643,8 +671,8 @@ export default function Exams() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Exam Results</CardTitle>
-              <CardDescription>Student performance and results summary</CardDescription>
+              <CardTitle>Student Results</CardTitle>
+              <CardDescription>View and manage all examination results</CardDescription>
             </CardHeader>
             <CardContent>
               {resultsLoading ? (
@@ -656,44 +684,35 @@ export default function Exams() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Student</TableHead>
+                      <TableHead>Student ID</TableHead>
+                      <TableHead>Student Name</TableHead>
                       <TableHead>Exam</TableHead>
+                      <TableHead>Course</TableHead>
                       <TableHead>Marks</TableHead>
                       <TableHead>Percentage</TableHead>
                       <TableHead>Grade</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredResults.map((result) => (
                       <TableRow key={result.id}>
+                        <TableCell className="font-medium">{result.students?.student_id}</TableCell>
+                        <TableCell>{result.students?.name}</TableCell>
+                        <TableCell>{result.exams?.name}</TableCell>
+                        <TableCell>{result.courses?.name}</TableCell>
+                        <TableCell>{result.marks_obtained}/{result.total_marks}</TableCell>
                         <TableCell>
-                          <div>
-                            <div className="font-medium">{result.students?.name}</div>
-                            <div className="text-sm text-muted-foreground">{result.students?.student_id}</div>
+                          <div className="flex items-center gap-2">
+                            <span className={result.percentage >= 40 ? "text-green-600" : "text-red-600"}>
+                              {result.percentage}%
+                            </span>
+                            {result.percentage >= 40 && <CheckCircle className="h-4 w-4 text-green-600" />}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div>
-                            <div className="font-medium">{result.exams?.name}</div>
-                            <div className="text-sm text-muted-foreground">{result.courses?.name}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{result.marks_obtained}/{result.total_marks}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium">{result.percentage}%</div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{result.grade}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={result.percentage >= 40 ? 'default' : 'destructive'}>
-                            {result.percentage >= 40 ? 'Pass' : 'Fail'}
+                          <Badge variant={result.percentage >= 40 ? "default" : "destructive"}>
+                            {result.grade}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -707,6 +726,7 @@ export default function Exams() {
                             </Button>
                             {result.percentage >= 40 && (
                               <Button 
+                                variant="outline" 
                                 size="sm"
                                 onClick={() => handleGenerateCertificate(result)}
                               >
@@ -721,12 +741,12 @@ export default function Exams() {
                 </Table>
               ) : (
                 <div className="text-center py-8">
-                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-medium mb-2">No Results Found</h3>
                   <p className="text-muted-foreground">
                     {resultsSearchTerm 
                       ? "Try adjusting your search criteria" 
-                      : "No exam results have been recorded yet"
+                      : "No results have been published yet"
                     }
                   </p>
                 </div>
@@ -735,72 +755,65 @@ export default function Exams() {
           </Card>
         </TabsContent>
 
-        {/* Certificates */}
-        <TabsContent value="certificates">
-          <Card>
-            <CardHeader>
-              <CardTitle>Certificates & Documents</CardTitle>
-              <CardDescription>Generate and manage student certificates</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Certificates Tab */}
+        <TabsContent value="certificates" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Bulk Certificate Generation</CardTitle>
+                <CardDescription>Generate certificates in bulk for eligible students</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <Button 
-                  variant="outline" 
-                  className="h-20 flex-col"
-                  onClick={() => handleBulkCertificateGeneration('Course Completion Certificate')}
+                  className="w-full" 
+                  onClick={() => handleBulkCertificateGeneration("Completion Certificates")}
                 >
-                  <Award className="h-6 w-6 mb-2" />
-                  Course Completion Certificate
+                  Generate Completion Certificates
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="h-20 flex-col"
-                  onClick={() => handleBulkCertificateGeneration('Batch Marksheet Report')}
+                  className="w-full"
+                  onClick={() => handleBulkCertificateGeneration("Merit Certificates")}
                 >
-                  <FileText className="h-6 w-6 mb-2" />
-                  Batch Marksheet
+                  Generate Merit Certificates
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="h-20 flex-col"
-                  onClick={() => handleBulkCertificateGeneration('Academic Transcript')}
+                  className="w-full"
+                  onClick={() => handleBulkCertificateGeneration("Participation Certificates")}
                 >
-                  <Download className="h-6 w-6 mb-2" />
-                  Transcript
+                  Generate Participation Certificates
                 </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-20 flex-col"
-                  onClick={() => handleBulkCertificateGeneration('Merit Certificate')}
-                >
-                  <Award className="h-6 w-6 mb-2" />
-                  Merit Certificate
-                </Button>
-              </div>
-              
-              <div className="mt-6 p-4 bg-muted rounded-lg">
-                <h4 className="font-medium mb-2">Certificate Statistics</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <div className="font-medium text-green-600">{results.filter(r => r.percentage >= 40).length}</div>
-                    <div className="text-muted-foreground">Eligible Students</div>
-                  </div>
-                  <div>
-                    <div className="font-medium text-blue-600">{examStats.passRate}%</div>
-                    <div className="text-muted-foreground">Success Rate</div>
-                  </div>
-                  <div>
-                    <div className="font-medium text-orange-600">{results.filter(r => r.grade === 'A' || r.grade === 'A+').length}</div>
-                    <div className="text-muted-foreground">Merit Students</div>
-                  </div>
-                  <div>
-                    <div className="font-medium text-purple-600">{examStats.completedExams}</div>
-                    <div className="text-muted-foreground">Completed Exams</div>
-                  </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Certificate Statistics</CardTitle>
+                <CardDescription>Overview of certificate eligibility</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span>Total Students</span>
+                  <Badge variant="outline">{results.length}</Badge>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="flex justify-between items-center">
+                  <span>Eligible for Certificates</span>
+                  <Badge className="bg-green-100 text-green-800">
+                    {results.filter(r => r.percentage >= 40).length}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Pass Rate</span>
+                  <Badge variant="secondary">{examStats.passRate}%</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Certificates Generated</span>
+                  <Badge variant="outline">0</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

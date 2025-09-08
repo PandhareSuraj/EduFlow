@@ -40,7 +40,8 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/welcome" element={<Index />} />
-            <Route path="/" element={
+            <Route path="/" element={<Index />} />
+            <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Layout>
                   <Dashboard />

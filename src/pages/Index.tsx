@@ -12,7 +12,7 @@ export default function Index() {
   useEffect(() => {
     // Redirect authenticated users to dashboard
     if (!loading && user) {
-      navigate('/');
+      navigate('/dashboard');
     }
   }, [user, loading, navigate]);
 
