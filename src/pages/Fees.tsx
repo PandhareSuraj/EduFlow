@@ -30,10 +30,13 @@ import {
   Eye,
   CreditCard,
   Loader2,
-  Settings
+  Settings,
+  Calculator,
+  FileText
 } from "lucide-react";
 import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
 import { FeeStructureDialog } from "@/components/forms/FeeStructureDialog";
+import { StudentFeeLedger } from "@/components/fees/StudentFeeLedger";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
@@ -51,6 +54,10 @@ interface StudentFeeData {
       code: string;
     } | null;
   } | null;
+  original_amount: number;
+  discount_amount: number;
+  discount_percentage: number;
+  discount_reason: string;
   total_amount: number;
   paid_amount: number;
   balance_amount: number;
@@ -79,6 +86,10 @@ export default function Fees() {
         .select(`
           id,
           student_id,
+          original_amount,
+          discount_amount,
+          discount_percentage,
+          discount_reason,
           total_amount,
           paid_amount,
           balance_amount,
@@ -147,6 +158,7 @@ export default function Fees() {
   const totalCollection = feeRecords.reduce((sum, record) => sum + record.paid_amount, 0);
   const totalPending = feeRecords.reduce((sum, record) => sum + record.balance_amount, 0);
   const totalAmount = feeRecords.reduce((sum, record) => sum + record.total_amount, 0);
+  const totalDiscounts = feeRecords.reduce((sum, record) => sum + (record.discount_amount || 0), 0);
   const collectionRate = totalAmount > 0 ? ((totalCollection / totalAmount) * 100).toFixed(1) : 0;
 
   const handleExportRecords = () => {
@@ -203,6 +215,7 @@ export default function Fees() {
           <p className="text-muted-foreground">Manage student fee collections and payments</p>
         </div>
         <div className="flex gap-2">
+          <StudentFeeLedger />
           <PermissionWrapper permission="FEES_STRUCTURE">
             <FeeStructureDialog
               trigger={
@@ -229,7 +242,7 @@ export default function Fees() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Collection</CardTitle>
@@ -260,6 +273,17 @@ export default function Fees() {
           <CardContent>
             <div className="text-2xl font-bold">{collectionRate}%</div>
             <p className="text-xs text-muted-foreground">Fee collection efficiency</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Discounts</CardTitle>
+            <Calculator className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₹{totalDiscounts.toLocaleString('en-IN')}</div>
+            <p className="text-xs text-muted-foreground">Total discounts given</p>
           </CardContent>
         </Card>
         
@@ -336,7 +360,9 @@ export default function Fees() {
                   <TableHead>Student ID</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Course</TableHead>
-                  <TableHead>Total Fees</TableHead>
+                  <TableHead>Original Fee</TableHead>
+                  <TableHead>Discount</TableHead>
+                  <TableHead>Final Fee</TableHead>
                   <TableHead>Paid</TableHead>
                   <TableHead>Balance</TableHead>
                   <TableHead>Status</TableHead>
@@ -355,6 +381,22 @@ export default function Fees() {
                       </div>
                     </TableCell>
                     <TableCell>{record.students?.courses?.code || 'N/A'}</TableCell>
+                    <TableCell>₹{(record.original_amount || record.total_amount).toLocaleString('en-IN')}</TableCell>
+                    <TableCell>
+                      {(record.discount_amount || 0) > 0 || (record.discount_percentage || 0) > 0 ? (
+                        <div className="text-sm">
+                          <div>₹{(record.discount_amount || 0).toLocaleString('en-IN')}</div>
+                          {(record.discount_percentage || 0) > 0 && (
+                            <div className="text-xs text-muted-foreground">({record.discount_percentage}%)</div>
+                          )}
+                          {record.discount_reason && (
+                            <div className="text-xs text-muted-foreground">{record.discount_reason}</div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
                     <TableCell>₹{record.total_amount.toLocaleString('en-IN')}</TableCell>
                     <TableCell>₹{record.paid_amount.toLocaleString('en-IN')}</TableCell>
                     <TableCell>

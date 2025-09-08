@@ -55,6 +55,10 @@ interface StudentFee {
   paid_amount: number;
   due_date: string;
   status: string;
+  original_amount?: number;
+  discount_amount?: number;
+  discount_percentage?: number;
+  discount_reason?: string;
 }
 
 interface PaymentReceiptData {
@@ -158,7 +162,18 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
     try {
       const { data, error } = await supabase
         .from('student_fees')
-        .select('id, balance_amount, total_amount, paid_amount, due_date, status')
+        .select(`
+          id, 
+          balance_amount, 
+          total_amount, 
+          paid_amount, 
+          due_date, 
+          status,
+          original_amount,
+          discount_amount,
+          discount_percentage,
+          discount_reason
+        `)
         .eq('student_id', studentId)
         .gt('balance_amount', 0);
 
@@ -415,7 +430,14 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
                 <SelectContent>
                   {studentFees.map((fee) => (
                     <SelectItem key={fee.id} value={fee.id}>
-                      Balance: ₹{fee.balance_amount.toLocaleString('en-IN')} (Total: ₹{fee.total_amount.toLocaleString('en-IN')})
+                      <div>
+                        <div>Balance: ₹{fee.balance_amount.toLocaleString('en-IN')} | Total: ₹{fee.total_amount.toLocaleString('en-IN')}</div>
+                        {fee.discount_amount > 0 && (
+                          <div className="text-xs text-muted-foreground">
+                            (Original: ₹{fee.original_amount?.toLocaleString('en-IN')} - Discount: ₹{fee.discount_amount.toLocaleString('en-IN')})
+                          </div>
+                        )}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>

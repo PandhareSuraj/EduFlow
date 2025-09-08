@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, User } from "lucide-react";
+import { Plus, FileText, User, IndianRupee, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Export the individual dialog components
 export { ViewStudentDialog } from "./ViewStudentDialog";
@@ -19,6 +20,41 @@ interface Course {
   id: number;
   name: string;
   code: string;
+}
+
+interface FeeStructure {
+  id: string;
+  total_fee: number;
+  registration_fee: number;
+  tuition_fee: number;
+  lab_fee: number;
+  library_fee: number;
+  other_fees: number;
+  due_date: string;
+  semester: number;
+}
+
+interface AddStudentDialogProps {
+  onStudentAdded?: () => void;
+}
+
+
+interface Course {
+  id: number;
+  name: string;
+  code: string;
+}
+
+interface FeeStructure {
+  id: string;
+  total_fee: number;
+  registration_fee: number;
+  tuition_fee: number;
+  lab_fee: number;
+  library_fee: number;
+  other_fees: number;
+  due_date: string;
+  semester: number;
 }
 
 interface AddStudentDialogProps {
@@ -38,11 +74,34 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
     year: 1,
     admission_date: new Date().toISOString().split('T')[0]
   });
+  const [feeData, setFeeData] = useState({
+    discount_type: 'amount',
+    discount_amount: 0,
+    discount_percentage: 0,
+    discount_reason: ''
+  });
   const [documents, setDocuments] = useState<{[key: string]: File}>({});
   const [courses, setCourses] = useState<Course[]>([]);
+  const [feeStructure, setFeeStructure] = useState<FeeStructure | null>(null);
   const [loadingCourses, setLoadingCourses] = useState(true);
+  const [loadingFeeStructure, setLoadingFeeStructure] = useState(false);
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const { toast } = useToast();
+
+  // Calculate final fee amount
+  const calculateFinalFee = () => {
+    if (!feeStructure) return 0;
+    
+    let finalAmount = feeStructure.total_fee;
+    
+    if (feeData.discount_type === 'percentage' && feeData.discount_percentage > 0) {
+      finalAmount = feeStructure.total_fee - (feeStructure.total_fee * feeData.discount_percentage / 100);
+    } else if (feeData.discount_type === 'amount' && feeData.discount_amount > 0) {
+      finalAmount = feeStructure.total_fee - feeData.discount_amount;
+    }
+    
+    return Math.max(finalAmount, 0);
+  };
 
   // Load courses from Supabase
   useEffect(() => {
@@ -73,6 +132,37 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
 
     loadCourses();
   }, [toast]);
+
+  // Load fee structure when course or semester changes
+  useEffect(() => {
+    if (formData.course_id && formData.semester) {
+      loadFeeStructure(parseInt(formData.course_id), formData.semester);
+    }
+  }, [formData.course_id, formData.semester]);
+
+  const loadFeeStructure = async (courseId: number, semester: number) => {
+    setLoadingFeeStructure(true);
+    try {
+      const { data, error } = await supabase
+        .from('fee_structures')
+        .select('*')
+        .eq('course_id', courseId)
+        .eq('semester', semester)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error loading fee structure:', error);
+      } else {
+        setFeeStructure(data);
+      }
+    } catch (error) {
+      console.error('Error loading fee structure:', error);
+    } finally {
+      setLoadingFeeStructure(false);
+    }
+  };
 
   const handleFileUpload = (documentType: string, file: File) => {
     setDocuments(prev => ({
@@ -242,9 +332,28 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
         await Promise.all(documentPromises);
       }
 
+      // Create fee record if fee structure exists
+      if (feeStructure && studentData) {
+        const discountAmount = feeData.discount_type === 'amount' ? feeData.discount_amount : 0;
+        const discountPercentage = feeData.discount_type === 'percentage' ? feeData.discount_percentage : 0;
+        
+        const { error: feeError } = await supabase
+          .rpc('auto_create_student_fees_with_discount', {
+            p_student_id: studentData.id,
+            p_discount_amount: discountAmount,
+            p_discount_percentage: discountPercentage,
+            p_discount_reason: feeData.discount_reason || null
+          });
+
+        if (feeError) {
+          console.error('Error creating fee record:', feeError);
+          // Don't fail the entire operation, just log the error
+        }
+      }
+
       toast({
         title: "Success",
-        description: `Student ${formData.name} added successfully with ID: ${studentData.student_id}!`,
+        description: `Student ${formData.name} added successfully with ID: ${studentData.student_id}! ${feeStructure ? 'Fee record created.' : 'No fee structure found for selected course/semester.'}`,
       });
 
       // Reset form
@@ -258,7 +367,14 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
         year: 1,
         admission_date: new Date().toISOString().split('T')[0]
       });
+      setFeeData({
+        discount_type: 'amount',
+        discount_amount: 0,
+        discount_percentage: 0,
+        discount_reason: ''
+      });
       setDocuments({});
+      setFeeStructure(null);
       setOpen(false);
 
       // Call the callback to refresh parent component
@@ -292,8 +408,9 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <Tabs defaultValue="details" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="details">Student Details</TabsTrigger>
+              <TabsTrigger value="fees">Fee Information</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
 
@@ -400,6 +517,119 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
                   />
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="fees" className="space-y-4">
+              {feeStructure ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <IndianRupee className="h-5 w-5" />
+                      Fee Structure (Semester {feeStructure.semester})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>Registration Fee: ₹{feeStructure.registration_fee?.toLocaleString('en-IN') || 0}</div>
+                      <div>Tuition Fee: ₹{feeStructure.tuition_fee?.toLocaleString('en-IN') || 0}</div>
+                      <div>Lab Fee: ₹{feeStructure.lab_fee?.toLocaleString('en-IN') || 0}</div>
+                      <div>Library Fee: ₹{feeStructure.library_fee?.toLocaleString('en-IN') || 0}</div>
+                      <div>Other Fees: ₹{feeStructure.other_fees?.toLocaleString('en-IN') || 0}</div>
+                      <div className="font-semibold">Total Fee: ₹{feeStructure.total_fee?.toLocaleString('en-IN') || 0}</div>
+                    </div>
+                    
+                    <div className="border-t pt-4">
+                      <Label className="text-base font-semibold">Discount</Label>
+                      <div className="grid grid-cols-2 gap-4 mt-2">
+                        <div className="space-y-2">
+                          <Label>Discount Type</Label>
+                          <Select value={feeData.discount_type} onValueChange={(value) => setFeeData({...feeData, discount_type: value})}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="amount">Fixed Amount</SelectItem>
+                              <SelectItem value="percentage">Percentage</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        {feeData.discount_type === 'amount' ? (
+                          <div className="space-y-2">
+                            <Label>Discount Amount (₹)</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              max={feeStructure.total_fee}
+                              value={feeData.discount_amount}
+                              onChange={(e) => setFeeData({...feeData, discount_amount: parseFloat(e.target.value) || 0})}
+                              placeholder="Enter discount amount"
+                            />
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <Label>Discount Percentage (%)</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={feeData.discount_percentage}
+                              onChange={(e) => setFeeData({...feeData, discount_percentage: parseFloat(e.target.value) || 0})}
+                              placeholder="Enter discount percentage"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-2 mt-4">
+                        <Label>Discount Reason</Label>
+                        <Input
+                          value={feeData.discount_reason}
+                          onChange={(e) => setFeeData({...feeData, discount_reason: e.target.value})}
+                          placeholder="Reason for discount (optional)"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="border-t pt-4">
+                      <div className="flex items-center justify-between text-lg font-semibold">
+                        <span className="flex items-center gap-2">
+                          <Calculator className="h-5 w-5" />
+                          Final Fee Amount:
+                        </span>
+                        <span className="text-primary">₹{calculateFinalFee().toLocaleString('en-IN')}</span>
+                      </div>
+                      {(feeData.discount_amount > 0 || feeData.discount_percentage > 0) && (
+                        <div className="text-sm text-muted-foreground mt-1">
+                          You saved: ₹{(feeStructure.total_fee - calculateFinalFee()).toLocaleString('en-IN')}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardContent className="pt-6">
+                    {loadingFeeStructure ? (
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                        <p className="text-sm text-muted-foreground mt-2">Loading fee structure...</p>
+                      </div>
+                    ) : formData.course_id ? (
+                      <div className="text-center py-4 text-muted-foreground">
+                        <IndianRupee className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No fee structure found for the selected course and semester.</p>
+                        <p className="text-sm">Student will be registered without automatic fee creation.</p>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground">
+                        <IndianRupee className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>Please select a course to view fee information.</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="documents" className="space-y-4">
