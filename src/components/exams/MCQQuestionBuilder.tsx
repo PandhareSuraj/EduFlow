@@ -105,7 +105,8 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
   const getNextQuestionNumber = () => {
     if (questions.length === 0) return 1;
     const usedNumbers = questions.map(q => q.question_number).sort((a, b) => a - b);
-    for (let i = 1; i <= exam.total_questions; i++) {
+    const totalQuestions = exam.total_questions || 30;
+    for (let i = 1; i <= totalQuestions; i++) {
       if (!usedNumbers.includes(i)) {
         return i;
       }
@@ -299,7 +300,7 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <HelpCircle className="h-4 w-4 mr-2" />
-          Manage Questions ({questions.length}/{exam.total_questions})
+          Manage Questions ({exam.actual_question_count || 0}/{exam.total_questions || 30})
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-hidden flex flex-col">
@@ -327,7 +328,7 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
                     id="question_number"
                     type="number"
                     min="1"
-                    max={exam.total_questions}
+                    max={exam.total_questions || 30}
                     value={questionForm.question_number}
                     onChange={(e) => setQuestionForm({
                       ...questionForm,
@@ -454,7 +455,7 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
           {/* Questions List */}
           <Card>
             <CardHeader>
-              <CardTitle>Questions ({questions.length}/{exam.total_questions})</CardTitle>
+              <CardTitle>Questions ({questions.length}/{exam.total_questions || 30})</CardTitle>
               <CardDescription>
                 Questions added to this exam
               </CardDescription>

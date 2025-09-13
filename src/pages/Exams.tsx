@@ -24,6 +24,9 @@ interface Exam {
   course_id: number;
   exam_date: string;
   total_marks: number;
+  total_questions?: number;
+  exam_type?: string;
+  actual_question_count?: number;
   status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
   courses?: { name: string; code: string };
 }
