@@ -9,9 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Edit, Trash2, Save, FileText, Loader2, HelpCircle } from "lucide-react";
+import { Plus, Edit, Trash2, Save, FileText, Loader2, HelpCircle, Upload, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ExcelImportDialog } from "./ExcelImportDialog";
 
 interface MCQOption {
   key: 'A' | 'B' | 'C' | 'D';
@@ -34,6 +35,8 @@ interface Exam {
   name: string;
   total_questions: number;
   total_marks: number;
+  exam_type?: string;
+  actual_question_count?: number;
 }
 
 interface MCQQuestionBuilderProps {

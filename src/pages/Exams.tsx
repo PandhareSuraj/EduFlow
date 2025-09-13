@@ -69,21 +69,46 @@ export default function Exams() {
 
       if (coursesError) throw coursesError;
 
-      // Fetch exams separately
+      // Fetch exams separately with question counts
       const { data: examsData, error: examsError } = await supabase
         .from('exams')
-        .select('id, name, course_id, exam_date, total_marks, status')
+        .select(`
+          id, 
+          name, 
+          course_id, 
+          exam_date, 
+          total_marks, 
+          total_questions,
+          exam_type,
+          status
+        `)
         .order('exam_date', { ascending: false });
 
       if (examsError) throw examsError;
 
       setCourses(coursesData || []);
       
-      // Map exams with course data
-      const mappedExams = (examsData || []).map(exam => ({
-        ...exam,
-        status: exam.status as 'scheduled' | 'ongoing' | 'completed' | 'cancelled',
-        courses: coursesData?.find(c => c.id === exam.course_id)
+      // Map exams with course data and question counts
+      const mappedExams = await Promise.all((examsData || []).map(async (exam) => {
+        // Get actual question count for MCQ exams
+        let actualQuestionCount = 0;
+        if (exam.exam_type === 'mcq') {
+          const { count, error: countError } = await supabase
+            .from('mcq_questions')
+            .select('*', { count: 'exact', head: true })
+            .eq('exam_id', exam.id);
+          
+          if (!countError) {
+            actualQuestionCount = count || 0;
+          }
+        }
+
+        return {
+          ...exam,
+          actual_question_count: actualQuestionCount,
+          status: exam.status as 'scheduled' | 'ongoing' | 'completed' | 'cancelled',
+          course: courses.find(c => c.id === exam.course_id)
+        };
       }));
       
       setExams(mappedExams);
@@ -600,20 +625,39 @@ export default function Exams() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <PermissionWrapper 
-                              permission="EXAMS_CONDUCT"
-                              fallback={null}
-                            >
-                              <MCQQuestionBuilder
-                                exam={{
-                                  id: exam.id,
-                                  name: exam.name,
-                                  total_questions: 0,
-                                  total_marks: exam.total_marks
-                                }}
-                                onQuestionsUpdated={fetchData}
-                              />
-                            </PermissionWrapper>
+                            {/* MCQ Question Management - Only for MCQ exams */}
+                            {exam.exam_type === 'mcq' && (
+                              <PermissionWrapper 
+                                permission="EXAMS_CONDUCT"
+                                fallback={null}
+                              >
+                                <MCQQuestionBuilder
+                                  exam={{
+                                    id: exam.id,
+                                    name: exam.name,
+                                    total_questions: exam.total_questions || 30,
+                                    total_marks: exam.total_marks,
+                                    exam_type: exam.exam_type,
+                                    actual_question_count: exam.actual_question_count || 0
+                                  }}
+                                  onQuestionsUpdated={fetchData}
+                                />
+                              </PermissionWrapper>
+                            )}
+                            
+                            {/* Theory/Other Exam Management */}
+                            {exam.exam_type !== 'mcq' && (
+                              <PermissionWrapper 
+                                permission="EXAMS_CONDUCT"
+                                fallback={null}
+                              >
+                                <Button variant="outline" size="sm">
+                                  <FileText className="h-4 w-4 mr-1" />
+                                  Manage Questions
+                                </Button>
+                              </PermissionWrapper>
+                            )}
+                            
                             {courses.find(c => c.id === exam.course_id) && (
                               <ViewExamsDialog course={courses.find(c => c.id === exam.course_id)!} />
                             )}
