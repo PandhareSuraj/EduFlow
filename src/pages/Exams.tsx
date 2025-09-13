@@ -434,7 +434,7 @@ export default function Exams() {
           <h1 className="text-3xl font-bold text-foreground">Exams & Results</h1>
           <p className="text-muted-foreground">Manage examinations and student results</p>
         </div>
-        {courses.length > 0 && (
+        {courses && courses.length > 0 && (
           <div className="flex gap-2">
             <PermissionWrapper 
               permission="EXAMS_CREATE"
@@ -445,7 +445,7 @@ export default function Exams() {
               }
             >
               <MCQExamCreationDialog 
-                courses={courses} 
+                courses={courses || []} 
                 onExamCreated={fetchData}
               />
             </PermissionWrapper>

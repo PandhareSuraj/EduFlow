@@ -160,11 +160,11 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
                     <SelectValue placeholder="Select a course" />
                   </SelectTrigger>
                   <SelectContent>
-                    {courses.map((course) => (
+                    {courses?.map((course) => (
                       <SelectItem key={course.id} value={course.id.toString()}>
                         {course.name} ({course.code})
                       </SelectItem>
-                    ))}
+                    )) || []}
                   </SelectContent>
                 </Select>
               </div>
