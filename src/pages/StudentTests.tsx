@@ -198,10 +198,10 @@ export default function StudentTests() {
         return <Badge variant="default">Available</Badge>;
       case 'completed':
         return <Badge variant="secondary">Completed</Badge>;
-      case 'in_progress':
-        return <Badge variant="outline">In Progress</Badge>;
-      case 'locked':
-        return <Badge variant="destructive">Locked</Badge>;
+      case 'upcoming':
+        return <Badge variant="outline">Upcoming</Badge>;
+      case 'expired':
+        return <Badge variant="destructive">Expired</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -213,9 +213,9 @@ export default function StudentTests() {
         return <Play className="h-4 w-4 text-green-600" />;
       case 'completed':
         return <CheckCircle className="h-4 w-4 text-blue-600" />;
-      case 'in_progress':
+      case 'upcoming':
         return <Clock className="h-4 w-4 text-orange-600" />;
-      case 'locked':
+      case 'expired':
         return <AlertCircle className="h-4 w-4 text-red-600" />;
       default:
         return <BookOpen className="h-4 w-4 text-gray-600" />;
@@ -230,7 +230,7 @@ export default function StudentTests() {
   };
 
   const handleStartTest = async (testId: string) => {
-    if (!studentData) {
+    if (!studentId) {
       toast({
         title: "Error",
         description: "Student data not found. Please log in as a student.",
@@ -247,7 +247,7 @@ export default function StudentTests() {
         .single();
       
       if (exam) {
-        setCurrentExam({ ...exam, studentId: studentData.id });
+        setCurrentExam({ ...exam, studentId: studentId });
       } else {
         // For mock tests, show alert
         toast({
@@ -274,7 +274,8 @@ export default function StudentTests() {
 
   const completedTests = tests.filter(test => test.status === 'completed');
   const availableTests = tests.filter(test => test.status === 'available');
-  const lockedTests = tests.filter(test => test.status === 'locked');
+  const upcomingTests = tests.filter(test => test.status === 'upcoming');
+  const expiredTests = tests.filter(test => test.status === 'expired');
 
   const averageScore = completedTests.length > 0 
     ? Math.round(completedTests.reduce((sum, test) => sum + (test.score || 0), 0) / completedTests.length)
@@ -483,19 +484,19 @@ export default function StudentTests() {
         </Card>
       )}
 
-      {/* Locked Tests */}
-      {lockedTests.length > 0 && (
+      {/* Upcoming Tests */}
+      {upcomingTests.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-red-600" />
+              <AlertCircle className="h-5 w-5 text-orange-600" />
               Upcoming Tests
             </CardTitle>
             <CardDescription>Tests that will be available later</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
-              {lockedTests.map((test) => (
+              {upcomingTests.map((test) => (
                 <div key={test.id} className="border rounded-lg p-4 opacity-60">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
