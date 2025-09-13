@@ -1,5 +1,8 @@
 project_id = "velhefqnjmevluskffzp"
 
+[functions.create-general-user]
+verify_jwt = false
+
 [functions.create-faculty-user]
 verify_jwt = true
 

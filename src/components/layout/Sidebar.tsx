@@ -14,7 +14,7 @@ export function Sidebar() {
     if (userRole === 'super_admin') {
       // Super Admin Navigation - Multi-college management
       return [
-        { name: "Dashboard", href: "/", icon: BarChart3 },
+        { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
         { name: "College Management", href: "/colleges", icon: Building2 },
         { name: "AMC Revenue", href: "/amc-revenue", icon: IndianRupee },
         { name: "System Analytics", href: "/system-analytics", icon: TrendingUp },
@@ -25,7 +25,7 @@ export function Sidebar() {
     } else if (userRole === 'student') {
       // Student Navigation - View own information and tests
       return [
-        { name: "Dashboard", href: "/", icon: BarChart3 },
+        { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
         { name: "My Profile", href: "/student-profile", icon: Users },
         { name: "My Course", href: "/student-course", icon: GraduationCap },
         { name: "My Results", href: "/student-results", icon: FileText },
@@ -35,7 +35,7 @@ export function Sidebar() {
     } else if (userRole === 'admin') {
       // Admin Navigation - Full college operations
       return [
-        { name: "Dashboard", href: "/", icon: BarChart3 },
+        { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
         { name: "Students", href: "/students", icon: Users },
         { name: "Courses", href: "/courses", icon: GraduationCap },
         { name: "Faculty", href: "/faculty", icon: UserCheck },
@@ -52,7 +52,7 @@ export function Sidebar() {
     } else if (userRole === 'teacher') {
       // Teacher Navigation - Teaching focused
       return [
-        { name: "Dashboard", href: "/", icon: BarChart3 },
+        { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
         { name: "Students", href: "/students", icon: Users },
         { name: "Courses", href: "/courses", icon: GraduationCap },
         { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
@@ -63,7 +63,7 @@ export function Sidebar() {
     } else if (userRole === 'clerk') {
       // Clerk Navigation - Administrative tasks
       return [
-        { name: "Dashboard", href: "/", icon: BarChart3 },
+        { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
         { name: "Students", href: "/students", icon: Users },
         { name: "Enquiries", href: "/enquiries", icon: MessageSquare },
         { name: "Fees", href: "/fees", icon: CreditCard },
@@ -75,14 +75,14 @@ export function Sidebar() {
     } else if (userRole === 'librarian') {
       // Librarian Navigation - Library focused
       return [
-        { name: "Dashboard", href: "/", icon: BarChart3 },
+        { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
         { name: "Library", href: "/library", icon: BookOpen },
         { name: "Inventory", href: "/inventory", icon: Package }
       ];
     } else if (userRole === 'accountant') {
       // Accountant Navigation - Financial focus
       return [
-        { name: "Dashboard", href: "/", icon: BarChart3 },
+        { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
         { name: "Students", href: "/students", icon: Users },
         { name: "Fees", href: "/fees", icon: CreditCard },
         { name: "Reports", href: "/reports", icon: BarChart3 }
@@ -90,7 +90,7 @@ export function Sidebar() {
     } else {
       // Default navigation for other roles
       return [
-        { name: "Dashboard", href: "/", icon: BarChart3 }
+        { name: "Dashboard", href: "/dashboard", icon: BarChart3 }
       ];
     }
   };

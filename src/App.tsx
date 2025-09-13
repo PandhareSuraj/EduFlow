@@ -20,6 +20,7 @@ import Inventory from "./pages/Inventory";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import CollegeManagement from "./pages/CollegeManagement";
+import UserManagement from "./pages/UserManagement";
 import Auth from "./pages/Auth";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -136,6 +137,13 @@ const App = () => (
               <ProtectedRoute requiredRole="super_admin">
                 <Layout>
                   <CollegeManagement />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/user-management" element={
+              <ProtectedRoute requiredRole="super_admin">
+                <Layout>
+                  <UserManagement />
                 </Layout>
               </ProtectedRoute>
             } />

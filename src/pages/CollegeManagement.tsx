@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Building2, Users, Settings, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface College {
   id: string;
@@ -26,6 +27,7 @@ interface College {
 export default function CollegeManagement() {
   const { userRole } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [colleges, setColleges] = useState<College[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -273,7 +275,7 @@ export default function CollegeManagement() {
               </div>
               
               <div className="flex gap-2 mt-4">
-                <Button size="sm" variant="outline" className="flex-1">
+                <Button size="sm" variant="outline" className="flex-1" onClick={() => navigate(`/user-management?college=${college.id}`)}>
                   <Users className="mr-2 h-4 w-4" />
                   Manage Users
                 </Button>
