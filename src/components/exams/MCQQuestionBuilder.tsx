@@ -149,24 +149,27 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
         explanation: questionForm.explanation?.trim() || null
       };
 
+      let result;
       if (editingQuestion) {
-        const { error } = await supabase
+        result = await supabase
           .from('mcq_questions')
           .update(questionData)
-          .eq('id', editingQuestion.id);
+          .eq('id', editingQuestion.id)
+          .select();
         
-        if (error) throw error;
+        if (result.error) throw result.error;
         
         toast({
           title: "Question Updated",
           description: "Question has been updated successfully",
         });
       } else {
-        const { error } = await supabase
+        result = await supabase
           .from('mcq_questions')
-          .insert([questionData]);
+          .insert([questionData])
+          .select();
         
-        if (error) throw error;
+        if (result.error) throw result.error;
         
         toast({
           title: "Question Added",
@@ -174,10 +177,17 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
         });
       }
 
+      // Reset form and refresh questions list
       resetForm();
-      fetchQuestions();
+      
+      // Wait a bit before fetching to ensure database consistency
+      setTimeout(() => {
+        fetchQuestions();
+      }, 100);
+      
       onQuestionsUpdated?.();
     } catch (error: any) {
+      console.error('Error saving question:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to save question",

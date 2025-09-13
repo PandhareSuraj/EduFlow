@@ -17,14 +17,15 @@ interface Course {
 }
 
 interface MCQExamCreationDialogProps {
-  course: Course;
+  courses: Course[];
   onExamCreated?: () => void;
 }
 
-export function MCQExamCreationDialog({ course, onExamCreated }: MCQExamCreationDialogProps) {
+export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreationDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
+    course_id: "",
     name: "",
     exam_type: "mcq",
     exam_date: "",
@@ -42,16 +43,31 @@ export function MCQExamCreationDialog({ course, onExamCreated }: MCQExamCreation
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.course_id) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a course",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
+      const selectedCourse = courses.find(c => c.id.toString() === formData.course_id);
+      if (!selectedCourse) {
+        throw new Error("Selected course not found");
+      }
+
       // Get college_id
-      let collegeId = course.college_id;
+      let collegeId = selectedCourse.college_id;
       if (!collegeId) {
         const { data: courseData, error: courseError } = await supabase
           .from('courses')
           .select('college_id')
-          .eq('id', course.id)
+          .eq('id', selectedCourse.id)
           .single();
         
         if (courseError) throw courseError;
@@ -62,7 +78,7 @@ export function MCQExamCreationDialog({ course, onExamCreated }: MCQExamCreation
       const { data: examData, error: examError } = await supabase
         .from('exams')
         .insert([{
-          course_id: course.id,
+          course_id: selectedCourse.id,
           college_id: collegeId,
           name: formData.name.trim(),
           exam_type: formData.exam_type,
@@ -85,10 +101,11 @@ export function MCQExamCreationDialog({ course, onExamCreated }: MCQExamCreation
 
       toast({
         title: "MCQ Exam Created",
-        description: `${formData.name} has been created. You can now add questions.`,
+        description: `${formData.name} has been created for ${selectedCourse.name}. You can now add questions.`,
       });
       
       setFormData({ 
+        course_id: "",
         name: "", 
         exam_type: "mcq",
         exam_date: "", 
@@ -125,7 +142,7 @@ export function MCQExamCreationDialog({ course, onExamCreated }: MCQExamCreation
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create MCQ Exam for {course.name}</DialogTitle>
+          <DialogTitle>Create MCQ Exam</DialogTitle>
           <DialogDescription>
             Set up a new multiple choice exam with customizable settings.
           </DialogDescription>
@@ -133,6 +150,24 @@ export function MCQExamCreationDialog({ course, onExamCreated }: MCQExamCreation
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="course_id">Course</Label>
+                <Select 
+                  value={formData.course_id} 
+                  onValueChange={(value) => setFormData({...formData, course_id: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses.map((course) => (
+                      <SelectItem key={course.id} value={course.id.toString()}>
+                        {course.name} ({course.code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="name">Exam Name</Label>
                 <Input
@@ -143,6 +178,9 @@ export function MCQExamCreationDialog({ course, onExamCreated }: MCQExamCreation
                   required
                 />
               </div>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="exam_type">Exam Type</Label>
                 <Select value={formData.exam_type} onValueChange={(value) => setFormData({...formData, exam_type: value})}>

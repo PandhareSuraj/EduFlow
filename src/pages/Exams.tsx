@@ -445,7 +445,7 @@ export default function Exams() {
               }
             >
               <MCQExamCreationDialog 
-                course={courses[0]} 
+                courses={courses} 
                 onExamCreated={fetchData}
               />
             </PermissionWrapper>
