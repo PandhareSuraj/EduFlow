@@ -1,6 +1,6 @@
 {
-  "name": "KK Patil Paramedical College - ERP System",
-  "short_name": "KK Patil ERP",
+  "name": "EduERP Platform - Multi-College Management System",
+  "short_name": "EduERP",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -22,5 +22,5 @@
     }
   ],
   "categories": ["education", "productivity"],
-  "description": "Comprehensive ERP system for KK Patil Paramedical College, Sangamner"
+  "description": "Comprehensive ERP platform for educational institutions. Manage multiple colleges, students, faculty, and operations from one unified system."
 }

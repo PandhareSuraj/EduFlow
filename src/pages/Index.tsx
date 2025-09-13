@@ -36,7 +36,7 @@ export default function Index() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <GraduationCap className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold">KK Patil Paramedical College</span>
+            <span className="text-xl font-bold">EduERP Platform</span>
           </div>
           <Button onClick={() => navigate('/auth')}>
             <LogIn className="mr-2 h-4 w-4" />
@@ -49,34 +49,36 @@ export default function Index() {
       <section className="container mx-auto px-4 py-20 text-center">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Welcome to KK Patil Paramedical College
+            Complete College Management Platform
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
-            Advanced Management System for Excellence in Healthcare Education
+            Powerful ERP System for Educational Institutions of All Types
           </p>
           <Button size="lg" onClick={() => navigate('/auth')} className="shadow-elegant">
-            Access Management System
+            Access Your Institution
           </Button>
         </div>
       </section>
 
       {/* Features */}
       <section className="container mx-auto px-4 py-20">
-        <h2 className="text-3xl font-bold text-center mb-12">System Features</h2>
+        <h2 className="text-3xl font-bold text-center mb-4">Platform Features</h2>
+        <p className="text-center text-muted-foreground mb-12">Supporting educational institutions across all disciplines</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <Card className="shadow-card">
             <CardHeader>
               <Users className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>Student Management</CardTitle>
+              <CardTitle>Multi-College Management</CardTitle>
               <CardDescription>
-                Complete student lifecycle management from admission to graduation
+                Manage multiple educational institutions from a single platform
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Student Registration & Profiles</li>
-                <li>• Document Management</li>
-                <li>• Academic Progress Tracking</li>
+                <li>• Centralized Administration</li>
+                <li>• Institution-wise Data Segregation</li>
+                <li>• Cross-Institution Reporting</li>
+                <li>• Role-based Access Control</li>
               </ul>
             </CardContent>
           </Card>
@@ -84,16 +86,17 @@ export default function Index() {
           <Card className="shadow-card">
             <CardHeader>
               <BookOpen className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>Academic Operations</CardTitle>
+              <CardTitle>Academic Excellence</CardTitle>
               <CardDescription>
-                Streamlined academic processes and curriculum management
+                Complete academic lifecycle management for any institution type
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Course & Subject Management</li>
-                <li>• Attendance Tracking</li>
-                <li>• Examination & Results</li>
+                <li>• Student Management System</li>
+                <li>• Course & Curriculum Planning</li>
+                <li>• Examination & Assessment</li>
+                <li>• Faculty Performance Tracking</li>
               </ul>
             </CardContent>
           </Card>
@@ -101,26 +104,56 @@ export default function Index() {
           <Card className="shadow-card">
             <CardHeader>
               <TrendingUp className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>Administrative Tools</CardTitle>
+              <CardTitle>Smart Administration</CardTitle>
               <CardDescription>
-                Comprehensive tools for efficient college administration
+                Advanced tools for efficient institutional operations
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Fee Management</li>
-                <li>• Reports & Analytics</li>
-                <li>• Faculty Management</li>
+                <li>• Financial Management</li>
+                <li>• Library & Inventory</li>
+                <li>• Analytics & Insights</li>
+                <li>• Compliance & Reporting</li>
               </ul>
             </CardContent>
           </Card>
         </div>
       </section>
 
+      {/* Additional Features Section */}
+      <section className="container mx-auto px-4 py-20 bg-muted/30">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-4">Supporting All Institution Types</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Our platform adapts to your institution's unique needs, whether you're running a medical college, 
+            engineering institute, arts college, or any other educational establishment.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="text-center p-4">
+            <div className="text-2xl mb-2">🏥</div>
+            <h3 className="font-semibold">Medical Colleges</h3>
+          </div>
+          <div className="text-center p-4">
+            <div className="text-2xl mb-2">⚙️</div>
+            <h3 className="font-semibold">Engineering</h3>
+          </div>
+          <div className="text-center p-4">
+            <div className="text-2xl mb-2">🎨</div>
+            <h3 className="font-semibold">Arts & Sciences</h3>
+          </div>
+          <div className="text-center p-4">
+            <div className="text-2xl mb-2">💼</div>
+            <h3 className="font-semibold">Commerce</h3>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-8 text-center text-muted-foreground">
-          <p>© 2024 KK Patil Paramedical College. All rights reserved.</p>
+          <p>© 2024 EduERP Platform. Empowering Educational Institutions.</p>
         </div>
       </footer>
     </div>

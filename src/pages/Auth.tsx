@@ -208,15 +208,15 @@ export default function Auth() {
               <GraduationCap className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">KK Patil Paramedical College</h1>
-          <p className="text-muted-foreground">Management System</p>
+          <h1 className="text-2xl font-bold text-foreground">EduERP Platform</h1>
+          <p className="text-muted-foreground">Educational Management System</p>
         </div>
 
         <Card className="shadow-elegant">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Welcome</CardTitle>
             <CardDescription className="text-center">
-              Sign in to your account or create a new one
+              Access your educational institution's management system
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -420,7 +420,7 @@ export default function Auth() {
             <Users className="h-3 w-3 mr-1" />
             {isLoading ? 'Creating...' : 'Create Demo Users'}
           </Button>
-          <p className="text-sm text-muted-foreground">© 2024 KK Patil Paramedical College. All rights reserved.</p>
+          <p className="text-sm text-muted-foreground">© 2024 EduERP Platform. Empowering Educational Institutions.</p>
         </div>
       </div>
     </div>
