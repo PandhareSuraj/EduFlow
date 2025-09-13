@@ -15,10 +15,13 @@ interface MCQTest {
   subject: string;
   duration: number; // in minutes
   totalQuestions: number;
-  status: 'available' | 'completed' | 'in_progress' | 'locked';
+  status: 'available' | 'completed' | 'upcoming' | 'expired';
   score?: number;
   completedAt?: string;
   description: string;
+  startTime?: string;
+  endTime?: string;
+  passingMarks?: number;
 }
 
 export default function StudentTests() {
@@ -26,7 +29,7 @@ export default function StudentTests() {
   const [loading, setLoading] = useState(true);
   const [currentExam, setCurrentExam] = useState<any>(null);
   const [showResults, setShowResults] = useState<string | null>(null);
-  const [studentData, setStudentData] = useState<any>(null);
+  const [studentId, setStudentId] = useState<number | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,44 +37,101 @@ export default function StudentTests() {
   }, []);
 
   const fetchExamsAndStudent = async () => {
+    setLoading(true);
     try {
-      // Get current student data
-      const { data: student } = await supabase
-        .rpc('get_student_data')
-        .single();
-      
-      if (student) {
-        setStudentData(student);
-        
-        // Fetch available MCQ exams
-        const { data: exams } = await supabase
-          .from('exams')
-          .select('*')
-          .eq('exam_type', 'mcq')
-          .eq('status', 'scheduled');
-
-        if (exams && exams.length > 0) {
-          const formattedTests = exams.map(exam => ({
-            id: exam.id,
-            title: exam.name,
-            subject: 'MCQ Test',
-            duration: exam.duration_minutes,
-            totalQuestions: exam.total_questions,
-            status: 'available' as const,
-            description: exam.description || 'Multiple choice examination'
-          }));
-          setTests(formattedTests);
-        } else {
-          // Use mock data when no real exams exist
-          setMockTests();
-        }
-      } else {
-        // No student data, use mock tests
+      // Get current user's email
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) {
+        console.error('No authenticated user found');
         setMockTests();
+        return;
       }
+
+      // Fetch student data first
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .select('id, course_id, name')
+        .eq('email', user.email)
+        .single();
+
+      if (studentError || !studentData) {
+        console.error('Error fetching student data:', studentError);
+        setMockTests();
+        return;
+      }
+
+      // Fetch live MCQ exams for the student's course
+      const { data: examsData, error: examsError } = await supabase
+        .from('exams')
+        .select(`
+          id,
+          name,
+          description,
+          exam_type,
+          start_time,
+          end_time,
+          duration_minutes,
+          total_questions,
+          passing_marks,
+          status,
+          subjects(name)
+        `)
+        .eq('course_id', studentData.course_id)
+        .eq('exam_type', 'mcq')
+        .in('status', ['scheduled', 'active'])
+        .order('start_time', { ascending: true });
+
+      if (examsError) {
+        console.error('Error fetching exams:', examsError);
+        setMockTests();
+        return;
+      }
+
+      // Check for existing exam sessions
+      const { data: sessionsData } = await supabase
+        .from('student_exam_sessions')
+        .select('exam_id, status, percentage, grade, marks_obtained, total_marks')
+        .eq('student_id', studentData.id);
+
+      const sessionMap = new Map(sessionsData?.map(s => [s.exam_id, s]) || []);
+
+      // Transform exams to MCQTest format
+      const transformedTests: MCQTest[] = examsData?.map(exam => {
+        const session = sessionMap.get(exam.id);
+        const now = new Date();
+        const startTime = new Date(exam.start_time || '');
+        const endTime = new Date(exam.end_time || '');
+        
+        let testStatus: 'available' | 'completed' | 'upcoming' | 'expired' = 'upcoming';
+        
+        if (session?.status === 'completed') {
+          testStatus = 'completed';
+        } else if (now >= startTime && now <= endTime) {
+          testStatus = 'available';
+        } else if (now > endTime) {
+          testStatus = 'expired';
+        }
+
+        return {
+          id: exam.id,
+          title: exam.name,
+          subject: exam.subjects?.[0]?.name || 'General',
+          duration: exam.duration_minutes || 60,
+          totalQuestions: exam.total_questions || 30,
+          status: testStatus,
+          score: session?.percentage || undefined,
+          completedAt: session?.status === 'completed' ? new Date().toISOString() : undefined,
+          description: exam.description || 'MCQ Examination',
+          startTime: exam.start_time,
+          endTime: exam.end_time,
+          passingMarks: exam.passing_marks
+        };
+      }) || [];
+
+      setTests(transformedTests);
+      setStudentId(studentData.id);
     } catch (error) {
-      console.error('Error fetching data:', error);
-      // Use mock data as fallback on error
+      console.error('Error in fetchExamsAndStudent:', error);
       setMockTests();
     } finally {
       setLoading(false);
@@ -117,7 +177,7 @@ export default function StudentTests() {
         subject: 'Pathology',
         duration: 40,
         totalQuestions: 35,
-        status: 'locked',
+        status: 'upcoming',
         description: 'Introduction to pathological conditions'
       },
       {

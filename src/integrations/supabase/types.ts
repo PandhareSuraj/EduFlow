@@ -1649,6 +1649,7 @@ export type Database = {
           status: string
           student_id: string
           updated_at: string
+          user_id: string | null
           year: number | null
         }
         Insert: {
@@ -1665,6 +1666,7 @@ export type Database = {
           status?: string
           student_id?: string
           updated_at?: string
+          user_id?: string | null
           year?: number | null
         }
         Update: {
@@ -1681,6 +1683,7 @@ export type Database = {
           status?: string
           student_id?: string
           updated_at?: string
+          user_id?: string | null
           year?: number | null
         }
         Relationships: [
@@ -1904,6 +1907,10 @@ export type Database = {
           student_id: string
           year: number
         }[]
+      }
+      get_student_login_status: {
+        Args: { _student_id: number }
+        Returns: boolean
       }
       get_user_college: {
         Args: Record<PropertyKey, never>

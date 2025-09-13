@@ -29,9 +29,13 @@ import {
   Eye,
   Edit,
   Trash2,
-  Loader2
+  Loader2,
+  Settings,
+  UserPlus
 } from "lucide-react";
 import { ViewStudentDialog, EditStudentDialog, DeleteStudentDialog, AddStudentDialog } from "@/components/forms/StudentDialogs";
+import { CreateStudentLoginDialog } from "@/components/forms/CreateStudentLoginDialog";
+import { ManageStudentLoginDialog } from "@/components/forms/ManageStudentLoginDialog";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +52,7 @@ interface Student {
   admission_date: string;
   status: string;
   class: string | null;
+  user_id?: string;
   courses?: {
     name: string;
     code: string;
@@ -89,6 +94,7 @@ export default function Students() {
           admission_date,
           status,
           class,
+          user_id,
           courses!students_course_id_fkey (
             name,
             code
@@ -342,6 +348,7 @@ export default function Students() {
                   <TableHead>Contact</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Fee Status</TableHead>
+                  <TableHead>Login</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -376,6 +383,37 @@ export default function Students() {
                             Clear
                           </Badge>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {student.user_id ? (
+                            <>
+                              <Badge variant="default">Has Login</Badge>
+                              <ManageStudentLoginDialog 
+                                student={student}
+                                onSuccess={refreshData}
+                                trigger={
+                                  <Button variant="ghost" size="sm">
+                                    <Settings className="h-4 w-4" />
+                                  </Button>
+                                }
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <Badge variant="secondary">No Login</Badge>
+                              <CreateStudentLoginDialog 
+                                student={student}
+                                onSuccess={refreshData}
+                                trigger={
+                                  <Button variant="ghost" size="sm">
+                                    <UserPlus className="h-4 w-4" />
+                                  </Button>
+                                }
+                              />
+                            </>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">

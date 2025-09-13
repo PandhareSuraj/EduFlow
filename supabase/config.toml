@@ -6,5 +6,8 @@ verify_jwt = true
 [functions.reset-faculty-password]
 verify_jwt = false
 
+[functions.create-student-user]
+verify_jwt = false
+
 [functions.clean-college-data]
 verify_jwt = true
