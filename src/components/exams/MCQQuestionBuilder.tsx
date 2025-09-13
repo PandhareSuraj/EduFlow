@@ -99,9 +99,20 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
     }
   }, [open]);
 
+  const getNextQuestionNumber = () => {
+    if (questions.length === 0) return 1;
+    const usedNumbers = questions.map(q => q.question_number).sort((a, b) => a - b);
+    for (let i = 1; i <= exam.total_questions; i++) {
+      if (!usedNumbers.includes(i)) {
+        return i;
+      }
+    }
+    return questions.length + 1;
+  };
+
   const resetForm = () => {
     setQuestionForm({
-      question_number: questions.length + 1,
+      question_number: getNextQuestionNumber(),
       question_text: "",
       options: [
         { key: 'A', text: '' },
@@ -137,6 +148,19 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
       return;
     }
 
+    // Check for duplicate question number if not editing
+    if (!editingQuestion) {
+      const existingQuestion = questions.find(q => q.question_number === questionForm.question_number);
+      if (existingQuestion) {
+        toast({
+          title: "Validation Error",
+          description: `Question number ${questionForm.question_number} is already used. Please choose a different number.`,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       const questionData = {
@@ -170,7 +194,17 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
           .insert([questionData])
           .select();
         
-        if (result.error) throw result.error;
+        if (result.error) {
+          if (result.error.code === '23505' && result.error.message.includes('unique_question_number_per_exam')) {
+            toast({
+              title: "Duplicate Question Number",
+              description: `Question number ${questionForm.question_number} already exists for this exam. Please choose a different number.`,
+              variant: "destructive"
+            });
+            return;
+          }
+          throw result.error;
+        }
         
         toast({
           title: "Question Added",

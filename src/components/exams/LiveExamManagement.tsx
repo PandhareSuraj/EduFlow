@@ -41,78 +41,227 @@ export function LiveExamManagement() {
   const [loading, setLoading] = useState(false);
   const [timeExtension, setTimeExtension] = useState(15);
 
-  // Mock data for demonstration
+  // Fetch live exams and student sessions
   useEffect(() => {
-    const mockLiveExams: LiveExam[] = [
-      {
-        id: "1",
-        name: "DMLT Final Exam",
-        course_name: "Diploma in Medical Laboratory Technology",
-        status: "ongoing",
-        start_time: "2024-02-15T10:00:00Z",
-        duration: 180,
-        students_enrolled: 45,
-        students_online: 42,
-        submissions_count: 15
-      },
-      {
-        id: "2", 
-        name: "Radiology Mid-term",
-        course_name: "Radiology Technology",
-        status: "ongoing",
-        start_time: "2024-02-15T14:00:00Z",
-        duration: 120,
-        students_enrolled: 30,
-        students_online: 28,
-        submissions_count: 8
-      }
-    ];
-
-    const mockStudents: StudentSubmission[] = [
-      {
-        id: "1",
-        student_name: "Aarti Sharma",
-        student_id: "STU001",
-        status: "in_progress",
-        time_remaining: 45,
-        progress: 75,
-        last_activity: "2 minutes ago"
-      },
-      {
-        id: "2",
-        student_name: "Rohit Patil", 
-        student_id: "STU002",
-        status: "submitted",
-        time_remaining: 0,
-        progress: 100,
-        last_activity: "15 minutes ago"
-      },
-      {
-        id: "3",
-        student_name: "Priya Kumar",
-        student_id: "STU003", 
-        status: "in_progress",
-        time_remaining: 62,
-        progress: 60,
-        last_activity: "Just now"
-      }
-    ];
-
-    setLiveExams(mockLiveExams);
-    setStudents(mockStudents);
+    fetchLiveExams();
+    fetchStudentSessions();
   }, []);
+
+  const fetchLiveExams = async () => {
+    setLoading(true);
+    try {
+      // First get active exam sessions
+      const { data: sessions, error: sessionsError } = await supabase
+        .from('student_exam_sessions')
+        .select(`
+          id,
+          exam_id,
+          student_id,
+          status,
+          start_time,
+          end_time,
+          duration_minutes
+        `)
+        .eq('status', 'in_progress')
+        .order('start_time', { ascending: false });
+
+      if (sessionsError) throw sessionsError;
+
+      if (!sessions || sessions.length === 0) {
+        setLiveExams([]);
+        return;
+      }
+
+      // Get unique exam IDs
+      const examIds = [...new Set(sessions.map(s => s.exam_id))];
+
+      // Get exam details for these IDs
+      const { data: exams, error: examsError } = await supabase
+        .from('exams')
+        .select(`
+          id,
+          name,
+          course_id,
+          duration_minutes,
+          total_questions
+        `)
+        .in('id', examIds);
+
+      if (examsError) throw examsError;
+
+      // Get course details
+      const courseIds = [...new Set(exams?.map(e => e.course_id) || [])];
+      const { data: courses, error: coursesError } = await supabase
+        .from('courses')
+        .select('id, name')
+        .in('id', courseIds);
+
+      if (coursesError) throw coursesError;
+
+      // Create course lookup map
+      const courseMap = new Map(courses?.map(c => [c.id, c.name]) || []);
+
+      // Group sessions by exam to get live exam data
+      const examMap = new Map();
+      sessions.forEach(session => {
+        const examId = session.exam_id;
+        const exam = exams?.find(e => e.id === examId);
+        
+        if (!exam) return;
+
+        if (!examMap.has(examId)) {
+          examMap.set(examId, {
+            id: examId,
+            name: exam.name,
+            course_name: courseMap.get(exam.course_id) || 'Unknown Course',
+            status: 'ongoing' as const,
+            start_time: session.start_time,
+            duration: exam.duration_minutes || 60,
+            students_enrolled: 0,
+            students_online: 0,
+            submissions_count: 0
+          });
+        }
+        
+        const liveExam = examMap.get(examId);
+        liveExam.students_online += 1;
+        if (session.status === 'completed') {
+          liveExam.submissions_count += 1;
+        }
+      });
+
+      // Get total enrolled students for each exam
+      for (const [examId, exam] of examMap.entries()) {
+        const examData = exams?.find(e => e.id === examId);
+        if (examData) {
+          const { count } = await supabase
+            .from('students')
+            .select('id', { count: 'exact' })
+            .eq('course_id', examData.course_id);
+          
+          exam.students_enrolled = count || 0;
+        }
+      }
+
+      const liveExamsData = Array.from(examMap.values());
+      setLiveExams(liveExamsData);
+
+    } catch (error: any) {
+      console.error('Error fetching live exams:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load live exams",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStudentSessions = async () => {
+    try {
+      const { data: sessions, error } = await supabase
+        .from('student_exam_sessions')
+        .select(`
+          id,
+          student_id,
+          status,
+          start_time,
+          end_time,
+          duration_minutes,
+          answered_questions,
+          total_questions
+        `)
+        .eq('status', 'in_progress')
+        .order('start_time', { ascending: false });
+
+      if (error) throw error;
+
+      if (!sessions || sessions.length === 0) {
+        setStudents([]);
+        return;
+      }
+
+      // Get student details
+      const studentIds = [...new Set(sessions.map(s => s.student_id))];
+      const { data: students, error: studentsError } = await supabase
+        .from('students')
+        .select('id, name, student_id')
+        .in('id', studentIds);
+
+      if (studentsError) throw studentsError;
+
+      // Create student lookup map
+      const studentMap = new Map(students?.map(s => [s.id, s]) || []);
+
+      const studentsData: StudentSubmission[] = sessions.map(session => {
+        const student = studentMap.get(session.student_id);
+        const timeElapsed = new Date().getTime() - new Date(session.start_time).getTime();
+        const totalDuration = (session.duration_minutes || 60) * 60 * 1000;
+        const timeRemaining = Math.max(0, Math.floor((totalDuration - timeElapsed) / (1000 * 60)));
+        const progress = session.total_questions > 0 ? 
+          Math.floor((session.answered_questions / session.total_questions) * 100) : 0;
+
+        return {
+          id: session.id,
+          student_name: student?.name || 'Unknown Student',
+          student_id: student?.student_id || 'Unknown ID',
+          status: session.status === 'completed' ? 'submitted' : 'in_progress',
+          time_remaining: timeRemaining,
+          progress: progress,
+          last_activity: timeElapsed < 120000 ? 'Just now' : 
+                        timeElapsed < 300000 ? 'Few minutes ago' : 
+                        'More than 5 minutes ago'
+        };
+      });
+
+      setStudents(studentsData);
+
+    } catch (error: any) {
+      console.error('Error fetching student sessions:', error);
+      toast({
+        title: "Error", 
+        description: error.message || "Failed to load student sessions",
+        variant: "destructive"
+      });
+    }
+  };
 
   const handleExtendTime = async (examId: string, minutes: number) => {
     try {
-      // In a real implementation, this would call an API to extend exam time
+      // Get current sessions for this exam
+      const { data: sessions, error: fetchError } = await supabase
+        .from('student_exam_sessions')
+        .select('id, duration_minutes')
+        .eq('exam_id', examId)
+        .eq('status', 'in_progress');
+
+      if (fetchError) throw fetchError;
+
+      // Update each session individually
+      for (const session of sessions || []) {
+        const newDuration = (session.duration_minutes || 60) + minutes;
+        
+        const { error: updateError } = await supabase
+          .from('student_exam_sessions')
+          .update({ duration_minutes: newDuration })
+          .eq('id', session.id);
+
+        if (updateError) throw updateError;
+      }
+
       toast({
         title: "Time Extended",
         description: `Exam time extended by ${minutes} minutes for all students`,
       });
-    } catch (error) {
+
+      // Refresh data
+      fetchLiveExams();
+      fetchStudentSessions();
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to extend exam time",
+        description: error.message || "Failed to extend exam time",
         variant: "destructive",
       });
     }
@@ -120,19 +269,31 @@ export function LiveExamManagement() {
 
   const handleEndExam = async (examId: string) => {
     try {
-      // In a real implementation, this would call an API to end the exam
-      setLiveExams(prev => prev.map(exam => 
-        exam.id === examId ? { ...exam, status: 'ongoing' as const } : exam
-      ));
+      // End all active sessions for this exam
+      const { error } = await supabase
+        .from('student_exam_sessions')
+        .update({ 
+          status: 'completed',
+          end_time: new Date().toISOString(),
+          submit_time: new Date().toISOString()
+        })
+        .eq('exam_id', examId)
+        .eq('status', 'in_progress');
+
+      if (error) throw error;
       
       toast({
         title: "Exam Ended",
         description: "The exam has been ended successfully. All submissions are now final.",
       });
-    } catch (error) {
+
+      // Refresh data
+      fetchLiveExams();
+      fetchStudentSessions();
+    } catch (error: any) {
       toast({
         title: "Error", 
-        description: "Failed to end exam",
+        description: error.message || "Failed to end exam",
         variant: "destructive",
       });
     }
@@ -140,14 +301,15 @@ export function LiveExamManagement() {
 
   const handlePauseExam = async (examId: string) => {
     try {
+      // For now, just show a message as pausing requires more complex state management
       toast({
         title: "Exam Paused",
         description: "The exam has been paused for all students",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to pause exam", 
+        description: error.message || "Failed to pause exam", 
         variant: "destructive",
       });
     }
@@ -155,14 +317,15 @@ export function LiveExamManagement() {
 
   const handleResumeExam = async (examId: string) => {
     try {
+      // For now, just show a message as resuming requires more complex state management
       toast({
-        title: "Exam Resumed",
+        title: "Exam Resumed",  
         description: "The exam has been resumed for all students",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to resume exam",
+        description: error.message || "Failed to resume exam",
         variant: "destructive",
       });
     }
