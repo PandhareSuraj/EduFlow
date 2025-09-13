@@ -173,10 +173,6 @@ export function ManageStudentLoginDialog({ student, trigger, onSuccess }: Manage
     }
   };
 
-  if (!student.user_id) {
-    return null;
-  }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -187,13 +183,14 @@ export function ManageStudentLoginDialog({ student, trigger, onSuccess }: Manage
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Manage Student Login</DialogTitle>
-          <DialogDescription>
-            Manage login credentials for <strong>{student.name}</strong>
-          </DialogDescription>
-        </DialogHeader>
+      {student.user_id && (
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Manage Student Login</DialogTitle>
+            <DialogDescription>
+              Manage login credentials for <strong>{student.name}</strong>
+            </DialogDescription>
+          </DialogHeader>
 
         <div className="space-y-6">
           {/* Role Management */}
@@ -296,6 +293,7 @@ export function ManageStudentLoginDialog({ student, trigger, onSuccess }: Manage
           </Button>
         </DialogFooter>
       </DialogContent>
+      )}
     </Dialog>
   );
 }
