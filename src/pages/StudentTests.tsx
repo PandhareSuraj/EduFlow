@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, BookOpen, Play, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Clock, BookOpen, Play, CheckCircle, AlertCircle, Loader2, Timer } from "lucide-react";
 import { StudentExamInterface } from "@/components/exams/StudentExamInterface";
 import { ExamResultsDisplay } from "@/components/exams/ExamResultsDisplay";
+import { CountdownTimer } from "@/components/ui/countdown-timer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { RoleGuard } from "@/components/permissions/RoleGuard";
@@ -311,6 +312,10 @@ export default function StudentTests() {
     });
   };
 
+  const handleRefreshTests = () => {
+    fetchExamsAndStudent();
+  };
+
   const completedTests = tests.filter(test => test.status === 'completed');
   const availableTests = tests.filter(test => test.status === 'available');
   const upcomingTests = tests.filter(test => test.status === 'upcoming');
@@ -528,40 +533,74 @@ export default function StudentTests() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-orange-600" />
+              <Timer className="h-5 w-5 text-orange-600" />
               Upcoming Tests
             </CardTitle>
-            <CardDescription>Tests that will be available later</CardDescription>
+            <CardDescription>Tests scheduled for later - watch the countdown!</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4">
+            <div className="grid gap-6">
               {upcomingTests.map((test) => (
-                <div key={test.id} className="border rounded-lg p-4 opacity-60">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      {getStatusIcon(test.status)}
-                      <div>
-                        <h3 className="font-semibold">{test.title}</h3>
-                        <p className="text-sm text-muted-foreground">{test.subject}</p>
+                <div key={test.id} className="border rounded-lg p-6 bg-gradient-to-r from-background to-muted/30">
+                  <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+                    {/* Test Info Section */}
+                    <div className="flex-1 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {getStatusIcon(test.status)}
+                          <div>
+                            <h3 className="text-lg font-semibold">{test.title}</h3>
+                            <p className="text-sm text-muted-foreground">{test.subject}</p>
+                          </div>
+                        </div>
+                        {getStatusBadge(test.status)}
                       </div>
+                      
+                      <p className="text-sm text-muted-foreground">{test.description}</p>
+                      
+                      <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {test.duration} min
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <BookOpen className="h-3 w-3" />
+                          {test.totalQuestions} questions
+                        </span>
+                        {test.passingMarks && (
+                          <span>Passing: {test.passingMarks}%</span>
+                        )}
+                      </div>
+
+                      {/* Start Time Display */}
+                      {test.startTime && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-muted-foreground">Starts:</span>
+                          <span className="font-medium">
+                            {formatISTDate(test.startTime, 'MMM d, yyyy \'at\' h:mm a')}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    {getStatusBadge(test.status)}
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground mb-3">{test.description}</p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {test.duration} min
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="h-3 w-3" />
-                        {test.totalQuestions} questions
-                      </span>
+
+                    {/* Countdown Timer Section */}
+                    <div className="lg:w-80">
+                      {test.startTime ? (
+                        <CountdownTimer
+                          targetDate={test.startTime}
+                          onExpire={handleRefreshTests}
+                          urgencyThreshold={24}
+                          size="md"
+                          className="bg-card border rounded-lg p-4"
+                        />
+                      ) : (
+                        <div className="bg-card border rounded-lg p-4 text-center">
+                          <div className="text-muted-foreground text-sm">
+                            Start time not set
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">Available after completing prerequisites</p>
                   </div>
                 </div>
               ))}
