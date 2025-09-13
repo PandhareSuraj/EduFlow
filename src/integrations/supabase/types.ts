@@ -707,8 +707,22 @@ export type Database = {
             foreignKeyName: "fk_fee_installments_student_fee_id"
             columns: ["student_fee_id"]
             isOneToOne: false
+            referencedRelation: "student_fee_summary"
+            referencedColumns: ["fee_record_id"]
+          },
+          {
+            foreignKeyName: "fk_fee_installments_student_fee_id"
+            columns: ["student_fee_id"]
+            isOneToOne: false
             referencedRelation: "student_fees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_fee_installments_student_fee_id"
+            columns: ["student_fee_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["fee_record_id"]
           },
         ]
       }
@@ -773,14 +787,42 @@ export type Database = {
             foreignKeyName: "fee_payments_student_fee_id_fkey"
             columns: ["student_fee_id"]
             isOneToOne: false
+            referencedRelation: "student_fee_summary"
+            referencedColumns: ["fee_record_id"]
+          },
+          {
+            foreignKeyName: "fee_payments_student_fee_id_fkey"
+            columns: ["student_fee_id"]
+            isOneToOne: false
             referencedRelation: "student_fees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_student_fee_id_fkey"
+            columns: ["student_fee_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["fee_record_id"]
           },
           {
             foreignKeyName: "fee_payments_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "student_fee_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "fee_payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_fee_summary"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "fee_payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
             referencedColumns: ["student_id"]
           },
           {
@@ -801,14 +843,42 @@ export type Database = {
             foreignKeyName: "fk_fee_payments_student_fee_id"
             columns: ["student_fee_id"]
             isOneToOne: false
+            referencedRelation: "student_fee_summary"
+            referencedColumns: ["fee_record_id"]
+          },
+          {
+            foreignKeyName: "fk_fee_payments_student_fee_id"
+            columns: ["student_fee_id"]
+            isOneToOne: false
             referencedRelation: "student_fees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_fee_payments_student_fee_id"
+            columns: ["student_fee_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["fee_record_id"]
           },
           {
             foreignKeyName: "fk_fee_payments_student_id"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "student_fee_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "fk_fee_payments_student_id"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_fee_summary"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "fk_fee_payments_student_id"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
             referencedColumns: ["student_id"]
           },
           {
@@ -1308,6 +1378,20 @@ export type Database = {
             foreignKeyName: "fk_results_student_id"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "student_fee_summary"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "fk_results_student_id"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "fk_results_student_id"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -1454,6 +1538,20 @@ export type Database = {
             foreignKeyName: "student_documents_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "student_fee_summary"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_documents_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_documents_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -1539,6 +1637,20 @@ export type Database = {
             foreignKeyName: "student_exam_sessions_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "student_fee_summary"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_exam_sessions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_exam_sessions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -1608,6 +1720,20 @@ export type Database = {
             foreignKeyName: "fk_student_fees_student_id"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "student_fee_summary"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "fk_student_fees_student_id"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "fk_student_fees_student_id"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -1623,6 +1749,20 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "student_fee_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_fees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_fee_summary"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_fees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
             referencedColumns: ["student_id"]
           },
           {
@@ -1847,6 +1987,66 @@ export type Database = {
           student_id: number | null
           student_name: string | null
           student_number: string | null
+        }
+        Relationships: []
+      }
+      student_fee_summary: {
+        Row: {
+          balance_amount: number | null
+          course_code: string | null
+          course_name: string | null
+          discount_amount: number | null
+          discount_percentage: number | null
+          discount_reason: string | null
+          due_date: string | null
+          email: string | null
+          fee_created_at: string | null
+          fee_record_id: string | null
+          fee_status: string | null
+          last_payment_amount: number | null
+          last_payment_date: string | null
+          last_payment_method: string | null
+          mobile_number: string | null
+          original_amount: number | null
+          paid_amount: number | null
+          payment_count: number | null
+          payment_status: string | null
+          semester: number | null
+          student_id: number | null
+          student_name: string | null
+          student_number: string | null
+          total_amount: number | null
+          year: number | null
+        }
+        Relationships: []
+      }
+      student_payment_ledger: {
+        Row: {
+          bank_name: string | null
+          cheque_number: string | null
+          course_name: string | null
+          cumulative_paid: number | null
+          discount_amount: number | null
+          discount_percentage: number | null
+          discount_reason: string | null
+          due_date: string | null
+          fee_created_at: string | null
+          fee_record_id: string | null
+          fee_status: string | null
+          original_amount: number | null
+          payment_amount: number | null
+          payment_date: string | null
+          payment_id: string | null
+          payment_method: string | null
+          payment_sequence: number | null
+          receipt_number: string | null
+          remarks: string | null
+          running_balance: number | null
+          student_id: number | null
+          student_name: string | null
+          student_number: string | null
+          total_amount: number | null
+          transaction_id: string | null
         }
         Relationships: []
       }

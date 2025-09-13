@@ -37,6 +37,7 @@ import {
 import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
 import { FeeStructureDialog } from "@/components/forms/FeeStructureDialog";
 import { StudentFeeLedger } from "@/components/fees/StudentFeeLedger";
+import { PaymentHistoryDialog } from "@/components/fees/PaymentHistoryDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
@@ -46,6 +47,7 @@ interface StudentFeeData {
   id: string;
   student_id: number;
   students: {
+    id: number;
     student_id: string;
     name: string;
     email: string;
@@ -65,6 +67,10 @@ interface StudentFeeData {
   balance_amount: number;
   status: string;
   due_date: string;
+  payment_status?: string;
+  payment_count?: number;
+  last_payment_date?: string;
+  last_payment_amount?: number;
   fee_payments: {
     amount: number;
     payment_date: string;
@@ -79,45 +85,18 @@ export default function Fees() {
   const [courseFilter, setCourseFilter] = useState("all");
   const [feeRecords, setFeeRecords] = useState<StudentFeeData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedStudentForHistory, setSelectedStudentForHistory] = useState<{id: number, name: string} | null>(null);
   const { toast } = useToast();
   const { courses, loading: coursesLoading } = useCourses();
 
   const fetchFeeRecords = async () => {
     try {
       console.log('Fetching fee records with relationships...');
+      setLoading(true);
       const { data, error } = await supabase
-        .from('student_fees')
-        .select(`
-          id,
-          student_id,
-          original_amount,
-          discount_amount,
-          discount_percentage,
-          discount_reason,
-          total_amount,
-          paid_amount,
-          balance_amount,
-          status,
-          due_date,
-          students!student_fees_student_id_fkey (
-            student_id,
-            name,
-            email,
-            mobile_number,
-            courses!students_course_id_fkey (
-              id,
-              name,
-              code
-            )
-          ),
-          fee_payments!fee_payments_student_fee_id_fkey (
-            amount,
-            payment_date,
-            payment_method,
-            receipt_number
-          )
-        `)
-        .order('created_at', { ascending: false });
+        .from('student_fee_summary')
+        .select('*')
+        .order('fee_created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching fee records:', error);
@@ -130,7 +109,40 @@ export default function Fees() {
       }
 
       console.log('Fee records data received:', data);
-      setFeeRecords(data || []);
+      
+      // Transform data to match expected format
+      const transformedData = (data || []).map(record => ({
+        id: record.fee_record_id,
+        student_id: record.student_id,
+        total_amount: record.total_amount,
+        paid_amount: record.paid_amount,
+        balance_amount: record.balance_amount,
+        due_date: record.due_date,
+        status: record.fee_status,
+        original_amount: record.original_amount,
+        discount_amount: record.discount_amount,
+        discount_percentage: record.discount_percentage,
+        discount_reason: record.discount_reason,
+        payment_status: record.payment_status,
+        payment_count: record.payment_count,
+        last_payment_date: record.last_payment_date,
+        last_payment_amount: record.last_payment_amount,
+        students: {
+          id: record.student_id,
+          student_id: record.student_number,
+          name: record.student_name,
+          email: record.email,
+          mobile_number: record.mobile_number,
+          courses: {
+            id: null,
+            name: record.course_name,
+            code: record.course_code
+          }
+        },
+        fee_payments: [] // Will be loaded separately if needed
+      }));
+
+      setFeeRecords(transformedData);
     } catch (error) {
       console.error('Error fetching fee records:', error);
       toast({
@@ -437,21 +449,44 @@ export default function Fees() {
                     <TableCell>₹{record.total_amount.toLocaleString('en-IN')}</TableCell>
                     <TableCell>₹{record.paid_amount.toLocaleString('en-IN')}</TableCell>
                     <TableCell>
-                      <span className={record.balance_amount > 0 ? "text-red-600 font-medium" : "text-green-600"}>
-                        ₹{record.balance_amount.toLocaleString('en-IN')}
-                      </span>
+                      <div className="text-right">
+                        <div className={record.balance_amount > 0 ? "text-red-600 font-medium" : "text-green-600"}>
+                          ₹{record.balance_amount.toLocaleString('en-IN')}
+                        </div>
+                        {record.payment_count && record.payment_count > 0 && (
+                          <div className="text-xs text-muted-foreground">
+                            {record.payment_count} payment{record.payment_count > 1 ? 's' : ''} • 
+                            Last: ₹{record.last_payment_amount?.toLocaleString('en-IN')}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(record.status)}>
-                        {record.status}
-                      </Badge>
+                      <div className="flex flex-col gap-1">
+                        <Badge className={getStatusColor(record.status)}>
+                          {record.status}
+                        </Badge>
+                        {record.payment_status && (
+                          <Badge variant={record.payment_status === 'Overdue' ? 'destructive' : 
+                                        record.payment_status === 'Due Soon' ? 'secondary' : 'default'}>
+                            {record.payment_status}
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {record.due_date ? new Date(record.due_date).toLocaleDateString('en-IN') : 'No due date'}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setSelectedStudentForHistory({
+                            id: record.students?.id || 0,
+                            name: record.students?.name || ''
+                          })}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                         {record.balance_amount > 0 && (
@@ -476,6 +511,14 @@ export default function Fees() {
           )}
         </CardContent>
       </Card>
+
+      {/* Payment History Dialog */}
+      <PaymentHistoryDialog
+        open={!!selectedStudentForHistory}
+        onOpenChange={(open) => !open && setSelectedStudentForHistory(null)}
+        studentId={selectedStudentForHistory?.id || 0}
+        studentName={selectedStudentForHistory?.name || ''}
+      />
     </div>
   );
 }

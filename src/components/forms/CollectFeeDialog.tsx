@@ -160,6 +160,9 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
 
   const fetchStudentFees = async (studentId: number) => {
     try {
+      setStudentFees([]);
+      
+      // First get fee records
       const { data, error } = await supabase
         .from('student_fees')
         .select(`

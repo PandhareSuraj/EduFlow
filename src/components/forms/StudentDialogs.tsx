@@ -333,22 +333,64 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
         await Promise.all(documentPromises);
       }
 
-      // Create fee record if fee structure exists
-      if (feeStructure && studentData) {
-        const discountAmount = feeData.discount_type === 'amount' ? feeData.discount_amount : 0;
-        const discountPercentage = feeData.discount_type === 'percentage' ? feeData.discount_percentage : 0;
+      // Create fee record if fee structure exists and no discount is applied
+      // (The trigger will handle automatic creation, only intervene if discount is needed)
+      if (feeStructure && studentData && (feeData.discount_amount > 0 || feeData.discount_percentage > 0)) {
+        // Wait a moment for trigger to complete, then check and update with discount
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        const { error: feeError } = await supabase
-          .rpc('auto_create_student_fees_with_discount', {
-            p_student_id: studentData.id,
-            p_discount_amount: discountAmount,
-            p_discount_percentage: discountPercentage,
-            p_discount_reason: feeData.discount_reason || null
-          });
+        const { data: existingFees, error: checkError } = await supabase
+          .from('student_fees')
+          .select('id, total_amount')
+          .eq('student_id', studentData.id);
 
-        if (feeError) {
-          console.error('Error creating fee record:', feeError);
-          // Don't fail the entire operation, just log the error
+        if (checkError) {
+          console.error('Error checking existing fees:', checkError);
+        } else if (existingFees && existingFees.length > 0) {
+          // Update existing fee with discount
+          const feeId = existingFees[0].id;
+          const originalAmount = feeStructure.total_fee;
+          let finalAmount = originalAmount;
+          
+          if (feeData.discount_type === 'percentage') {
+            finalAmount = originalAmount - (originalAmount * feeData.discount_percentage / 100);
+          } else {
+            finalAmount = originalAmount - feeData.discount_amount;
+          }
+          
+          finalAmount = Math.max(finalAmount, 0);
+
+          const { error: updateError } = await supabase
+            .from('student_fees')
+            .update({
+              original_amount: originalAmount,
+              discount_amount: feeData.discount_type === 'amount' ? feeData.discount_amount : 0,
+              discount_percentage: feeData.discount_type === 'percentage' ? feeData.discount_percentage : 0,
+              discount_reason: feeData.discount_reason || null,
+              total_amount: finalAmount,
+              balance_amount: finalAmount
+            })
+            .eq('id', feeId);
+
+          if (updateError) {
+            console.error('Error updating fee with discount:', updateError);
+          }
+        } else {
+          // No existing fee found, create one with discount using RPC
+          const discountAmount = feeData.discount_type === 'amount' ? feeData.discount_amount : 0;
+          const discountPercentage = feeData.discount_type === 'percentage' ? feeData.discount_percentage : 0;
+          
+          const { error: feeError } = await supabase
+            .rpc('auto_create_student_fees_with_discount', {
+              p_student_id: studentData.id,
+              p_discount_amount: discountAmount,
+              p_discount_percentage: discountPercentage,
+              p_discount_reason: feeData.discount_reason || null
+            });
+
+          if (feeError) {
+            console.error('Error creating fee record with discount:', feeError);
+          }
         }
       }
 
