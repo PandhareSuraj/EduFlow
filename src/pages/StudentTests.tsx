@@ -43,22 +43,37 @@ export default function StudentTests() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.email) {
         console.error('No authenticated user found');
+        toast({
+          title: "Authentication Error",
+          description: "Please log in as a student to view your tests.",
+          variant: "destructive"
+        });
         setMockTests();
         return;
       }
+
+      console.log('Looking for student with email:', user.email);
 
       // Fetch student data first
       const { data: studentData, error: studentError } = await supabase
         .from('students')
-        .select('id, course_id, name')
+        .select('id, course_id, name, email')
         .eq('email', user.email)
         .single();
 
       if (studentError || !studentData) {
-        console.error('Error fetching student data:', studentError);
+        console.error('Error fetching student data:', { studentError, userEmail: user.email });
+        toast({
+          title: "Student Record Not Found",
+          description: "No student record found for your account. Please contact administration.",
+          variant: "destructive"
+        });
         setMockTests();
         return;
       }
+
+      console.log('Student data found:', { id: studentData.id, course_id: studentData.course_id, name: studentData.name });
+      setStudentId(studentData.id);
 
       // Fetch live MCQ exams for the student's course
       const { data: examsData, error: examsError } = await supabase
@@ -74,18 +89,27 @@ export default function StudentTests() {
           total_questions,
           passing_marks,
           status,
-          subjects(name)
+          course_id
         `)
         .eq('course_id', studentData.course_id)
         .eq('exam_type', 'mcq')
         .in('status', ['scheduled', 'active'])
         .order('start_time', { ascending: true });
 
+      console.log('Exams query result:', { examsData, examsError, course_id: studentData.course_id });
+
       if (examsError) {
         console.error('Error fetching exams:', examsError);
+        toast({
+          title: "Database Error",
+          description: `Failed to fetch exams: ${examsError.message}`,
+          variant: "destructive"
+        });
         setMockTests();
         return;
       }
+
+      console.log(`Found ${examsData?.length || 0} exams for course ${studentData.course_id}`);
 
       // Check for existing exam sessions
       const { data: sessionsData } = await supabase
@@ -115,7 +139,7 @@ export default function StudentTests() {
         return {
           id: exam.id,
           title: exam.name,
-          subject: exam.subjects?.[0]?.name || 'General',
+          subject: 'General', // Removed invalid subjects join
           duration: exam.duration_minutes || 60,
           totalQuestions: exam.total_questions || 30,
           status: testStatus,
@@ -129,7 +153,13 @@ export default function StudentTests() {
       }) || [];
 
       setTests(transformedTests);
-      setStudentId(studentData.id);
+      
+      if (transformedTests.length === 0) {
+        toast({
+          title: "No Exams Found",
+          description: "No MCQ exams are currently available for your course. Contact your instructor for more information.",
+        });
+      }
     } catch (error) {
       console.error('Error in fetchExamsAndStudent:', error);
       setMockTests();
@@ -230,35 +260,49 @@ export default function StudentTests() {
   };
 
   const handleStartTest = async (testId: string) => {
+    console.log('Starting test:', { testId, studentId });
+    
     if (!studentId) {
       toast({
         title: "Error",
-        description: "Student data not found. Please log in as a student.",
+        description: "Student data not found. Please refresh the page and try again.",
         variant: "destructive"
       });
       return;
     }
 
     try {
-      const { data: exam } = await supabase
+      // Check if exam exists and student can access it
+      const { data: exam, error: examError } = await supabase
         .from('exams')
         .select('*')
         .eq('id', testId)
         .single();
       
+      if (examError) {
+        console.error('Error fetching exam:', examError);
+        toast({
+          title: "Error",
+          description: "Failed to load exam details.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       if (exam) {
+        console.log('Exam found, starting interface:', exam.name);
         setCurrentExam({ ...exam, studentId: studentId });
       } else {
-        // For mock tests, show alert
         toast({
           title: "Demo Mode",
           description: "This is a demo test. Real MCQ functionality requires actual exam data.",
         });
       }
     } catch (error: any) {
+      console.error('Error starting test:', error);
       toast({
         title: "Error",
-        description: "Failed to start exam",
+        description: error.message || "Failed to start exam",
         variant: "destructive"
       });
     }
