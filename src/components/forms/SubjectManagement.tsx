@@ -41,7 +41,7 @@ export function SubjectManagement() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [courseFilter, setCourseFilter] = useState("");
+  const [courseFilter, setCourseFilter] = useState("all");
 
   const handleEdit = (subject: any) => {
     setEditingSubject(subject);
@@ -86,7 +86,7 @@ export function SubjectManagement() {
   const filteredSubjects = subjects.filter(subject => {
     const matchesSearch = subject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          subject.code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCourse = !courseFilter || subject.course_id.toString() === courseFilter;
+    const matchesCourse = courseFilter === "all" || subject.course_id.toString() === courseFilter;
     return matchesSearch && matchesCourse;
   });
 
@@ -117,7 +117,7 @@ export function SubjectManagement() {
             <SelectValue placeholder="Filter by course" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Courses</SelectItem>
+            <SelectItem value="all">All Courses</SelectItem>
             {courses.map((course) => (
               <SelectItem key={course.id} value={course.id.toString()}>
                 {course.name} ({course.code})
@@ -131,7 +131,7 @@ export function SubjectManagement() {
         <div className="text-center py-8 text-muted-foreground">
           <p>No subjects found.</p>
           <p className="text-sm">
-            {searchTerm || courseFilter 
+            {searchTerm || courseFilter !== "all" 
               ? "Try adjusting your search or filter." 
               : "Add your first subject to get started."
             }

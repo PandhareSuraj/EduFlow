@@ -347,10 +347,10 @@ export default function Fees() {
           <SelectContent>
             <SelectItem value="all">All Courses</SelectItem>
             {coursesLoading ? (
-              <SelectItem value="" disabled>
+              <div className="px-2 py-1.5 text-sm text-muted-foreground flex items-center">
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Loading...
-              </SelectItem>
+                Loading courses...
+              </div>
             ) : (
               courses.map((course) => (
                 <SelectItem key={course.id} value={course.code}>

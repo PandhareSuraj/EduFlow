@@ -192,9 +192,9 @@ export function AddFacultyDialog({ trigger, onSuccess }: AddFacultyDialogProps) 
                 </SelectTrigger>
                 <SelectContent>
                   {departmentsLoading ? (
-                    <SelectItem value="" disabled>Loading departments...</SelectItem>
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">Loading departments...</div>
                   ) : departments.length === 0 ? (
-                    <SelectItem value="" disabled>No departments available</SelectItem>
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">No departments available</div>
                   ) : (
                     departments.map((dept) => (
                       <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
