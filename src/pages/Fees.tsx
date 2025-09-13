@@ -51,6 +51,7 @@ interface StudentFeeData {
     email: string;
     mobile_number: string;
     courses: {
+      id?: number;
       name: string;
       code: string;
     } | null;
@@ -104,6 +105,7 @@ export default function Fees() {
             email,
             mobile_number,
             courses!students_course_id_fkey (
+              id,
               name,
               code
             )
@@ -161,9 +163,8 @@ export default function Fees() {
     
     const matchesStatus = statusFilter === "all" || record.status === statusFilter;
     
-    const matchesCourse = courseFilter === "all" || 
-      record.students?.courses?.code === courseFilter ||
-      record.students?.courses?.name === courseFilter;
+    const courseId = record.students?.courses?.id?.toString() || "";
+    const matchesCourse = courseFilter === "all" || courseId === courseFilter;
     
     return matchesSearch && matchesStatus && matchesCourse;
   });
@@ -353,8 +354,8 @@ export default function Fees() {
               </div>
             ) : (
               courses.map((course) => (
-                <SelectItem key={course.id} value={course.code}>
-                  {course.code} - {course.name}
+                <SelectItem key={course.id} value={course.id.toString()}>
+                  {course.code ? `${course.code} - ${course.name}` : course.name}
                 </SelectItem>
               ))
             )}
