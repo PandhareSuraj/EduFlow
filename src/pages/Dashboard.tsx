@@ -63,64 +63,67 @@ export default function Dashboard() {
   const { notifications, loading: notificationsLoading } = useDashboardNotifications();
   const { toast } = useToast();
 
-  // Render student dashboard for student users
-  if (userRole === 'student') {
-    return <StudentDashboard />;
-  }
-
   // AMC calculation constants
   const AMC_BASE_FEE = 25000; // Base annual fee per college
   const AMC_PER_STUDENT = 100; // Per student annual fee
   const AMC_PER_USER = 500; // Per user annual fee
 
   useEffect(() => {
-    fetchDashboardData();
-    
-    // Set up real-time subscriptions for dashboard stats
-    const channel = supabase
-      .channel('dashboard-stats')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'students'
-        },
-        () => fetchDashboardData()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'courses'
-        },
-        () => fetchDashboardData()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'faculty'
-        },
-        () => fetchDashboardData()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'colleges'
-        },
-        () => fetchDashboardData()
-      )
-      .subscribe();
+    // Only fetch dashboard data for non-student users
+    if (userRole !== 'student') {
+      fetchDashboardData();
+      
+      // Set up real-time subscriptions for dashboard stats
+      const channel = supabase
+        .channel('dashboard-stats')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'students'
+          },
+          () => fetchDashboardData()
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'courses'
+          },
+          () => fetchDashboardData()
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'faculty'
+          },
+          () => fetchDashboardData()
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'colleges'
+          },
+          () => fetchDashboardData()
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      return () => {
+        channel.unsubscribe();
+      };
+    }
   }, [userRole]);
+
+  // Render student dashboard for student users - AFTER all hooks
+  if (userRole === 'student') {
+    return <StudentDashboard />;
+  }
 
   const fetchDashboardData = async () => {
     try {
