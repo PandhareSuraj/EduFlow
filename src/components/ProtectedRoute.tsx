@@ -50,15 +50,29 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
   };
 
   if ((requiredRole || allowedRoles) && !hasAccess()) {
+    console.log('Access denied - User role:', userRole, 'Required:', requiredRole || allowedRoles);
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold text-destructive mb-4">Access Denied</h1>
           <p className="text-muted-foreground">You don't have permission to access this page.</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Required: {requiredRole || (allowedRoles ? allowedRoles.join(', ') : '')}
+          <div className="bg-muted p-4 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              <strong>Required role:</strong> {requiredRole || (allowedRoles ? allowedRoles.join(', ') : '')}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              <strong>Your current role:</strong> {userRole || 'No role assigned'}
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Contact your administrator if you believe this is an error.
           </p>
-          <p className="text-sm text-muted-foreground">Your role: {userRole}</p>
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Return to Dashboard
+          </button>
         </div>
       </div>
     );

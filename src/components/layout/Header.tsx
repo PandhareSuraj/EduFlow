@@ -18,8 +18,16 @@ export function Header() {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
+    try {
+      console.log('Header: Starting logout process');
+      await signOut();
+      console.log('Header: Logout successful, navigating to auth');
+      navigate('/auth');
+    } catch (error) {
+      console.error('Header: Logout error:', error);
+      // Navigate anyway to ensure user gets to login page
+      navigate('/auth');
+    }
   };
 
   const getRoleColor = (role: string | null) => {
