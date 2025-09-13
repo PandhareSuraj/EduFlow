@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Clock, Users, FileText, Award, AlertCircle, CheckCircle, Timer, Monitor, Pause, Play, StopCircle } from "lucide-react";
+import { getCurrentISTTime, formatISTDate, convertToIST } from "@/utils/dateUtils";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -196,7 +197,7 @@ export function LiveExamManagement() {
 
       const studentsData: StudentSubmission[] = sessions.map(session => {
         const student = studentMap.get(session.student_id);
-        const timeElapsed = new Date().getTime() - new Date(session.start_time).getTime();
+        const timeElapsed = getCurrentISTTime().getTime() - convertToIST(session.start_time).getTime();
         const totalDuration = (session.duration_minutes || 60) * 60 * 1000;
         const timeRemaining = Math.max(0, Math.floor((totalDuration - timeElapsed) / (1000 * 60)));
         const progress = session.total_questions > 0 ? 
@@ -274,8 +275,8 @@ export function LiveExamManagement() {
         .from('student_exam_sessions')
         .update({ 
           status: 'completed',
-          end_time: new Date().toISOString(),
-          submit_time: new Date().toISOString()
+          end_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss'),
+          submit_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss')
         })
         .eq('exam_id', examId)
         .eq('status', 'in_progress');

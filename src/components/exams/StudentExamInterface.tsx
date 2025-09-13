@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Clock, ChevronLeft, ChevronRight, Flag, CheckCircle, AlertCircle, Send, Timer } from "lucide-react";
+import { getCurrentISTTime, formatISTDate, convertToIST } from "@/utils/dateUtils";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -102,8 +103,9 @@ export function StudentExamInterface({ exam, studentId, onExamComplete }: Studen
       if (existingSession) {
         sessionData = existingSession;
         // Calculate remaining time
-        const startTime = new Date(existingSession.start_time);
-        const elapsed = Math.floor((Date.now() - startTime.getTime()) / 1000);
+        const startTime = convertToIST(existingSession.start_time);
+        const currentTime = getCurrentISTTime();
+        const elapsed = Math.floor((currentTime.getTime() - startTime.getTime()) / 1000);
         const remaining = Math.max(0, (exam.duration_minutes * 60) - elapsed);
         setTimeRemaining(remaining);
       } else {
@@ -221,8 +223,8 @@ export function StudentExamInterface({ exam, studentId, onExamComplete }: Studen
         .from('student_exam_sessions')
         .update({ 
           status: 'completed',
-          submit_time: new Date().toISOString(),
-          end_time: new Date().toISOString()
+          submit_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss'),
+          end_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss')
         })
         .eq('id', session.id);
 
@@ -256,8 +258,8 @@ export function StudentExamInterface({ exam, studentId, onExamComplete }: Studen
         .from('student_exam_sessions')
         .update({ 
           status: 'timed_out',
-          submit_time: new Date().toISOString(),
-          end_time: new Date().toISOString()
+          submit_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss'),
+          end_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss')
         })
         .eq('id', session.id);
 

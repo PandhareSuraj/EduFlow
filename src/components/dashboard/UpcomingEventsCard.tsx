@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Calendar, GraduationCap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
+import { getCurrentISTTime, formatISTDate, convertToIST } from "@/utils/dateUtils";
 
 interface UpcomingEvent {
   id: string;
@@ -49,16 +50,16 @@ export function UpcomingEventsCard() {
   const fetchUpcomingEvents = async () => {
     try {
       const events: UpcomingEvent[] = [];
-      const today = new Date();
-      const nextWeek = new Date();
+      const today = getCurrentISTTime();
+      const nextWeek = getCurrentISTTime();
       nextWeek.setDate(today.getDate() + 7);
 
       // Fetch upcoming exams
       const { data: upcomingExams } = await supabase
         .from('exams')
         .select('id, name, exam_date')
-        .gte('exam_date', today.toISOString().split('T')[0])
-        .lte('exam_date', nextWeek.toISOString().split('T')[0])
+        .gte('exam_date', formatISTDate(today, 'yyyy-MM-dd'))
+        .lte('exam_date', formatISTDate(nextWeek, 'yyyy-MM-dd'))
         .eq('status', 'scheduled')
         .order('exam_date', { ascending: true })
         .limit(3);
@@ -82,8 +83,8 @@ export function UpcomingEventsCard() {
       const { data: upcomingFees } = await supabase
         .from('student_fees')
         .select('id, due_date, students!student_fees_student_id_fkey(name)')
-        .gte('due_date', today.toISOString().split('T')[0])
-        .lte('due_date', nextWeek.toISOString().split('T')[0])
+        .gte('due_date', formatISTDate(today, 'yyyy-MM-dd'))
+        .lte('due_date', formatISTDate(nextWeek, 'yyyy-MM-dd'))
         .in('status', ['pending', 'partial'])
         .order('due_date', { ascending: true })
         .limit(2);
@@ -115,9 +116,9 @@ export function UpcomingEventsCard() {
   };
 
   const formatEventDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const today = new Date();
-    const tomorrow = new Date();
+    const date = convertToIST(dateStr);
+    const today = getCurrentISTTime();
+    const tomorrow = getCurrentISTTime();
     tomorrow.setDate(today.getDate() + 1);
 
     if (date.toDateString() === today.toDateString()) {

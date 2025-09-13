@@ -8,6 +8,7 @@ import { ExamResultsDisplay } from "@/components/exams/ExamResultsDisplay";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { RoleGuard } from "@/components/permissions/RoleGuard";
+import { getExamStatus, formatISTDate } from "@/utils/dateUtils";
 
 interface MCQTest {
   id: string;
@@ -122,19 +123,13 @@ export default function StudentTests() {
       // Transform exams to MCQTest format
       const transformedTests: MCQTest[] = examsData?.map(exam => {
         const session = sessionMap.get(exam.id);
-        const now = new Date();
-        const startTime = new Date(exam.start_time || '');
-        const endTime = new Date(exam.end_time || '');
         
-        let testStatus: 'available' | 'completed' | 'upcoming' | 'expired' = 'upcoming';
-        
-        if (session?.status === 'completed') {
-          testStatus = 'completed';
-        } else if (now >= startTime && now <= endTime) {
-          testStatus = 'available';
-        } else if (now > endTime) {
-          testStatus = 'expired';
-        }
+        // Use IST-aware status determination
+        const testStatus = getExamStatus(
+          exam.start_time || '', 
+          exam.end_time || '', 
+          session?.status === 'completed'
+        );
 
         return {
           id: exam.id,
@@ -144,7 +139,7 @@ export default function StudentTests() {
           totalQuestions: exam.total_questions || 30,
           status: testStatus,
           score: session?.percentage || undefined,
-          completedAt: session?.status === 'completed' ? new Date().toISOString() : undefined,
+          completedAt: session?.status === 'completed' ? formatISTDate(new Date()) : undefined,
           description: exam.description || 'MCQ Examination',
           startTime: exam.start_time,
           endTime: exam.end_time,

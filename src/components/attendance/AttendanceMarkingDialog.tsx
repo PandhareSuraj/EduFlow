@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, CheckCircle, XCircle, Clock, Users } from "lucide-react";
+import { getCurrentISTTime, formatISTDate } from "@/utils/dateUtils";
 
 interface Student {
   id: number;
@@ -231,8 +232,8 @@ export function AttendanceMarkingDialog({ trigger }: AttendanceMarkingDialogProp
           subject_id: selectedSubject,
           faculty_id: selectedFaculty,
           class_name: className,
-          session_date: new Date().toISOString().split('T')[0],
-          start_time: new Date().toISOString(),
+          session_date: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd'),
+          start_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss'),
           status: 'completed',
           college_id: collegeId
         })
