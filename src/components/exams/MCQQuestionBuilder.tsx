@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Edit, Trash2, Save, FileText, Loader2, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -264,7 +265,7 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
           Manage Questions ({questions.length}/{exam.total_questions})
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-hidden">
+      <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>MCQ Questions - {exam.name}</DialogTitle>
           <DialogDescription>
@@ -272,7 +273,8 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-1 overflow-y-auto py-4 space-y-6">
+        <ScrollArea className="flex-1 py-4">
+          <div className="space-y-6 pr-4">
           {/* Question Form */}
           <Card>
             <CardHeader>
@@ -426,7 +428,7 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
                   <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
               ) : questions.length > 0 ? (
-                <div className="border rounded-lg">
+                <ScrollArea className="border rounded-lg">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -482,7 +484,7 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
                       ))}
                     </TableBody>
                   </Table>
-                </div>
+                </ScrollArea>
               ) : (
                 <div className="text-center py-8">
                   <HelpCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -494,7 +496,8 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
               )}
             </CardContent>
           </Card>
-        </div>
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
