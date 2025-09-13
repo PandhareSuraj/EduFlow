@@ -40,6 +40,7 @@ import { StudentFeeLedger } from "@/components/fees/StudentFeeLedger";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
+import { useCourses } from "@/hooks/useCourses";
 
 interface StudentFeeData {
   id: string;
@@ -74,9 +75,11 @@ interface StudentFeeData {
 export default function Fees() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [courseFilter, setCourseFilter] = useState("all");
   const [feeRecords, setFeeRecords] = useState<StudentFeeData[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { courses, loading: coursesLoading } = useCourses();
 
   const fetchFeeRecords = async () => {
     try {
@@ -142,16 +145,27 @@ export default function Fees() {
     fetchFeeRecords();
   }, []);
 
-  // Filter records based on search term and status
+  // Filter records based on search term, status, and course
   const filteredRecords = feeRecords.filter(record => {
-    const matchesSearch = 
-      record.students?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.students?.student_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.students?.courses?.code?.toLowerCase().includes(searchTerm.toLowerCase());
+    // Improved search with better null handling
+    const studentName = record.students?.name || '';
+    const studentId = record.students?.student_id || '';
+    const courseCode = record.students?.courses?.code || '';
+    const courseName = record.students?.courses?.name || '';
+    
+    const matchesSearch = searchTerm === "" || 
+      studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      courseCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      courseName.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || record.status === statusFilter;
     
-    return matchesSearch && matchesStatus;
+    const matchesCourse = courseFilter === "all" || 
+      record.students?.courses?.code === courseFilter ||
+      record.students?.courses?.name === courseFilter;
+    
+    return matchesSearch && matchesStatus && matchesCourse;
   });
 
   // Calculate totals
@@ -322,6 +336,28 @@ export default function Fees() {
             <SelectItem value="partial">Partial</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="overdue">Overdue</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={courseFilter} onValueChange={setCourseFilter}>
+          <SelectTrigger className="w-[160px]">
+            <FileText className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Course" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Courses</SelectItem>
+            {coursesLoading ? (
+              <SelectItem value="" disabled>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Loading...
+              </SelectItem>
+            ) : (
+              courses.map((course) => (
+                <SelectItem key={course.id} value={course.code}>
+                  {course.code} - {course.name}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
         
