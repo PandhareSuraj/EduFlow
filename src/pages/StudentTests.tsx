@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, BookOpen, Play, CheckCircle, AlertCircle, Loader2, Timer } from "lucide-react";
+import { Clock, BookOpen, Play, CheckCircle, AlertCircle, Loader2, Timer, FileText } from "lucide-react";
 import { StudentExamInterface } from "@/components/exams/StudentExamInterface";
 import { ExamResultsDisplay } from "@/components/exams/ExamResultsDisplay";
 import { CountdownTimer } from "@/components/ui/countdown-timer";
@@ -77,7 +77,7 @@ export default function StudentTests() {
       console.log('Student data found:', { id: studentData.id, course_id: studentData.course_id, name: studentData.name });
       setStudentId(studentData.id);
 
-      // Fetch live MCQ exams for the student's course
+      // Fetch all MCQ exams for the student's course (including completed and expired)
       const { data: examsData, error: examsError } = await supabase
         .from('exams')
         .select(`
@@ -95,8 +95,7 @@ export default function StudentTests() {
         `)
         .eq('course_id', studentData.course_id)
         .eq('exam_type', 'mcq')
-        .in('status', ['scheduled', 'active'])
-        .order('start_time', { ascending: true });
+        .order('start_time', { ascending: false });
 
       console.log('Exams query result:', { examsData, examsError, course_id: studentData.course_id });
 
@@ -372,101 +371,144 @@ export default function StudentTests() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">MCQ Tests</h1>
-          <p className="text-muted-foreground">Practice tests and assessments for your course</p>
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            MCQ Tests
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Practice tests and assessments for your course • Track your progress and improve your skills
+          </p>
         </div>
+        <Button variant="outline" onClick={handleRefreshTests} className="gap-2">
+          <BookOpen className="h-4 w-4" />
+          Refresh Tests
+        </Button>
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-blue-700">Total Tests</CardTitle>
+            <BookOpen className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{tests.length}</div>
-            <p className="text-xs text-muted-foreground">Available in course</p>
+            <div className="text-2xl font-bold text-blue-800">{tests.length}</div>
+            <p className="text-xs text-blue-600">Available in course</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-emerald-700">Completed</CardTitle>
+            <CheckCircle className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{completedTests.length}</div>
-            <p className="text-xs text-muted-foreground">Tests completed</p>
+            <div className="text-2xl font-bold text-emerald-800">{completedTests.length}</div>
+            <p className="text-xs text-emerald-600">Tests finished</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Available</CardTitle>
-            <Play className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-amber-700">Available</CardTitle>
+            <Play className="h-4 w-4 text-amber-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{availableTests.length}</div>
-            <p className="text-xs text-muted-foreground">Ready to take</p>
+            <div className="text-2xl font-bold text-amber-800">{availableTests.length}</div>
+            <p className="text-xs text-amber-600">Ready to take</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-br from-red-50 to-pink-50 border-red-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Score</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-red-700">Missed</CardTitle>
+            <AlertCircle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${getScoreColor(averageScore)}`}>
-              {averageScore > 0 ? `${averageScore}%` : 'N/A'}
-            </div>
-            <p className="text-xs text-muted-foreground">Overall average</p>
+            <div className="text-2xl font-bold text-red-800">{expiredTests.length}</div>
+            <p className="text-xs text-red-600">Expired tests</p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Average Score Card */}
+      {completedTests.length > 0 && (
+        <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-purple-700">
+              <Clock className="h-5 w-5" />
+              Performance Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className={`text-3xl font-bold ${getScoreColor(averageScore)}`}>
+                  {averageScore}%
+                </div>
+                <p className="text-sm text-purple-600">Average Score</p>
+              </div>
+              <div className="text-right text-sm text-muted-foreground">
+                <p>Based on {completedTests.length} completed test{completedTests.length > 1 ? 's' : ''}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Available Tests */}
       {availableTests.length > 0 && (
-        <Card>
+        <Card className="shadow-lg border-l-4 border-l-green-500">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Play className="h-5 w-5 text-green-600" />
+            <CardTitle className="flex items-center gap-2 text-green-700">
+              <Play className="h-6 w-6" />
               Available Tests
             </CardTitle>
-            <CardDescription>Tests you can take now</CardDescription>
+            <CardDescription>Tests you can take right now</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
               {availableTests.map((test) => (
-                <div key={test.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      {getStatusIcon(test.status)}
+                <div key={test.id} className="border rounded-xl p-6 hover:shadow-lg transition-all duration-300 bg-gradient-to-r from-green-50/50 to-emerald-50/50 hover:from-green-100/50 hover:to-emerald-100/50">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-green-100 p-2 rounded-lg">
+                        {getStatusIcon(test.status)}
+                      </div>
                       <div>
-                        <h3 className="font-semibold">{test.title}</h3>
-                        <p className="text-sm text-muted-foreground">{test.subject}</p>
+                        <h3 className="text-lg font-semibold text-gray-900">{test.title}</h3>
+                        <p className="text-sm text-gray-600">{test.subject}</p>
                       </div>
                     </div>
                     {getStatusBadge(test.status)}
                   </div>
                   
-                  <p className="text-sm text-muted-foreground mb-3">{test.description}</p>
+                  <p className="text-gray-700 mb-4 leading-relaxed">{test.description}</p>
                   
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
+                    <div className="flex items-center gap-6 text-sm text-gray-600">
+                      <span className="flex items-center gap-2 bg-white/60 px-3 py-1 rounded-full">
+                        <Clock className="h-4 w-4" />
                         {test.duration} min
                       </span>
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="h-3 w-3" />
+                      <span className="flex items-center gap-2 bg-white/60 px-3 py-1 rounded-full">
+                        <BookOpen className="h-4 w-4" />
                         {test.totalQuestions} questions
                       </span>
+                      {test.passingMarks && (
+                        <span className="flex items-center gap-2 bg-white/60 px-3 py-1 rounded-full">
+                          Pass: {test.passingMarks}%
+                        </span>
+                      )}
                     </div>
-                    <Button onClick={() => handleStartTest(test.id)}>
+                    <Button 
+                      onClick={() => handleStartTest(test.id)}
+                      size="lg"
+                      className="bg-green-600 hover:bg-green-700 text-white px-6"
+                    >
+                      <Play className="h-4 w-4 mr-2" />
                       Start Test
                     </Button>
                   </div>
@@ -479,46 +521,72 @@ export default function StudentTests() {
 
       {/* Completed Tests */}
       {completedTests.length > 0 && (
-        <Card>
+        <Card className="shadow-lg border-l-4 border-l-blue-500">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-blue-600" />
-              Completed Tests
+            <CardTitle className="flex items-center gap-2 text-blue-700">
+              <CheckCircle className="h-6 w-6" />
+              Test History
             </CardTitle>
-            <CardDescription>Your test history and scores</CardDescription>
+            <CardDescription>Your completed tests and performance records</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
               {completedTests.map((test) => (
-                <div key={test.id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      {getStatusIcon(test.status)}
+                <div key={test.id} className="border rounded-xl p-6 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-blue-100 p-2 rounded-lg">
+                        {getStatusIcon(test.status)}
+                      </div>
                       <div>
-                        <h3 className="font-semibold">{test.title}</h3>
-                        <p className="text-sm text-muted-foreground">{test.subject}</p>
+                        <h3 className="text-lg font-semibold text-gray-900">{test.title}</h3>
+                        <p className="text-sm text-gray-600">{test.subject}</p>
+                        {test.completedAt && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Completed on {test.completedAt}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       {getStatusBadge(test.status)}
-                      <Badge className={`${getScoreColor(test.score || 0)} bg-opacity-10`}>
-                        {test.score}%
-                      </Badge>
+                      <div className="text-center">
+                        <div className={`text-2xl font-bold ${getScoreColor(test.score || 0)}`}>
+                          {test.score}%
+                        </div>
+                        <p className="text-xs text-gray-500">Score</p>
+                      </div>
                     </div>
                   </div>
                   
-                  <p className="text-sm text-muted-foreground mb-3">{test.description}</p>
+                  <p className="text-gray-700 mb-4 leading-relaxed">{test.description}</p>
                   
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>Completed: {test.completedAt && new Date(test.completedAt).toLocaleDateString()}</span>
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="h-3 w-3" />
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <span className="flex items-center gap-2 bg-white/60 px-3 py-1 rounded-full">
+                        <Clock className="h-4 w-4" />
+                        {test.duration} min
+                      </span>
+                      <span className="flex items-center gap-2 bg-white/60 px-3 py-1 rounded-full">
+                        <BookOpen className="h-4 w-4" />
                         {test.totalQuestions} questions
                       </span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        (test.score || 0) >= 80 ? 'bg-green-100 text-green-700' :
+                        (test.score || 0) >= 60 ? 'bg-blue-100 text-blue-700' :
+                        (test.score || 0) >= 40 ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {(test.score || 0) >= (test.passingMarks || 50) ? 'PASSED' : 'FAILED'}
+                      </span>
                     </div>
-                    <Button variant="outline" onClick={() => handleViewResults(test.id)}>
-                      View Results
+                    <Button 
+                      variant="outline" 
+                      onClick={() => handleViewResults(test.id)}
+                      className="hover:bg-blue-50"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Details
                     </Button>
                   </div>
                 </div>
@@ -601,6 +669,60 @@ export default function StudentTests() {
                         </div>
                       )}
                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Expired/Missed Tests */}
+      {expiredTests.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              Missed Tests
+            </CardTitle>
+            <CardDescription>Tests that have expired or were missed</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              {expiredTests.map((test) => (
+                <div key={test.id} className="border rounded-lg p-4 bg-gradient-to-r from-red-50/30 to-orange-50/30 opacity-75">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      {getStatusIcon(test.status)}
+                      <div>
+                        <h3 className="font-semibold text-muted-foreground">{test.title}</h3>
+                        <p className="text-sm text-muted-foreground">{test.subject}</p>
+                        {test.endTime && (
+                          <p className="text-xs text-red-600">
+                            Expired on {formatISTDate(test.endTime, 'MMM d, yyyy')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {getStatusBadge(test.status)}
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground mb-3">{test.description}</p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {test.duration} min
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <BookOpen className="h-3 w-3" />
+                        {test.totalQuestions} questions
+                      </span>
+                    </div>
+                    <Badge variant="outline" className="text-red-600 border-red-600">
+                      Expired
+                    </Badge>
                   </div>
                 </div>
               ))}

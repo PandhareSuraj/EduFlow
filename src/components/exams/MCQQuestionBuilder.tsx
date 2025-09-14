@@ -13,6 +13,7 @@ import { Plus, Edit, Trash2, Save, FileText, Loader2, HelpCircle, Upload, Downlo
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ExcelImportDialog } from "./ExcelImportDialog";
+import * as XLSX from 'xlsx';
 
 interface MCQOption {
   key: 'A' | 'B' | 'C' | 'D';
@@ -454,11 +455,63 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
 
           {/* Questions List */}
           <Card>
-            <CardHeader>
-              <CardTitle>Questions ({questions.length}/{exam.total_questions || 30})</CardTitle>
-              <CardDescription>
-                Questions added to this exam
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Questions ({questions.length}/{exam.total_questions || 30})</CardTitle>
+                <CardDescription>
+                  Questions added to this exam
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    const templateData = [
+                      {
+                        'Question Number': 1,
+                        'Question Text': 'What is the capital of India?',
+                        'Option A': 'Mumbai',
+                        'Option B': 'Delhi',
+                        'Option C': 'Kolkata',
+                        'Option D': 'Chennai',
+                        'Correct Answer': 'B',
+                        'Marks': 2,
+                        'Difficulty': 'easy',
+                        'Explanation': 'Delhi is the national capital of India'
+                      }
+                    ];
+                    
+                    // Quick template download without opening dialog
+                    const ws = XLSX.utils.json_to_sheet(templateData);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'MCQ Questions');
+                    XLSX.writeFile(wb, `MCQ_Template_${exam.name.replace(/\s+/g, '_')}.xlsx`);
+                    
+                    toast({
+                      title: "Template Downloaded",
+                      description: "Excel template has been downloaded",
+                    });
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Template
+                </Button>
+                <ExcelImportDialog 
+                  examId={exam.id}
+                  examName={exam.name}
+                  onImportComplete={() => {
+                    fetchQuestions();
+                    onQuestionsUpdated?.();
+                  }}
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Import Excel
+                    </Button>
+                  }
+                />
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (
