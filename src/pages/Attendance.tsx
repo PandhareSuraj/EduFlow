@@ -9,6 +9,7 @@ import { Search, Calendar, Users, CheckCircle, XCircle, RefreshCw, Eye, Plus } f
 import { AttendanceMarkingDialog } from "@/components/attendance/AttendanceMarkingDialog";
 import { SessionDetailsDialog } from "@/components/attendance/SessionDetailsDialog";
 import { StudentDetailsDialog } from "@/components/attendance/StudentDetailsDialog";
+import { AttendanceReportsContainer } from "@/components/attendance/AttendanceReportsContainer";
 import { useAttendanceData } from "@/hooks/useAttendanceData";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { format } from "date-fns";
