@@ -245,13 +245,13 @@ export default function Dashboard() {
   const isSuperAdmin = userRole === 'super_admin';
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Welcome Header */}
-      <div className="bg-gradient-header rounded-lg p-6 text-white shadow-header">
-        <h1 className="text-3xl font-bold mb-2">
+      <div className="bg-gradient-header rounded-lg p-4 sm:p-6 text-white shadow-header">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 leading-tight">
           {isSuperAdmin ? 'Multi-College Management Dashboard' : 'Welcome to KK Patil Paramedical College ERP'}
         </h1>
-        <p className="text-white/90">
+        <p className="text-white/90 text-sm sm:text-base">
           {isSuperAdmin 
             ? 'Manage all colleges and monitor system-wide performance' 
             : 'Manage your institution efficiently with our comprehensive system'
@@ -260,7 +260,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className={`grid gap-6 md:grid-cols-2 ${isSuperAdmin ? 'lg:grid-cols-6' : 'lg:grid-cols-4'}`}>
+      <div className={`grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 ${isSuperAdmin ? 'lg:grid-cols-3 xl:grid-cols-6' : 'lg:grid-cols-4'}`}>
         {isSuperAdmin && (
           <>
             <StatsCard
@@ -305,7 +305,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions & Recent Activity */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3">
         {/* Quick Actions */}
         <Card className="lg:col-span-1 shadow-card">
           <CardHeader>

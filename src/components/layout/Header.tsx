@@ -1,31 +1,35 @@
-import { Bell, User, Search, Settings, LogOut } from "lucide-react";
+import { Bell, Search, User, LogOut, Settings, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function Header() {
-  const { user, userRole, signOut, refreshUserRole } = useAuth();
+  const { user, userRole } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const handleSignOut = async () => {
     try {
       console.log('Header: Starting logout process');
-      await signOut();
+      await supabase.auth.signOut();
       console.log('Header: Logout successful, navigating to auth');
       navigate('/auth');
     } catch (error) {
       console.error('Header: Logout error:', error);
-      // Navigate anyway to ensure user gets to login page
       navigate('/auth');
     }
   };
@@ -43,49 +47,72 @@ export function Header() {
   };
 
   return (
-    <header className="bg-card border-b border-border px-6 py-4">
+    <header className="bg-card border-b border-border px-3 sm:px-4 md:px-6 py-3 sm:py-4">
       <div className="flex items-center justify-between">
-        {/* Search */}
-        <div className="flex items-center space-x-4 flex-1 max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search students, courses, faculty..."
-              className="pl-10 w-80"
-            />
-          </div>
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <SidebarTrigger className="h-8 w-8 sm:h-9 sm:w-9" />
+          {!isMobile && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search students, courses..."
+                className="pl-10 w-48 md:w-64 lg:w-80"
+              />
+            </div>
+          )}
         </div>
-
-        {/* Right side actions */}
-        <div className="flex items-center space-x-4">
-          {/* Notifications */}
-          <Button variant="ghost" size="sm" className="relative">
+        
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          {isMobile && (
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Search className="h-4 w-4" />
+            </Button>
+          )}
+          
+          <Button variant="ghost" size="icon" className="relative h-8 w-8 sm:h-9 sm:w-9">
             <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-[10px] sm:text-xs">
               3
             </span>
           </Button>
-
-          {/* User menu */}
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center space-x-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>
+              <Button variant="ghost" className={`flex items-center ${isMobile ? 'p-1' : 'space-x-2'} h-8 sm:h-auto`}>
+                <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+                  <AvatarImage src="/placeholder-user.jpg" alt="@user" />
+                  <AvatarFallback className="text-xs">
                     {user?.email?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <div className="text-left">
-                  <p className="text-sm font-medium">{user?.email}</p>
-                  <div className="flex items-center gap-1">
-                    <Badge className={getRoleColor(userRole)} variant="outline">
-                      {userRole?.charAt(0).toUpperCase()}{userRole?.slice(1)}
-                    </Badge>
+                {!isMobile && (
+                  <div className="text-left hidden sm:block">
+                    <p className="text-sm font-medium truncate max-w-32">{user?.email}</p>
+                    <div className="flex items-center gap-1">
+                      <Badge className={getRoleColor(userRole)} variant="outline">
+                        {userRole?.charAt(0).toUpperCase()}{userRole?.slice(1)}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
+              {isMobile && (
+                <>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none truncate">
+                        {user?.email}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        Role: {userRole}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuItem>
                 <User className="mr-2 h-4 w-4" />
                 Profile
