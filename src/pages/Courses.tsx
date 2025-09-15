@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Eye, Edit, Users, BookOpen, BarChart3, Loader2 } from "lucide-react";
+import { Search, Eye, Edit, Users, BookOpen, BarChart3, Loader2, CheckCircle, XCircle, DollarSign } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddCourseDialog } from "@/components/forms/AddCourseDialog";
 import { ViewCourseDialog, EditCourseDialog } from "@/components/forms/CourseDialogs";
 import { ViewSubjectsDialog } from "@/components/forms/SubjectDialogs";
 import { ViewExamsDialog } from "@/components/forms/ExamDialogs";
 import { ViewResultsDialog } from "@/components/forms/ResultDialogs";
+import { FeeStructureDialog } from "@/components/forms/FeeStructureDialog";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +24,17 @@ interface Course {
   status: string;
   description: string | null;
   students?: { count: number }[];
+  fee_structures?: {
+    id: string;
+    semester: number;
+    total_fee: number;
+    registration_fee: number;
+    tuition_fee: number;
+    lab_fee: number;
+    library_fee: number;
+    other_fees: number;
+    due_date: string | null;
+  }[];
 }
 
 export default function Courses() {
@@ -56,11 +68,13 @@ export default function Courses() {
       const { data: courseRows, error: coursesError } = await coursesQuery;
       if (coursesError) throw coursesError;
 
-      // 3) Fetch student counts separately to avoid ambiguous embeds
+      // 3) Fetch student counts and fee structures separately
       const courseIds = (courseRows || []).map((c: any) => c.id);
       let countsMap: Record<number, number> = {};
+      let feeStructuresMap: Record<number, any[]> = {};
 
       if (courseIds.length > 0) {
+        // Fetch student counts
         let studentsQuery = supabase
           .from('students')
           .select('id, course_id')
@@ -79,11 +93,34 @@ export default function Courses() {
             if (cid != null) countsMap[cid] = (countsMap[cid] || 0) + 1;
           });
         }
+
+        // Fetch fee structures
+        let feeQuery = supabase
+          .from('fee_structures')
+          .select('*')
+          .in('course_id', courseIds);
+
+        if (collegeId) {
+          feeQuery = feeQuery.eq('college_id', collegeId);
+        }
+
+        const { data: feeRows, error: feeError } = await feeQuery;
+        if (feeError) {
+          console.warn('Warning: failed to fetch fee structures', feeError);
+        } else {
+          (feeRows || []).forEach((fee: any) => {
+            if (!feeStructuresMap[fee.course_id]) {
+              feeStructuresMap[fee.course_id] = [];
+            }
+            feeStructuresMap[fee.course_id].push(fee);
+          });
+        }
       }
 
       const coursesData = (courseRows || []).map((course: any) => ({
         ...course,
         students: [{ count: countsMap[course.id] || 0 }],
+        fee_structures: feeStructuresMap[course.id] || [],
       }));
 
       setCourses(coursesData);
@@ -135,6 +172,11 @@ export default function Courses() {
   const formatFees = (fees: number | null) => {
     if (!fees) return "Not set";
     return `₹${fees.toLocaleString()}`;
+  };
+
+  const getTotalFeeFromStructures = (feeStructures: any[] = []) => {
+    if (feeStructures.length === 0) return null;
+    return feeStructures.reduce((total, structure) => total + (structure.total_fee || 0), 0);
   };
 
   return (
@@ -211,9 +253,29 @@ export default function Courses() {
                     <span className="text-sm font-medium">{formatDuration(course.duration_months)}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Fees:</span>
-                    <span className="text-sm font-medium text-primary">{formatFees(course.fees_per_semester)}</span>
+                    <span className="text-sm text-muted-foreground">Fee Structure:</span>
+                    <div className="flex items-center gap-2">
+                      {course.fee_structures && course.fee_structures.length > 0 ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span className="text-sm font-medium text-green-600">Set</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4 text-red-500" />
+                          <span className="text-sm font-medium text-red-600">Not Set</span>
+                        </>
+                      )}
+                    </div>
                   </div>
+                  {course.fee_structures && course.fee_structures.length > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Total Fees:</span>
+                      <span className="text-sm font-medium text-primary">
+                        {formatFees(getTotalFeeFromStructures(course.fee_structures))}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Students:</span>
                     <span className="text-sm font-medium">{course.students?.[0]?.count || 0}</span>
@@ -224,6 +286,38 @@ export default function Courses() {
                   <div className="flex gap-2">
                     <ViewCourseDialog course={course} />
                     <EditCourseDialog course={course} onSuccess={fetchCourses} />
+                  </div>
+                  
+                  <div className="border-t pt-3">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Fee Management</p>
+                    <div className="flex gap-2 mb-3">
+                      {course.fee_structures && course.fee_structures.length > 0 ? (
+                        <FeeStructureDialog 
+                          trigger={
+                            <Button variant="outline" size="sm" className="flex-1">
+                              <DollarSign className="h-4 w-4 mr-2" />
+                              Edit Fees
+                            </Button>
+                          }
+                          editData={{
+                            ...course.fee_structures[0],
+                            course_id: course.id
+                          }}
+                          isEdit={true}
+                          onSuccess={fetchCourses}
+                        />
+                      ) : (
+                        <FeeStructureDialog 
+                          trigger={
+                            <Button variant="outline" size="sm" className="flex-1">
+                              <DollarSign className="h-4 w-4 mr-2" />
+                              Set Fees
+                            </Button>
+                          }
+                          onSuccess={fetchCourses}
+                        />
+                      )}
+                    </div>
                   </div>
                   
                   <div className="border-t pt-3">

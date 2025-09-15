@@ -32,6 +32,18 @@ import { supabase } from "@/integrations/supabase/client";
 interface FeeStructureDialogProps {
   trigger?: React.ReactNode;
   onSuccess?: () => void;
+  editData?: {
+    id: string;
+    course_id: number;
+    semester: number;
+    registration_fee: number;
+    tuition_fee: number;
+    lab_fee: number;
+    library_fee: number;
+    other_fees: number;
+    due_date: string | null;
+  };
+  isEdit?: boolean;
 }
 
 interface Course {
@@ -43,7 +55,6 @@ interface Course {
 interface FeeStructureForm {
   course_id: string;
   semester: string;
-  total_fee: string;
   registration_fee: string;
   tuition_fee: string;
   lab_fee: string;
@@ -52,23 +63,34 @@ interface FeeStructureForm {
   due_date: Date | undefined;
 }
 
-export function FeeStructureDialog({ trigger, onSuccess }: FeeStructureDialogProps) {
+export function FeeStructureDialog({ trigger, onSuccess, editData, isEdit = false }: FeeStructureDialogProps) {
   const [open, setOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState<FeeStructureForm>({
-    course_id: '',
-    semester: '',
-    total_fee: '',
-    registration_fee: '',
-    tuition_fee: '',
-    lab_fee: '',
-    library_fee: '',
-    other_fees: '',
-    due_date: undefined,
+    course_id: editData?.course_id.toString() || '',
+    semester: editData?.semester.toString() || '',
+    registration_fee: editData?.registration_fee.toString() || '',
+    tuition_fee: editData?.tuition_fee.toString() || '',
+    lab_fee: editData?.lab_fee.toString() || '',
+    library_fee: editData?.library_fee.toString() || '',
+    other_fees: editData?.other_fees.toString() || '',
+    due_date: editData?.due_date ? new Date(editData.due_date) : undefined,
   });
+
+  // Auto-calculate total fee based on component fees
+  const calculateTotalFee = () => {
+    const registrationFee = parseFloat(formData.registration_fee) || 0;
+    const tuitionFee = parseFloat(formData.tuition_fee) || 0;
+    const labFee = parseFloat(formData.lab_fee) || 0;
+    const libraryFee = parseFloat(formData.library_fee) || 0;
+    const otherFees = parseFloat(formData.other_fees) || 0;
+    return registrationFee + tuitionFee + labFee + libraryFee + otherFees;
+  };
+
+  const totalFee = calculateTotalFee();
 
   // Fetch courses on component mount
   useEffect(() => {
@@ -116,28 +138,11 @@ export function FeeStructureDialog({ trigger, onSuccess }: FeeStructureDialogPro
       return;
     }
 
-    const totalFee = parseFloat(formData.total_fee);
-    if (!totalFee || totalFee <= 0) {
+    const calculatedTotalFee = calculateTotalFee();
+    if (calculatedTotalFee <= 0) {
       toast({
         title: "Validation Error",
-        description: "Please enter a valid total fee amount",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Calculate component fees sum
-    const componentFeesSum = 
-      (parseFloat(formData.registration_fee) || 0) +
-      (parseFloat(formData.tuition_fee) || 0) +
-      (parseFloat(formData.lab_fee) || 0) +
-      (parseFloat(formData.library_fee) || 0) +
-      (parseFloat(formData.other_fees) || 0);
-
-    if (componentFeesSum > totalFee) {
-      toast({
-        title: "Validation Error",
-        description: "Sum of component fees cannot exceed total fee",
+        description: "Please enter valid fee amounts",
         variant: "destructive",
       });
       return;
@@ -159,67 +164,78 @@ export function FeeStructureDialog({ trigger, onSuccess }: FeeStructureDialogPro
         return;
       }
 
-      // Check if fee structure already exists
-      const { data: existingStructure } = await supabase
-        .from('fee_structures')
-        .select('id')
-        .eq('course_id', parseInt(formData.course_id))
-        .eq('semester', parseInt(formData.semester))
-        .eq('college_id', collegeId)
-        .maybeSingle();
+      if (isEdit && editData) {
+        // Update existing fee structure
+        const { error } = await supabase
+          .from('fee_structures')
+          .update({
+            total_fee: calculatedTotalFee,
+            registration_fee: parseFloat(formData.registration_fee) || 0,
+            tuition_fee: parseFloat(formData.tuition_fee) || 0,
+            lab_fee: parseFloat(formData.lab_fee) || 0,
+            library_fee: parseFloat(formData.library_fee) || 0,
+            other_fees: parseFloat(formData.other_fees) || 0,
+            due_date: formData.due_date ? format(formData.due_date, 'yyyy-MM-dd') : null,
+          })
+          .eq('id', editData.id);
 
-      if (existingStructure) {
-        toast({
-          title: "Error",
-          description: "Fee structure already exists for this course and semester",
-          variant: "destructive",
-        });
-        return;
-      }
+        if (error) throw error;
+      } else {
+        // Check if fee structure already exists
+        const { data: existingStructure } = await supabase
+          .from('fee_structures')
+          .select('id')
+          .eq('course_id', parseInt(formData.course_id))
+          .eq('semester', parseInt(formData.semester))
+          .eq('college_id', collegeId)
+          .maybeSingle();
 
-      // Insert fee structure
-      const { error } = await supabase
-        .from('fee_structures')
-        .insert([{
-          course_id: parseInt(formData.course_id),
-          semester: parseInt(formData.semester),
-          total_fee: totalFee,
-          registration_fee: parseFloat(formData.registration_fee) || 0,
-          tuition_fee: parseFloat(formData.tuition_fee) || 0,
-          lab_fee: parseFloat(formData.lab_fee) || 0,
-          library_fee: parseFloat(formData.library_fee) || 0,
-          other_fees: parseFloat(formData.other_fees) || 0,
-          due_date: formData.due_date ? format(formData.due_date, 'yyyy-MM-dd') : null,
-          college_id: collegeId,
-        }]);
+        if (existingStructure) {
+          toast({
+            title: "Error",
+            description: "Fee structure already exists for this course and semester",
+            variant: "destructive",
+          });
+          return;
+        }
 
-      if (error) {
-        console.error('Error creating fee structure:', error);
-        toast({
-          title: "Error",
-          description: error.message || "Failed to create fee structure",
-          variant: "destructive",
-        });
-        return;
+        // Insert new fee structure
+        const { error } = await supabase
+          .from('fee_structures')
+          .insert([{
+            course_id: parseInt(formData.course_id),
+            semester: parseInt(formData.semester),
+            total_fee: calculatedTotalFee,
+            registration_fee: parseFloat(formData.registration_fee) || 0,
+            tuition_fee: parseFloat(formData.tuition_fee) || 0,
+            lab_fee: parseFloat(formData.lab_fee) || 0,
+            library_fee: parseFloat(formData.library_fee) || 0,
+            other_fees: parseFloat(formData.other_fees) || 0,
+            due_date: formData.due_date ? format(formData.due_date, 'yyyy-MM-dd') : null,
+            college_id: collegeId,
+          }]);
+
+        if (error) throw error;
       }
 
       toast({
         title: "Success",
-        description: "Fee structure created successfully!",
+        description: isEdit ? "Fee structure updated successfully!" : "Fee structure created successfully!",
       });
 
-      // Reset form
-      setFormData({
-        course_id: '',
-        semester: '',
-        total_fee: '',
-        registration_fee: '',
-        tuition_fee: '',
-        lab_fee: '',
-        library_fee: '',
-        other_fees: '',
-        due_date: undefined,
-      });
+      // Reset form if not editing
+      if (!isEdit) {
+        setFormData({
+          course_id: '',
+          semester: '',
+          registration_fee: '',
+          tuition_fee: '',
+          lab_fee: '',
+          library_fee: '',
+          other_fees: '',
+          due_date: undefined,
+        });
+      }
       
       setOpen(false);
       onSuccess?.();
@@ -245,22 +261,22 @@ export function FeeStructureDialog({ trigger, onSuccess }: FeeStructureDialogPro
       <DialogTrigger asChild>
         {trigger || (
           <Button>
-            Create Fee Structure
+            {isEdit ? "Edit Fee Structure" : "Create Fee Structure"}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Fee Structure</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Fee Structure" : "Create Fee Structure"}</DialogTitle>
           <DialogDescription>
-            Set up fee structure for a course and semester
+            {isEdit ? "Update fee structure for the course and semester" : "Set up fee structure for a course and semester"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="course">Course *</Label>
-              <Select value={formData.course_id} onValueChange={(value) => handleChange('course_id', value)}>
+              <Select value={formData.course_id} onValueChange={(value) => handleChange('course_id', value)} disabled={isEdit}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select course" />
                 </SelectTrigger>
@@ -276,7 +292,7 @@ export function FeeStructureDialog({ trigger, onSuccess }: FeeStructureDialogPro
 
             <div className="space-y-2">
               <Label htmlFor="semester">Semester *</Label>
-              <Select value={formData.semester} onValueChange={(value) => handleChange('semester', value)}>
+              <Select value={formData.semester} onValueChange={(value) => handleChange('semester', value)} disabled={isEdit}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select semester" />
                 </SelectTrigger>
@@ -292,16 +308,17 @@ export function FeeStructureDialog({ trigger, onSuccess }: FeeStructureDialogPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="total_fee">Total Fee Amount *</Label>
+            <Label htmlFor="total_fee">Total Fee Amount (Auto-calculated)</Label>
             <Input
               id="total_fee"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="Enter total fee amount"
-              value={formData.total_fee}
-              onChange={(e) => handleChange('total_fee', e.target.value)}
+              type="text"
+              value={`₹${totalFee.toLocaleString()}`}
+              disabled
+              className="bg-muted font-medium"
             />
+            <p className="text-xs text-muted-foreground">
+              This amount is automatically calculated from the fee components below
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -405,7 +422,7 @@ export function FeeStructureDialog({ trigger, onSuccess }: FeeStructureDialogPro
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Creating..." : "Create Fee Structure"}
+              {loading ? (isEdit ? "Updating..." : "Creating...") : (isEdit ? "Update Fee Structure" : "Create Fee Structure")}
             </Button>
           </div>
         </form>
