@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -112,7 +112,8 @@ export const useAttendanceReports = () => {
   const [lowAttendanceData, setLowAttendanceData] = useState<LowAttendanceAlert | null>(null);
   const { toast } = useToast();
 
-  const fetchDailyReport = async (filters: AttendanceReportFilters) => {
+  const fetchDailyReport = useCallback(async (filters: AttendanceReportFilters) => {
+    console.info('Fetching daily report...');
     setLoading(true);
     try {
       const { data: collegeId } = await supabase.rpc('get_user_college');
@@ -225,10 +226,12 @@ export const useAttendanceReports = () => {
       });
     } finally {
       setLoading(false);
+      console.info('Daily report fetch completed');
     }
-  };
+  }, [toast]);
 
-  const fetchStudentReport = async (filters: AttendanceReportFilters) => {
+  const fetchStudentReport = useCallback(async (filters: AttendanceReportFilters) => {
+    console.info('Fetching student report...');
     setLoading(true);
     try {
       const { data: collegeId } = await supabase.rpc('get_user_college');
@@ -377,10 +380,12 @@ export const useAttendanceReports = () => {
       });
     } finally {
       setLoading(false);
+      console.info('Student report fetch completed');
     }
-  };
+  }, [toast]);
 
-  const fetchLowAttendanceAlert = async (threshold: number = 75) => {
+  const fetchLowAttendanceAlert = useCallback(async (threshold: number = 75) => {
+    console.info('Fetching low attendance alert...');
     setLoading(true);
     try {
       const { data: collegeId } = await supabase.rpc('get_user_college');
@@ -509,8 +514,163 @@ export const useAttendanceReports = () => {
       });
     } finally {
       setLoading(false);
+      console.info('Low attendance alert fetch completed');
     }
-  };
+  }, [toast]);
+
+  const fetchCourseReport = useCallback(async (filters: AttendanceReportFilters) => {
+    console.info('Fetching course report...');
+    setLoading(true);
+    try {
+      const { data: collegeId } = await supabase.rpc('get_user_college');
+      
+      // Fetch attendance sessions within date range
+      let sessionsQuery = supabase
+        .from('attendance_sessions')
+        .select(`
+          id,
+          course_id,
+          subject_id,
+          faculty_id,
+          total_students,
+          present_count,
+          attendance_percentage,
+          session_date
+        `)
+        .gte('session_date', filters.dateRange.from.toISOString().split('T')[0])
+        .lte('session_date', filters.dateRange.to.toISOString().split('T')[0]);
+        
+      if (collegeId) {
+        sessionsQuery = sessionsQuery.eq('college_id', collegeId);
+      }
+      
+      if (filters.courseId && filters.courseId !== 'all') {
+        sessionsQuery = sessionsQuery.eq('course_id', parseInt(filters.courseId));
+      }
+      
+      const { data: sessionsData, error: sessionsError } = await sessionsQuery;
+      if (sessionsError) throw sessionsError;
+      
+      if (!sessionsData || sessionsData.length === 0) {
+        setCourseData({
+          courses: [],
+          trends: []
+        });
+        return;
+      }
+      
+      // Get course, subject and faculty details
+      const courseIds = [...new Set(sessionsData.map(s => s.course_id))];
+      const subjectIds = [...new Set(sessionsData.map(s => s.subject_id))];
+      const facultyIds = [...new Set(sessionsData.map(s => s.faculty_id))];
+      
+      const [coursesResponse, subjectsResponse, facultyResponse] = await Promise.all([
+        supabase.from('courses').select('id, name').in('id', courseIds),
+        supabase.from('subjects').select('id, name').in('id', subjectIds),
+        supabase.from('faculty').select('id, name').in('id', facultyIds)
+      ]);
+      
+      const coursesMap = new Map((coursesResponse.data || []).map(c => [c.id, c.name]));
+      const subjectsMap = new Map((subjectsResponse.data || []).map(s => [s.id, s.name]));
+      const facultyMap = new Map((facultyResponse.data || []).map(f => [f.id, f.name]));
+      
+      // Process course data
+      const courseStats = new Map<number, {
+        sessions: typeof sessionsData;
+        totalStudents: number;
+        totalSessions: number;
+        totalAttendance: number;
+      }>();
+      
+      sessionsData.forEach(session => {
+        const courseId = session.course_id;
+        if (!courseStats.has(courseId)) {
+          courseStats.set(courseId, {
+            sessions: [],
+            totalStudents: 0,
+            totalSessions: 0,
+            totalAttendance: 0
+          });
+        }
+        
+        const stats = courseStats.get(courseId)!;
+        stats.sessions.push(session);
+        stats.totalSessions += 1;
+        stats.totalStudents = Math.max(stats.totalStudents, session.total_students || 0);
+        stats.totalAttendance += session.attendance_percentage || 0;
+      });
+      
+      const courses = Array.from(courseStats.entries()).map(([courseId, stats]) => {
+        const courseName = coursesMap.get(courseId) || 'Unknown Course';
+        const averageAttendance = stats.totalSessions > 0 ? stats.totalAttendance / stats.totalSessions : 0;
+        
+        // Calculate subject-wise performance
+        const subjectStats = new Map<string, { sessions: number; attendance: number }>();
+        stats.sessions.forEach(session => {
+          const subjectName = subjectsMap.get(session.subject_id) || 'Unknown Subject';
+          if (!subjectStats.has(subjectName)) {
+            subjectStats.set(subjectName, { sessions: 0, attendance: 0 });
+          }
+          const subjectStat = subjectStats.get(subjectName)!;
+          subjectStat.sessions += 1;
+          subjectStat.attendance += session.attendance_percentage || 0;
+        });
+        
+        const subjects = Array.from(subjectStats.entries()).map(([name, stat]) => ({
+          subject_name: name,
+          sessions: stat.sessions,
+          attendance_percentage: stat.sessions > 0 ? stat.attendance / stat.sessions : 0
+        }));
+        
+        // Calculate faculty performance
+        const facultyStats = new Map<string, { sessions: number; attendance: number }>();
+        stats.sessions.forEach(session => {
+          const facultyName = facultyMap.get(session.faculty_id) || 'Unknown Faculty';
+          if (!facultyStats.has(facultyName)) {
+            facultyStats.set(facultyName, { sessions: 0, attendance: 0 });
+          }
+          const facultyStat = facultyStats.get(facultyName)!;
+          facultyStat.sessions += 1;
+          facultyStat.attendance += session.attendance_percentage || 0;
+        });
+        
+        const faculty_performance = Array.from(facultyStats.entries()).map(([name, stat]) => ({
+          faculty_name: name,
+          sessions: stat.sessions,
+          average_attendance: stat.sessions > 0 ? stat.attendance / stat.sessions : 0
+        }));
+        
+        return {
+          course_id: courseId,
+          course_name: courseName,
+          total_students: stats.totalStudents,
+          total_sessions: stats.totalSessions,
+          average_attendance: averageAttendance,
+          subjects,
+          faculty_performance
+        };
+      });
+      
+      // Calculate weekly trends
+      const trends: Array<{ date: string; courses: Record<string, number> }> = [];
+      
+      setCourseData({
+        courses: courses.sort((a, b) => a.course_name.localeCompare(b.course_name)),
+        trends
+      });
+      
+    } catch (error) {
+      console.error('Error fetching course report:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch course-wise attendance report",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+      console.info('Course report fetch completed');
+    }
+  }, [toast]);
 
   return {
     loading,
@@ -520,6 +680,7 @@ export const useAttendanceReports = () => {
     lowAttendanceData,
     fetchDailyReport,
     fetchStudentReport,
+    fetchCourseReport,
     fetchLowAttendanceAlert
   };
 };

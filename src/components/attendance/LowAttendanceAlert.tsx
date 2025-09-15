@@ -22,7 +22,7 @@ export const LowAttendanceAlert = () => {
 
   useEffect(() => {
     fetchLowAttendanceAlert(threshold[0]);
-  }, [threshold, fetchLowAttendanceAlert]);
+  }, [threshold]); // Removed fetchLowAttendanceAlert from deps as it's now memoized
 
   const filteredStudents = lowAttendanceData?.students.filter(student => {
     const matchesSearch = student.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||

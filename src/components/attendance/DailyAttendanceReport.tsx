@@ -31,7 +31,7 @@ export const DailyAttendanceReport = () => {
       }
     };
     fetchDailyReport(filters);
-  }, [selectedDate, selectedCourse, fetchDailyReport]);
+  }, [selectedDate, selectedCourse]); // Removed fetchDailyReport from deps as it's now memoized
 
   const formatTime = (timeString: string) => {
     try {

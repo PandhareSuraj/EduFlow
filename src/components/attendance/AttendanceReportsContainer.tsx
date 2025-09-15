@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,8 @@ import { DailyAttendanceReport } from "./DailyAttendanceReport";
 import { StudentAttendanceReport } from "./StudentAttendanceReport";
 import { CourseWiseAttendanceReport } from "./CourseWiseAttendanceReport";
 import { LowAttendanceAlert } from "./LowAttendanceAlert";
+import { useAttendanceReports } from "@/hooks/useAttendanceReports";
+import { useCourses } from "@/hooks/useCourses";
 
 interface AttendanceReportsContainerProps {
   onExportReport?: (reportType: string, format: 'pdf' | 'excel') => void;
@@ -25,6 +27,43 @@ interface AttendanceReportsContainerProps {
 
 export const AttendanceReportsContainer = ({ onExportReport }: AttendanceReportsContainerProps) => {
   const [activeReport, setActiveReport] = useState<string | null>(null);
+  const [quickStats, setQuickStats] = useState({
+    overallAttendance: 0,
+    totalSessions: 0,
+    activeCourses: 0,
+    atRiskStudents: 0
+  });
+  
+  const { courses } = useCourses();
+  const { dailyData, lowAttendanceData, fetchDailyReport, fetchLowAttendanceAlert } = useAttendanceReports();
+
+  // Fetch quick stats on mount
+  useEffect(() => {
+    const fetchQuickStats = async () => {
+      // Fetch today's overall attendance
+      const today = new Date();
+      await fetchDailyReport({
+        reportType: 'daily',
+        courseId: 'all',
+        dateRange: { from: today, to: today }
+      });
+      
+      // Fetch low attendance alerts
+      await fetchLowAttendanceAlert(75);
+    };
+    
+    fetchQuickStats();
+  }, [fetchDailyReport, fetchLowAttendanceAlert]);
+  
+  // Update quick stats when data changes
+  useEffect(() => {
+    setQuickStats({
+      overallAttendance: dailyData?.overallAttendance || 0,
+      totalSessions: dailyData?.totalSessions || 0,
+      activeCourses: courses.length,
+      atRiskStudents: lowAttendanceData?.summary.critical + lowAttendanceData?.summary.warning || 0
+    });
+  }, [dailyData, lowAttendanceData, courses.length]);
 
   const reportTypes = [
     {
@@ -178,19 +217,27 @@ export const AttendanceReportsContainer = ({ onExportReport }: AttendanceReports
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">95.2%</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {quickStats.overallAttendance > 0 ? `${quickStats.overallAttendance.toFixed(1)}%` : '—'}
+              </div>
               <div className="text-sm text-muted-foreground">Overall Attendance</div>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">1,247</div>
+              <div className="text-2xl font-bold text-green-600">
+                {quickStats.totalSessions || '—'}
+              </div>
               <div className="text-sm text-muted-foreground">Total Sessions</div>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">12</div>
+              <div className="text-2xl font-bold text-purple-600">
+                {quickStats.activeCourses || '—'}
+              </div>
               <div className="text-sm text-muted-foreground">Active Courses</div>
             </div>
             <div className="text-center p-4 bg-red-50 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">23</div>
+              <div className="text-2xl font-bold text-red-600">
+                {quickStats.atRiskStudents || '—'}
+              </div>
               <div className="text-sm text-muted-foreground">At-Risk Students</div>
             </div>
           </div>

@@ -16,34 +16,18 @@ export const CourseWiseAttendanceReport = () => {
   });
   
   const { courses } = useCourses();
-  const { loading, courseData } = useAttendanceReports();
+  const { loading, courseData, fetchCourseReport } = useAttendanceReports();
 
-  // Mock data for demonstration - in real implementation, this would come from the hook
-  const mockCourseData = {
-    courses: courses.slice(0, 5).map((course, index) => ({
-      course_id: course.id,
-      course_name: course.name,
-      total_students: 45 + index * 10,
-      total_sessions: 120 + index * 20,
-      average_attendance: 85 + Math.random() * 10,
-      subjects: [
-        { subject_name: 'Theory', sessions: 60, attendance_percentage: 88 },
-        { subject_name: 'Practical', sessions: 40, attendance_percentage: 92 },
-        { subject_name: 'Lab Work', sessions: 20, attendance_percentage: 85 }
-      ],
-      faculty_performance: [
-        { faculty_name: 'Dr. Smith', sessions: 40, average_attendance: 90 },
-        { faculty_name: 'Prof. Jones', sessions: 35, average_attendance: 87 },
-        { faculty_name: 'Dr. Brown', sessions: 45, average_attendance: 89 }
-      ]
-    })),
-    trends: [
-      { date: 'Week 1', courses: { 'DMLT': 85, 'DRT': 88, 'DOTT': 82 } },
-      { date: 'Week 2', courses: { 'DMLT': 87, 'DRT': 90, 'DOTT': 84 } },
-      { date: 'Week 3', courses: { 'DMLT': 89, 'DRT': 87, 'DOTT': 86 } },
-      { date: 'Week 4', courses: { 'DMLT': 91, 'DRT': 89, 'DOTT': 88 } }
-    ]
-  };
+  useEffect(() => {
+    const filters: AttendanceReportFilters = {
+      reportType: 'course',
+      courseId: selectedCourse,
+      dateRange
+    };
+    fetchCourseReport(filters);
+  }, [selectedCourse, dateRange.from, dateRange.to]); // Removed fetchCourseReport from deps as it's now memoized
+
+  // Remove the mock data since we're using real data from the hook
 
   const getAttendanceColor = (percentage: number) => {
     if (percentage >= 90) return 'text-green-600';
@@ -103,6 +87,18 @@ export const CourseWiseAttendanceReport = () => {
             </div>
           </CardContent>
         </Card>
+      ) : !courseData || courseData.courses.length === 0 ? (
+        <Card>
+          <CardContent className="flex items-center justify-center h-48">
+            <div className="text-center">
+              <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Course Data Found</h3>
+              <p className="text-muted-foreground">
+                No course attendance records found for the selected filters
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       ) : (
         <>
           {/* Summary Stats */}
@@ -114,7 +110,7 @@ export const CourseWiseAttendanceReport = () => {
                     <BookOpen className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">{mockCourseData.courses.length}</div>
+                    <div className="text-2xl font-bold">{courseData.courses.length}</div>
                     <div className="text-sm text-muted-foreground">Active Courses</div>
                   </div>
                 </div>
@@ -129,7 +125,7 @@ export const CourseWiseAttendanceReport = () => {
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
-                      {mockCourseData.courses.reduce((sum, course) => sum + course.total_students, 0)}
+                      {courseData.courses.reduce((sum, course) => sum + course.total_students, 0)}
                     </div>
                     <div className="text-sm text-muted-foreground">Total Students</div>
                   </div>
@@ -145,7 +141,7 @@ export const CourseWiseAttendanceReport = () => {
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
-                      {mockCourseData.courses.reduce((sum, course) => sum + course.total_sessions, 0)}
+                      {courseData.courses.reduce((sum, course) => sum + course.total_sessions, 0)}
                     </div>
                     <div className="text-sm text-muted-foreground">Total Sessions</div>
                   </div>
@@ -161,7 +157,9 @@ export const CourseWiseAttendanceReport = () => {
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
-                      {(mockCourseData.courses.reduce((sum, course) => sum + course.average_attendance, 0) / mockCourseData.courses.length).toFixed(1)}%
+                      {courseData.courses.length > 0 
+                        ? (courseData.courses.reduce((sum, course) => sum + course.average_attendance, 0) / courseData.courses.length).toFixed(1)
+                        : '0.0'}%
                     </div>
                     <div className="text-sm text-muted-foreground">Average Attendance</div>
                   </div>
@@ -180,7 +178,7 @@ export const CourseWiseAttendanceReport = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={mockCourseData.courses}>
+                <BarChart data={courseData.courses}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="course_name" angle={-45} textAnchor="end" height={100} />
                   <YAxis domain={[0, 100]} />
@@ -201,7 +199,9 @@ export const CourseWiseAttendanceReport = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={mockCourseData.trends}>
+                <LineChart data={courseData.trends.length > 0 ? courseData.trends : [
+                  { date: 'No data', courses: {} }
+                ]}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis domain={[0, 100]} />
@@ -224,7 +224,7 @@ export const CourseWiseAttendanceReport = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {mockCourseData.courses.map((course) => (
+                {courseData.courses.map((course) => (
                   <Card key={course.course_id} className="p-4">
                     <div className="space-y-4">
                       {/* Course Header */}
@@ -297,7 +297,7 @@ export const CourseWiseAttendanceReport = () => {
               <div className="space-y-4">
                 {/* Mobile Cards */}
                 <div className="md:hidden space-y-4">
-                  {mockCourseData.courses.map((course) => (
+                  {courseData.courses.map((course) => (
                     <Card key={course.course_id} className="p-4">
                       <div className="space-y-3">
                         <div className="flex justify-between items-start">
@@ -342,7 +342,7 @@ export const CourseWiseAttendanceReport = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {mockCourseData.courses.map((course) => (
+                      {courseData.courses.map((course) => (
                         <TableRow key={course.course_id}>
                           <TableCell className="font-medium">{course.course_name}</TableCell>
                           <TableCell>{course.total_students}</TableCell>

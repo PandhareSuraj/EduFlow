@@ -28,7 +28,7 @@ export const StudentAttendanceReport = () => {
       dateRange
     };
     fetchStudentReport(filters);
-  }, [selectedCourse, dateRange, fetchStudentReport]);
+  }, [selectedCourse, dateRange.from, dateRange.to]); // Removed fetchStudentReport from deps as it's now memoized
 
   const filteredStudents = studentData?.students.filter(student =>
     student.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
