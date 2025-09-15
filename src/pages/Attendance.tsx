@@ -364,34 +364,9 @@ export default function Attendance() {
 
         {/* Reports */}
         <TabsContent value="reports">
-          <Card>
-            <CardHeader>
-              <CardTitle>Attendance Reports</CardTitle>
-              <CardDescription>Generate comprehensive attendance analytics</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <PermissionWrapper permission="REPORTS_VIEW">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button variant="outline" className="h-20 flex-col hover-scale">
-                    <Calendar className="h-6 w-6 mb-2" />
-                    Daily Report
-                  </Button>
-                  <Button variant="outline" className="h-20 flex-col hover-scale">
-                    <Users className="h-6 w-6 mb-2" />
-                    Student Report
-                  </Button>
-                  <Button variant="outline" className="h-20 flex-col hover-scale">
-                    <CheckCircle className="h-6 w-6 mb-2" />
-                    Course-wise Report
-                  </Button>
-                  <Button variant="outline" className="h-20 flex-col hover-scale">
-                    <XCircle className="h-6 w-6 mb-2" />
-                    Low Attendance Alert
-                  </Button>
-                </div>
-              </PermissionWrapper>
-            </CardContent>
-          </Card>
+          <PermissionWrapper permission="REPORTS_VIEW">
+            <AttendanceReportsContainer />
+          </PermissionWrapper>
         </TabsContent>
       </Tabs>
     </div>
