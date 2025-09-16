@@ -1,14 +1,6 @@
 import { createRoot } from 'react-dom/client'
-import React from 'react'
 import App from './App.tsx'
 import './index.css'
-import { AuthProvider } from "@/hooks/useAuth";
-import { CollegeProvider } from "@/contexts/CollegeContext";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-
-const queryClient = new QueryClient();
 
 // Register service worker
 if ('serviceWorker' in navigator) {
@@ -56,17 +48,4 @@ window.addEventListener('beforeinstallprompt', (e) => {
   document.body.appendChild(installButton);
 });
 
-createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <CollegeProvider>
-            <App />
-            <Toaster />
-          </CollegeProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
-  </React.StrictMode>
-);
+createRoot(document.getElementById("root")!).render(<App />);
