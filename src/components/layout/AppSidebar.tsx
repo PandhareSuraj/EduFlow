@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useBranding } from "@/hooks/useBranding";
 import {
   Sidebar,
   SidebarContent,
@@ -33,6 +34,7 @@ import {
 
 export function AppSidebar() {
   const { userRole } = useAuth();
+  const { collegeName, logoUrl } = useBranding();
   const location = useLocation();
   const { state } = useSidebar();
 
@@ -131,7 +133,7 @@ export function AppSidebar() {
       case 'clerk': return 'Clerk Portal';
       case 'librarian': return 'Library Portal';
       case 'accountant': return 'Accounts Portal';
-      default: return 'KK Patil College';
+      default: return collegeName || 'College Management';
     }
   };
 
@@ -151,9 +153,14 @@ export function AppSidebar() {
     <Sidebar className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="border-b border-sidebar-border bg-gradient-header p-4">
         {!isCollapsed && (
-          <div className="text-white">
-            <h2 className="font-bold text-lg leading-tight">{getPortalTitle()}</h2>
-            <p className="text-sm text-white/80 mt-1">{getPortalSubtitle()}</p>
+          <div className="text-white flex items-center space-x-3">
+            {logoUrl && userRole !== 'super_admin' && (
+              <img src={logoUrl} alt={`Logo`} className="h-8 w-8 object-contain" />
+            )}
+            <div>
+              <h2 className="font-bold text-lg leading-tight">{getPortalTitle()}</h2>
+              <p className="text-sm text-white/80 mt-1">{getPortalSubtitle()}</p>
+            </div>
           </div>
         )}
       </SidebarHeader>

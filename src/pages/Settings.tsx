@@ -236,31 +236,26 @@ export default function Settings() {
               <CardDescription>Basic information about your institution</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="text-sm text-muted-foreground mb-4">
+                These settings are managed through the ID Cards section. College-specific branding and information can be updated there.
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-60">
                 <div className="space-y-2">
                   <Label htmlFor="college-name">College Name</Label>
-                  <Input id="college-name" defaultValue="KK Patil Paramedical College" />
+                  <Input id="college-name" value="Managed in ID Cards Settings" disabled />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="college-code">College Code</Label>
-                  <Input id="college-code" defaultValue="KKPPC" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="principal-name">Principal Name</Label>
-                  <Input id="principal-name" defaultValue="Dr. Kiran Patil" />
+                  <Input id="college-code" value="Managed in ID Cards Settings" disabled />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="contact-number">Contact Number</Label>
-                  <Input id="contact-number" defaultValue="+91 98765 43210" />
+                  <Input id="contact-number" value="Managed in ID Cards Settings" disabled />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="college-address">College Address</Label>
-                <Textarea id="college-address" defaultValue="Sangamner, Ahmednagar District, Maharashtra - 422605" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="website">Website</Label>
-                <Input id="website" defaultValue="https://kkpatilcollege.edu.in" />
+                <div className="space-y-2">
+                  <Label htmlFor="college-address">College Address</Label>
+                  <Input id="college-address" value="Managed in ID Cards Settings" disabled />
+                </div>
               </div>
             </CardContent>
           </Card>

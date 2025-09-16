@@ -1,5 +1,6 @@
 import { QrCode } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useBranding } from "@/hooks/useBranding";
 
 interface StudentIDCardProps {
   student: {
@@ -15,13 +16,19 @@ interface StudentIDCardProps {
 }
 
 export function StudentIDCard({ student }: StudentIDCardProps) {
+  const { collegeName, address, logoUrl, signatureUrl, signatureTitle } = useBranding();
   return (
     <div className="w-full max-w-md mx-auto bg-white border-2 border-gray-300 rounded-lg overflow-hidden shadow-lg print:shadow-none print:border-black print:border-2">
       {/* Header with College Info */}
-      <div className="bg-gradient-header text-white p-4 text-center">
-        <h2 className="text-lg font-bold">KK PATIL PARAMEDICAL COLLEGE</h2>
-        <p className="text-sm opacity-90">Sangamner, Maharashtra</p>
-        <p className="text-xs opacity-80">STUDENT IDENTITY CARD</p>
+      <div className="bg-gradient-header text-white p-4 text-center flex items-center justify-center space-x-3">
+        {logoUrl && (
+          <img src={logoUrl} alt={`${collegeName} Logo`} className="h-10 w-10 object-contain" />
+        )}
+        <div>
+          <h2 className="text-lg font-bold">{collegeName}</h2>
+          <p className="text-sm opacity-90">{address}</p>
+          <p className="text-xs opacity-80">STUDENT IDENTITY CARD</p>
+        </div>
       </div>
 
       {/* Student Photo and Basic Info */}
@@ -95,8 +102,12 @@ export function StudentIDCard({ student }: StudentIDCardProps) {
           </div>
           
           <div className="text-center">
-            <div className="w-20 h-8 border-b border-gray-400 mb-1"></div>
-            <p className="text-xs text-gray-600">Authorized Signature</p>
+            {signatureUrl ? (
+              <img src={signatureUrl} alt="Signature" className="w-20 h-8 object-contain mb-1" />
+            ) : (
+              <div className="w-20 h-8 border-b border-gray-400 mb-1"></div>
+            )}
+            <p className="text-xs text-gray-600">{signatureTitle}</p>
           </div>
         </div>
       </div>
@@ -104,7 +115,7 @@ export function StudentIDCard({ student }: StudentIDCardProps) {
       {/* Footer */}
       <div className="bg-gray-50 px-4 py-2 text-center border-t">
         <p className="text-xs text-gray-600">
-          This card is property of KK Patil Paramedical College. If found, please return to college office.
+          This card is property of {collegeName}. If found, please return to college office.
         </p>
       </div>
     </div>

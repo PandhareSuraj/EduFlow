@@ -33,30 +33,31 @@ export function useCollegeSettings() {
 
   const fetchCollegeInfo = async () => {
     try {
+      // Get user's college from user_roles
+      const { data: userRoleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('college_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (roleError || !userRoleData?.college_id) {
+        console.warn('No college associated with user');
+        setCollegeInfo(null);
+        return;
+      }
+
+      // Fetch the user's specific college
       const { data, error } = await supabase
         .from('colleges')
         .select('*')
-        .limit(1)
-        .maybeSingle();
+        .eq('id', userRoleData.college_id)
+        .single();
 
       if (error) {
         throw error;
       }
 
-      if (data) {
-        setCollegeInfo(data);
-      } else {
-        // Default college info if none exists
-        setCollegeInfo({
-          name: 'KK Patil Paramedical College',
-          code: 'KKPPC',
-          address: 'Sangamner, Maharashtra',
-          phone: '+91 98765 43210',
-          email: 'admin@kkpatilcollege.edu.in',
-          website: 'https://kkpatilcollege.edu.in',
-          signature_title: 'Authorized Signature'
-        });
-      }
+      setCollegeInfo(data);
     } catch (error: any) {
       console.error('Error fetching college info:', error);
       toast({
@@ -64,6 +65,7 @@ export function useCollegeSettings() {
         description: "Failed to load college information",
         variant: "destructive",
       });
+      setCollegeInfo(null);
     }
   };
 

@@ -1,4 +1,4 @@
-import { Search, User, LogOut, Settings, Menu } from "lucide-react";
+import { Search, User, LogOut, Settings, Menu, School } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useBranding } from "@/hooks/useBranding";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -20,6 +21,7 @@ import { NotificationDropdown } from "@/components/notifications/NotificationDro
 
 export function Header() {
   const { user, userRole } = useAuth();
+  const { collegeName, logoUrl } = useBranding();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -52,8 +54,24 @@ export function Header() {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2 sm:space-x-4">
           <SidebarTrigger className="h-8 w-8 sm:h-9 sm:w-9" />
+          
+          {/* College Branding - Only show on larger screens */}
           {!isMobile && (
-            <div className="relative">
+            <div className="flex items-center space-x-3">
+              {logoUrl ? (
+                <img src={logoUrl} alt={`${collegeName} Logo`} className="h-8 w-8 object-contain" />
+              ) : (
+                <School className="h-8 w-8 text-primary" />
+              )}
+              <div>
+                <h1 className="font-bold text-lg">{collegeName}</h1>
+                <p className="text-sm text-muted-foreground">Management System</p>
+              </div>
+            </div>
+          )}
+          
+          {!isMobile && (
+            <div className="relative ml-4">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search students, courses..."
