@@ -9,8 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { IndianRupee, Download, Eye, Search, FileText } from "lucide-react";
 import { useCollege } from "@/contexts/CollegeContext";
+import { IndianRupee, Download, Eye, Search, FileText } from "lucide-react";
 
 interface StudentFeeLedgerData {
   fee_record_id: string;
