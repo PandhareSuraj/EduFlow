@@ -75,6 +75,27 @@ export function CollegeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (userRole) {
       fetchUserCollege();
+      
+      // Set up real-time subscription for college data changes
+      const channel = supabase
+        .channel('college-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'colleges'
+          },
+          () => {
+            console.log('College data updated, refetching...');
+            fetchUserCollege();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        channel.unsubscribe();
+      };
     }
   }, [userRole]);
 

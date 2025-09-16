@@ -15,6 +15,7 @@ import {
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useBranding } from "@/hooks/useBranding";
 import { AddStudentDialog } from "@/components/forms/StudentDialogs";
 import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ interface CollegeAMCData {
 
 export default function Dashboard() {
   const { userRole } = useAuth();
+  const { collegeName } = useBranding();
   const [stats, setStats] = useState<DashboardStats>({
     totalStudents: 0,
     activeCourses: 0,
@@ -249,7 +251,7 @@ export default function Dashboard() {
       {/* Welcome Header */}
       <div className="bg-gradient-header rounded-lg p-4 sm:p-6 text-white shadow-header">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 leading-tight">
-          {isSuperAdmin ? 'Multi-College Management Dashboard' : 'Welcome to KK Patil Paramedical College ERP'}
+          {isSuperAdmin ? 'Multi-College Management Dashboard' : `Welcome to ${collegeName} ERP`}
         </h1>
         <p className="text-white/90 text-sm sm:text-base">
           {isSuperAdmin 

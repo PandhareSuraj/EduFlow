@@ -4,12 +4,12 @@ import { Users, GraduationCap, UserCheck, CreditCard, MessageSquare, ClipboardCh
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useBranding } from "@/hooks/useBranding";
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
-  const {
-    userRole
-  } = useAuth();
+  const { userRole } = useAuth();
+  const { collegeName } = useBranding();
   const getNavigation = () => {
     if (userRole === 'super_admin') {
       // Super Admin Navigation - Multi-college management
@@ -99,15 +99,15 @@ export function Sidebar() {
       <div className="p-4 border-b border-border bg-gradient-header">
         <div className="flex items-center justify-between">
           {!isCollapsed && <div className="text-white">
-          <h2 className="font-bold text-lg">
-            {userRole === 'super_admin' ? 'Multi-College ERP' : 
-             userRole === 'student' ? 'Student Portal' : 
-             userRole === 'teacher' ? 'Teacher Portal' :
-             userRole === 'clerk' ? 'Clerk Portal' :
-             userRole === 'librarian' ? 'Library Portal' :
-             userRole === 'accountant' ? 'Accounts Portal' :
-             'KK Patil College'}
-          </h2>
+           <h2 className="font-bold text-lg">
+             {userRole === 'super_admin' ? 'Multi-College ERP' : 
+              userRole === 'student' ? 'Student Portal' : 
+              userRole === 'teacher' ? 'Teacher Portal' :
+              userRole === 'clerk' ? 'Clerk Portal' :
+              userRole === 'librarian' ? 'Library Portal' :
+              userRole === 'accountant' ? 'Accounts Portal' :
+              collegeName}
+           </h2>
           <p className="text-sm text-white/80">
             {userRole === 'super_admin' ? 'System Management' : 
              userRole === 'student' ? 'Student Dashboard' : 
