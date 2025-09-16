@@ -11,6 +11,9 @@ export interface ReportFilters {
   };
   semester?: number;
   status?: string;
+  searchTerm?: string;
+  department?: string;
+  year?: number;
 }
 
 export interface ReportData {
@@ -53,11 +56,17 @@ export const useReportData = () => {
       if (filters.courseId && filters.courseId !== 'all') {
         studentsQuery = studentsQuery.eq('course_id', parseInt(filters.courseId));
       }
-      if (filters.status) {
+      if (filters.status && filters.status !== 'all') {
         studentsQuery = studentsQuery.eq('status', filters.status);
       }
       if (filters.semester) {
         studentsQuery = studentsQuery.eq('semester', filters.semester);
+      }
+      if (filters.year) {
+        studentsQuery = studentsQuery.eq('year', filters.year);
+      }
+      if (filters.searchTerm) {
+        studentsQuery = studentsQuery.or(`name.ilike.%${filters.searchTerm}%,email.ilike.%${filters.searchTerm}%,student_id.ilike.%${filters.searchTerm}%`);
       }
 
       promises.push(studentsQuery);
@@ -80,6 +89,9 @@ export const useReportData = () => {
         feesQuery = feesQuery
           .gte('payment_date', filters.dateRange.from.toISOString().split('T')[0])
           .lte('payment_date', filters.dateRange.to.toISOString().split('T')[0]);
+      }
+      if (filters.searchTerm) {
+        feesQuery = feesQuery.or(`receipt_number.ilike.%${filters.searchTerm}%,payment_method.ilike.%${filters.searchTerm}%`);
       }
 
       promises.push(feesQuery);
@@ -142,6 +154,12 @@ export const useReportData = () => {
         enquiriesQuery = enquiriesQuery
           .gte('created_at', filters.dateRange.from.toISOString())
           .lte('created_at', filters.dateRange.to.toISOString());
+      }
+      if (filters.status && filters.status !== 'all') {
+        enquiriesQuery = enquiriesQuery.eq('status', filters.status);
+      }
+      if (filters.searchTerm) {
+        enquiriesQuery = enquiriesQuery.or(`name.ilike.%${filters.searchTerm}%,phone.ilike.%${filters.searchTerm}%,email.ilike.%${filters.searchTerm}%,course.ilike.%${filters.searchTerm}%`);
       }
 
       promises.push(enquiriesQuery);

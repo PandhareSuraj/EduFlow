@@ -8,6 +8,7 @@ import { useReportData } from "@/hooks/useReportData";
 import { ReportGenerator, ReportConfigs } from "@/utils/reportGenerator";
 import { ReportFilters, FilterValues } from "@/components/reports/ReportFilters";
 import { ReportHistory } from "@/components/reports/ReportHistory";
+import { ReportDataTable } from "@/components/reports/ReportDataTable";
 import { format as formatDate } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -90,7 +91,11 @@ export default function Reports() {
     fetchData({
       reportType: filters.reportType,
       courseId: filters.courseId,
-      dateRange: filters.dateRange
+      dateRange: filters.dateRange,
+      searchTerm: filters.searchTerm,
+      status: filters.status,
+      semester: filters.semester,
+      year: filters.year
     });
   };
 
@@ -291,76 +296,109 @@ export default function Reports() {
         ))}
       </div>
 
-      {/* Data Preview */}
+      {/* Data Preview Table */}
       {currentFilters?.reportType && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Data Preview</CardTitle>
-            <CardDescription>
-              Preview of data for {currentFilters.reportType.replace('_', ' ')} report
-              {currentFilters.courseId !== 'all' && ` (Course: ${data.courses.find(c => c.id.toString() === currentFilters.courseId)?.name})`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-3 bg-muted/30 rounded-lg">
-                    <div className="text-2xl font-bold text-primary">
-                      {currentFilters.reportType === 'student_enrollment' && data.students.length}
-                      {currentFilters.reportType === 'fees_collection' && data.fees.length}
-                      {currentFilters.reportType === 'attendance_summary' && data.attendance.length}
-                      {currentFilters.reportType === 'exam_results' && data.exams.length}
-                      {currentFilters.reportType === 'enquiry_report' && data.enquiries.length}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Total Records</div>
-                  </div>
-                  
-                  {currentFilters.reportType === 'fees_collection' && (
-                    <div className="p-3 bg-muted/30 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">
-                        ₹{data.fees.reduce((sum, fee) => sum + (fee.amount || 0), 0).toLocaleString()}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Total Collected</div>
-                    </div>
-                  )}
-                  
-                  {currentFilters.reportType === 'attendance_summary' && data.attendance.length > 0 && (
-                    <div className="p-3 bg-muted/30 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {(data.attendance.reduce((sum, session) => sum + (session.attendance_percentage || 0), 0) / data.attendance.length).toFixed(1)}%
-                      </div>
-                      <div className="text-sm text-muted-foreground">Avg Attendance</div>
-                    </div>
-                  )}
-                  
-                  <div className="p-3 bg-muted/30 rounded-lg">
-                    <div className="text-2xl font-bold text-orange-600">
-                      {formatDate(currentFilters.dateRange.from, 'MMM d')} - {formatDate(currentFilters.dateRange.to, 'MMM d')}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Date Range</div>
-                  </div>
-                </div>
-                
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Ready to generate report with {' '}
-                    {currentFilters.reportType === 'student_enrollment' && data.students.length}
-                    {currentFilters.reportType === 'fees_collection' && data.fees.length}
-                    {currentFilters.reportType === 'attendance_summary' && data.attendance.length}
-                    {currentFilters.reportType === 'exam_results' && data.exams.length}
-                    {currentFilters.reportType === 'enquiry_report' && data.enquiries.length}
-                    {' '} records
-                  </p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <>
+          {currentFilters.reportType === 'student_enrollment' && (
+            <ReportDataTable
+              title="Student Enrollment Data"
+              description={`Showing ${data.students.length} student records${currentFilters.courseId !== 'all' ? ` for ${data.courses.find(c => c.id.toString() === currentFilters.courseId)?.name}` : ''}`}
+              data={data.students}
+              columns={[
+                { key: 'student_id', label: 'Student ID' },
+                { key: 'name', label: 'Name' },
+                { key: 'email', label: 'Email' },
+                { key: 'courses.name', label: 'Course' },
+                { key: 'semester', label: 'Semester' },
+                { key: 'year', label: 'Year' },
+                { key: 'admission_date', label: 'Admission Date' },
+                { key: 'status', label: 'Status', formatter: (value) => <Badge variant={value === 'active' ? 'default' : 'secondary'}>{value}</Badge> }
+              ]}
+              loading={loading}
+              onExport={generateReport}
+              searchPlaceholder="Search students by name, ID, or email..."
+            />
+          )}
+
+          {currentFilters.reportType === 'fees_collection' && (
+            <ReportDataTable
+              title="Fees Collection Data"
+              description={`Showing ${data.fees.length} fee payment records`}
+              data={data.fees}
+              columns={[
+                { key: 'receipt_number', label: 'Receipt No.' },
+                { key: 'students.name', label: 'Student' },
+                { key: 'students.student_id', label: 'Student ID' },
+                { key: 'amount', label: 'Amount' },
+                { key: 'payment_date', label: 'Payment Date' },
+                { key: 'payment_method', label: 'Method' },
+                { key: 'transaction_id', label: 'Transaction ID' }
+              ]}
+              loading={loading}
+              onExport={generateReport}
+              searchPlaceholder="Search by receipt number, student name..."
+            />
+          )}
+
+          {currentFilters.reportType === 'attendance_summary' && (
+            <ReportDataTable
+              title="Attendance Summary Data"
+              description={`Showing ${data.attendance.length} attendance session records`}
+              data={data.attendance}
+              columns={[
+                { key: 'courses.name', label: 'Course' },
+                { key: 'subject', label: 'Subject' },
+                { key: 'session_date', label: 'Date' },
+                { key: 'total_students', label: 'Total Students' },
+                { key: 'present_count', label: 'Present' },
+                { key: 'absent_count', label: 'Absent' },
+                { key: 'attendance_percentage', label: 'Attendance %', formatter: (value) => value ? `${value}%` : '-' }
+              ]}
+              loading={loading}
+              onExport={generateReport}
+              searchPlaceholder="Search by course or subject..."
+            />
+          )}
+
+          {currentFilters.reportType === 'exam_results' && (
+            <ReportDataTable
+              title="Exam Results Data"
+              description={`Showing ${data.exams.length} exam records`}
+              data={data.exams}
+              columns={[
+                { key: 'name', label: 'Exam Name' },
+                { key: 'courses.name', label: 'Course' },
+                { key: 'exam_date', label: 'Date' },
+                { key: 'total_marks', label: 'Total Marks' },
+                { key: 'duration_minutes', label: 'Duration (min)' },
+                { key: 'status', label: 'Status', formatter: (value) => <Badge variant={value === 'completed' ? 'default' : 'secondary'}>{value}</Badge> }
+              ]}
+              loading={loading}
+              onExport={generateReport}
+              searchPlaceholder="Search exams by name or course..."
+            />
+          )}
+
+          {currentFilters.reportType === 'enquiry_report' && (
+            <ReportDataTable
+              title="Enquiry Report Data"
+              description={`Showing ${data.enquiries.length} enquiry records`}
+              data={data.enquiries}
+              columns={[
+                { key: 'name', label: 'Name' },
+                { key: 'phone', label: 'Phone' },
+                { key: 'email', label: 'Email' },
+                { key: 'course', label: 'Course of Interest' },
+                { key: 'source', label: 'Source' },
+                { key: 'status', label: 'Status', formatter: (value) => <Badge variant={value === 'converted' ? 'default' : 'secondary'}>{value}</Badge> },
+                { key: 'created_at', label: 'Created Date' }
+              ]}
+              loading={loading}
+              onExport={generateReport}
+              searchPlaceholder="Search by name, phone, email..."
+            />
+          )}
+        </>
       )}
 
         {/* Report History */}
