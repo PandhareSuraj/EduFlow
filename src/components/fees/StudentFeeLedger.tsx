@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { IndianRupee, Download, Eye, Search, FileText } from "lucide-react";
+import { useCollege } from "@/contexts/CollegeContext";
 
 interface StudentFeeLedgerData {
   fee_record_id: string;
@@ -43,6 +44,7 @@ export function StudentFeeLedger({ trigger }: StudentFeeLedgerProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
+  const { college } = useCollege();
 
   useEffect(() => {
     if (open) {
@@ -57,9 +59,17 @@ export function StudentFeeLedger({ trigger }: StudentFeeLedgerProps) {
   const fetchLedgerData = async () => {
     setLoading(true);
     try {
+      if (!college?.id) {
+        console.log('No college context available for fee ledger');
+        setLedgerData([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('student_fee_ledger')
         .select('*')
+        .eq('college_id', college.id)  // CRITICAL: Filter by college
         .order('fee_created_at', { ascending: false });
 
       if (error) {

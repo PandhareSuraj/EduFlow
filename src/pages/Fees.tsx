@@ -42,6 +42,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { useCourses } from "@/hooks/useCourses";
+import { useCollege } from "@/contexts/CollegeContext";
 
 interface StudentFeeData {
   id: string;
@@ -88,14 +89,24 @@ export default function Fees() {
   const [selectedStudentForHistory, setSelectedStudentForHistory] = useState<{id: number, name: string} | null>(null);
   const { toast } = useToast();
   const { courses, loading: coursesLoading } = useCourses();
+  const { college } = useCollege();
 
   const fetchFeeRecords = async () => {
     try {
-      console.log('Fetching fee records with relationships...');
+      console.log('Fetching fee records with college-based filtering...');
       setLoading(true);
+      
+      if (!college?.id) {
+        console.log('No college context available');
+        setFeeRecords([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('student_fee_summary')
         .select('*')
+        .eq('college_id', college.id)  // CRITICAL: Filter by college
         .order('fee_created_at', { ascending: false });
 
       if (error) {
@@ -156,8 +167,10 @@ export default function Fees() {
   };
 
   useEffect(() => {
-    fetchFeeRecords();
-  }, []);
+    if (college?.id) {
+      fetchFeeRecords();
+    }
+  }, [college?.id]);
 
   // Filter records based on search term, status, and course
   const filteredRecords = feeRecords.filter(record => {
