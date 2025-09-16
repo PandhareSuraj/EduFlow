@@ -351,9 +351,12 @@ export type Database = {
           created_by: string | null
           email: string | null
           id: string
+          id_card_template_id: string | null
           logo_url: string | null
           name: string
           phone: string | null
+          signature_title: string | null
+          signature_url: string | null
           status: string
           updated_at: string
           website: string | null
@@ -365,9 +368,12 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           id?: string
+          id_card_template_id?: string | null
           logo_url?: string | null
           name: string
           phone?: string | null
+          signature_title?: string | null
+          signature_url?: string | null
           status?: string
           updated_at?: string
           website?: string | null
@@ -379,14 +385,25 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           id?: string
+          id_card_template_id?: string | null
           logo_url?: string | null
           name?: string
           phone?: string | null
+          signature_title?: string | null
+          signature_url?: string | null
           status?: string
           updated_at?: string
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "colleges_id_card_template_id_fkey"
+            columns: ["id_card_template_id"]
+            isOneToOne: false
+            referencedRelation: "id_card_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       courses: {
         Row: {
@@ -934,6 +951,39 @@ export type Database = {
           semester?: number
           total_fee?: number
           tuition_fee?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      id_card_templates: {
+        Row: {
+          code: string
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
           updated_at?: string
         }
         Relationships: []
@@ -1785,6 +1835,7 @@ export type Database = {
           id: number
           mobile_number: string
           name: string
+          photo_url: string | null
           semester: number | null
           status: string
           student_id: string
@@ -1802,6 +1853,7 @@ export type Database = {
           id?: number
           mobile_number: string
           name: string
+          photo_url?: string | null
           semester?: number | null
           status?: string
           student_id?: string
@@ -1819,6 +1871,7 @@ export type Database = {
           id?: number
           mobile_number?: string
           name?: string
+          photo_url?: string | null
           semester?: number | null
           status?: string
           student_id?: string

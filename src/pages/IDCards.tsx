@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
-import { CreditCard, Download, Search, Filter, Plus, Printer, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { CreditCard, Download, Search, Filter, Plus, Printer, Loader2, Upload, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -20,7 +20,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { StudentIDCard } from "@/components/id-card/StudentIDCard";
+import { IDCardRenderer } from "@/components/id-card/IDCardRenderer";
+import { useCollegeSettings } from "@/hooks/useCollegeSettings";
+import { downloadIDCardPDF, downloadMultipleIDCards, printIDCard } from "@/utils/pdfGenerator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -43,7 +45,10 @@ export default function IDCards() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { collegeInfo, getSelectedTemplate } = useCollegeSettings();
 
   const fetchStudents = async () => {
     try {
@@ -59,7 +64,8 @@ export default function IDCards() {
           year,
           semester,
           status,
-          course_id
+          course_id,
+          photo_url
         `)
         .eq('status', 'active')
         .order('name', { ascending: true });
@@ -85,6 +91,7 @@ export default function IDCards() {
           admissionDate: student.admission_date,
           validUpto: new Date(new Date(student.admission_date).getFullYear() + 2, new Date(student.admission_date).getMonth(), new Date(student.admission_date).getDate()).toISOString().split('T')[0],
           idCardStatus: Math.random() > 0.3 ? "Generated" : "Pending",
+          photo: student.photo_url,
           courses: course
         };
       });
@@ -124,80 +131,141 @@ export default function IDCards() {
     setSelectedStudent(student);
   };
 
-  const handlePrintCard = (student: any) => {
-    // Print functionality
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Student ID Card - ${student.name}</title>
-            <style>
-              body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-              .id-card { 
-                width: 350px; 
-                height: 220px; 
-                border: 2px solid #000; 
-                padding: 15px; 
-                margin: 0 auto;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border-radius: 10px;
-              }
-              .header { text-align: center; margin-bottom: 15px; }
-              .college-name { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
-              .student-info { margin-bottom: 10px; }
-              .student-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
-              .details { font-size: 12px; line-height: 1.4; }
-              @media print { body { margin: 0; } }
-            </style>
-          </head>
-          <body>
-            <div class="id-card">
-              <div class="header">
-                <div class="college-name">KK Patil Paramedical College</div>
-                <div style="font-size: 12px;">Student Identity Card</div>
-              </div>
-              <div class="student-info">
-                <div class="student-name">${student.name}</div>
-                <div class="details">
-                  <div><strong>ID:</strong> ${student.id}</div>
-                  <div><strong>Course:</strong> ${student.course}</div>
-                  <div><strong>Batch:</strong> ${student.batch}</div>
-                  <div><strong>Valid Upto:</strong> ${new Date(student.validUpto).toLocaleDateString()}</div>
-                </div>
-              </div>
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
+  const handlePrintCard = async (student: Student) => {
+    if (!cardRef.current) {
+      toast({
+        title: "Error",
+        description: "ID card not ready for printing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await printIDCard(cardRef.current);
+      toast({
+        title: "Print Started",
+        description: "ID card sent to printer",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to print ID card",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleDownloadPDF = (student: any) => {
-    // For now, we'll create a simple download link
-    // In a real app, you'd generate a proper PDF
-    const element = document.createElement('a');
-    const content = `Student ID Card\n\nName: ${student.name}\nID: ${student.id}\nCourse: ${student.course}\nBatch: ${student.batch}\nValid Upto: ${new Date(student.validUpto).toLocaleDateString()}`;
-    const file = new Blob([content], {type: 'text/plain'});
-    element.href = URL.createObjectURL(file);
-    element.download = `${student.id}_id_card.txt`;
-    element.click();
+  const handleDownloadPDF = async (student: Student) => {
+    if (!cardRef.current) {
+      toast({
+        title: "Error",
+        description: "ID card not ready for download",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await downloadIDCardPDF(cardRef.current, `${student.id}_id_card.pdf`);
+      toast({
+        title: "Download Started",
+        description: "ID card PDF is being downloaded",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleBulkGenerate = () => {
-    // Bulk generate functionality
+  const handleBulkGenerate = async () => {
     const pendingStudents = students.filter(s => s.idCardStatus === "Pending");
     if (pendingStudents.length === 0) {
-      alert("No pending ID cards to generate.");
+      toast({
+        title: "No Pending Cards",
+        description: "All ID cards have already been generated.",
+        variant: "default",
+      });
       return;
     }
     
-    // In a real app, this would update the database
-    alert(`Generated ${pendingStudents.length} ID cards successfully!`);
-    window.location.reload();
+    try {
+      // This would typically update the database to mark cards as generated
+      toast({
+        title: "Bulk Generation Started",
+        description: `Generating ${pendingStudents.length} ID cards...`,
+      });
+      
+      // Simulate bulk generation
+      setTimeout(() => {
+        toast({
+          title: "Success",
+          description: `${pendingStudents.length} ID cards generated successfully!`,
+        });
+        fetchStudents(); // Refresh the list
+      }, 2000);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate ID cards in bulk",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePhotoUpload = async (studentId: string, file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File",
+        description: "Please select an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingPhoto(studentId);
+    try {
+      const path = `student-photos/${studentId}/${file.name}`;
+      const { data, error } = await supabase.storage
+        .from('student-documents')
+        .upload(path, file, { upsert: true });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('student-documents')
+        .getPublicUrl(path);
+
+      // Update student photo URL in database
+      const { error: updateError } = await supabase
+        .from('students')
+        .update({ photo_url: publicUrl })
+        .eq('student_id', studentId);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      setStudents(prev => prev.map(s => 
+        s.id === studentId ? { ...s, photo: publicUrl } : s
+      ));
+
+      toast({
+        title: "Photo Uploaded",
+        description: "Student photo updated successfully",
+      });
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload student photo",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingPhoto(null);
+    }
   };
 
   const handleExportList = () => {
@@ -358,14 +426,43 @@ export default function IDCards() {
               </TableHeader>
               <TableBody>
                 {filteredStudents.map((student) => (
-                  <TableRow key={student.id}>
+                <TableRow key={student.id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            {student.name.split(' ').map((n: string) => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative">
+                          <Avatar className="h-10 w-10">
+                            {student.photo ? (
+                              <AvatarImage src={student.photo} alt={student.name} />
+                            ) : (
+                              <AvatarFallback className="bg-primary/10 text-primary">
+                                {student.name.split(' ').map((n: string) => n[0]).join('')}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          {/* Photo upload button */}
+                          <div className="absolute -bottom-1 -right-1">
+                            <label 
+                              htmlFor={`photo-${student.id}`}
+                              className="w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/80 text-xs"
+                            >
+                              {uploadingPhoto === student.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Upload className="w-3 h-3" />
+                              )}
+                            </label>
+                            <input
+                              id={`photo-${student.id}`}
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handlePhotoUpload(student.id, file);
+                              }}
+                            />
+                          </div>
+                        </div>
                         <div>
                           <p className="font-medium">{student.name}</p>
                           <p className="text-sm text-muted-foreground">{student.phone}</p>
@@ -400,7 +497,15 @@ export default function IDCards() {
                               <DialogTitle>Student ID Card - {student.name}</DialogTitle>
                             </DialogHeader>
                             <div className="mt-4">
-                              <StudentIDCard student={student} />
+                              <div ref={cardRef}>
+                                {collegeInfo && getSelectedTemplate() && (
+                                  <IDCardRenderer
+                                    student={student}
+                                    college={collegeInfo}
+                                    templateCode={getSelectedTemplate()?.code || 'classic_corporate'}
+                                  />
+                                )}
+                              </div>
                               <div className="mt-6 flex justify-end gap-4">
                                 <Button 
                                   variant="outline"

@@ -13,6 +13,7 @@ import { DatabaseManagementDialog } from '@/components/database/DatabaseManageme
 import { RoleGuard } from '@/components/permissions/RoleGuard';
 import { DepartmentManagement } from '@/components/forms/DepartmentManagement';
 import { SubjectManagement } from '@/components/forms/SubjectManagement';
+import { IDCardSettings } from '@/components/settings/IDCardSettings';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -211,8 +212,9 @@ export default function Settings() {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-9">
+        <TabsList className="grid w-full grid-cols-10">
           <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="id-cards">ID Cards</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="departments">Departments</TabsTrigger>
           <TabsTrigger value="subjects">Subjects</TabsTrigger>
@@ -306,6 +308,11 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ID Card Settings */}
+        <TabsContent value="id-cards" className="space-y-6">
+          <IDCardSettings />
         </TabsContent>
 
         {/* User Management */}
