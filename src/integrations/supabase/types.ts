@@ -825,13 +825,6 @@ export type Database = {
             foreignKeyName: "fee_payments_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
-            referencedRelation: "student_fee_ledger"
-            referencedColumns: ["student_id"]
-          },
-          {
-            foreignKeyName: "fee_payments_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
             referencedRelation: "student_payment_ledger"
             referencedColumns: ["student_id"]
           },
@@ -869,13 +862,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "student_payment_ledger"
             referencedColumns: ["fee_record_id"]
-          },
-          {
-            foreignKeyName: "fk_fee_payments_student_id"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "student_fee_ledger"
-            referencedColumns: ["student_id"]
           },
           {
             foreignKeyName: "fk_fee_payments_student_id"
@@ -1452,13 +1438,6 @@ export type Database = {
             foreignKeyName: "fk_results_student_id"
             columns: ["student_id"]
             isOneToOne: false
-            referencedRelation: "student_fee_ledger"
-            referencedColumns: ["student_id"]
-          },
-          {
-            foreignKeyName: "fk_results_student_id"
-            columns: ["student_id"]
-            isOneToOne: false
             referencedRelation: "student_payment_ledger"
             referencedColumns: ["student_id"]
           },
@@ -1605,13 +1584,6 @@ export type Database = {
             foreignKeyName: "student_documents_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
-            referencedRelation: "student_fee_ledger"
-            referencedColumns: ["student_id"]
-          },
-          {
-            foreignKeyName: "student_documents_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
             referencedRelation: "student_payment_ledger"
             referencedColumns: ["student_id"]
           },
@@ -1697,13 +1669,6 @@ export type Database = {
             foreignKeyName: "student_exam_sessions_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
-            referencedRelation: "student_fee_ledger"
-            referencedColumns: ["student_id"]
-          },
-          {
-            foreignKeyName: "student_exam_sessions_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
             referencedRelation: "student_payment_ledger"
             referencedColumns: ["student_id"]
           },
@@ -1773,13 +1738,6 @@ export type Database = {
             foreignKeyName: "fk_student_fees_student_id"
             columns: ["student_id"]
             isOneToOne: false
-            referencedRelation: "student_fee_ledger"
-            referencedColumns: ["student_id"]
-          },
-          {
-            foreignKeyName: "fk_student_fees_student_id"
-            columns: ["student_id"]
-            isOneToOne: false
             referencedRelation: "student_payment_ledger"
             referencedColumns: ["student_id"]
           },
@@ -1796,13 +1754,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "fee_structures"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "student_fees_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "student_fee_ledger"
-            referencedColumns: ["student_id"]
           },
           {
             foreignKeyName: "student_fees_student_id_fkey"
@@ -2037,7 +1988,36 @@ export type Database = {
           student_name: string | null
           student_number: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_student_fees_student_id"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "fk_student_fees_student_id"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_fees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_fees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_fee_summary: {
         Row: {
@@ -2073,13 +2053,6 @@ export type Database = {
             foreignKeyName: "fk_student_fees_student_id"
             columns: ["student_id"]
             isOneToOne: false
-            referencedRelation: "student_fee_ledger"
-            referencedColumns: ["student_id"]
-          },
-          {
-            foreignKeyName: "fk_student_fees_student_id"
-            columns: ["student_id"]
-            isOneToOne: false
             referencedRelation: "student_payment_ledger"
             referencedColumns: ["student_id"]
           },
@@ -2089,13 +2062,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "student_fees_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "student_fee_ledger"
-            referencedColumns: ["student_id"]
           },
           {
             foreignKeyName: "student_fees_student_id_fkey"
