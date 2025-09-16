@@ -53,7 +53,7 @@ export const ReportFilters = ({ onFiltersChange, onGenerate, loading }: ReportFi
 
   useEffect(() => {
     onFiltersChange(filters);
-  }, [filters, onFiltersChange]);
+  }, [filters]);
 
   const fetchCourses = async () => {
     try {

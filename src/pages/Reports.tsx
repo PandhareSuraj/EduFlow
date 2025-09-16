@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -86,7 +86,7 @@ export default function Reports() {
   const { data, loading, fetchData } = useReportData();
   const [currentFilters, setCurrentFilters] = useState<FilterValues | null>(null);
 
-  const handleFiltersChange = (filters: FilterValues) => {
+  const handleFiltersChange = useCallback((filters: FilterValues) => {
     setCurrentFilters(filters);
     fetchData({
       reportType: filters.reportType,
@@ -97,7 +97,7 @@ export default function Reports() {
       semester: filters.semester,
       year: filters.year
     });
-  };
+  }, [fetchData]);
 
   const generateReport = async (format: 'pdf' | 'excel') => {
     if (!currentFilters || !currentFilters.reportType) {
