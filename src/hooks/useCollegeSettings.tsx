@@ -37,9 +37,9 @@ export function useCollegeSettings() {
         .from('colleges')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         throw error;
       }
 
