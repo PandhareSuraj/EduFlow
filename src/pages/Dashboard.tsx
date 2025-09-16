@@ -507,7 +507,7 @@ export default function Dashboard() {
                           </p>
                         </div>
                         <Badge variant="outline" className="text-xs">
-                          {notification.action}
+                          {notification.action_url ? 'View Details' : 'Info'}
                         </Badge>
                       </div>
                     </div>

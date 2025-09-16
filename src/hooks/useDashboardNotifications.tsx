@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
 
 export interface Notification {
   id: string;
@@ -7,150 +8,74 @@ export interface Notification {
   message: string;
   count: number;
   type: 'warning' | 'error' | 'info' | 'success';
-  action?: string;
+  action_url?: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+interface DatabaseNotification {
+  id: string;
+  title: string;
+  message: string;
+  count: number;
+  type: string;
+  action_url?: string;
+  is_read: boolean;
+  created_at: string;
 }
 
 export function useDashboardNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    fetchNotifications();
-    
-    // Set up real-time subscriptions
-    const channel = supabase
-      .channel('dashboard-notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'student_fees'
-        },
-        () => fetchNotifications()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'attendance_records'
-        },
-        () => fetchNotifications()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'exams'
-        },
-        () => fetchNotifications()
-      )
-      .subscribe();
+    if (user) {
+      fetchNotifications();
+      generateNotifications();
+      
+      // Set up real-time subscriptions for notifications
+      const channel = supabase
+        .channel('user-notifications')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => fetchNotifications()
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user]);
 
   const fetchNotifications = async () => {
+    if (!user) return;
+    
     try {
-      const notifications: Notification[] = [];
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-      // Check for students with pending fees
-      const { data: pendingFees, count: pendingFeesCount } = await supabase
-        .from('student_fees')
-        .select('id', { count: 'exact' })
-        .eq('status', 'pending');
-
-      if (pendingFeesCount && pendingFeesCount > 0) {
-        notifications.push({
-          id: 'pending-fees',
-          title: 'Fee Reminders',
-          message: 'students have pending fees',
-          count: pendingFeesCount,
-          type: 'warning',
-          action: 'View Fees'
-        });
-      }
-
-      // Check for students with low attendance (less than 75%)
-      const { data: lowAttendanceData } = await supabase
-        .from('students')
-        .select(`
-          id,
-          name,
-          attendance_records!attendance_records_student_id_fkey(status)
-        `);
-
-      let lowAttendanceCount = 0;
-      if (lowAttendanceData) {
-        lowAttendanceData.forEach((student: any) => {
-          if (student.attendance_records && student.attendance_records.length > 0) {
-            const presentCount = student.attendance_records.filter((record: any) => record.status === 'present').length;
-            const totalCount = student.attendance_records.length;
-            const attendancePercentage = (presentCount / totalCount) * 100;
-            
-            if (attendancePercentage < 75) {
-              lowAttendanceCount++;
-            }
-          }
-        });
-      }
-
-      if (lowAttendanceCount > 0) {
-        notifications.push({
-          id: 'low-attendance',
-          title: 'Low Attendance',
-          message: 'students below 75% attendance',
-          count: lowAttendanceCount,
-          type: 'error',
-          action: 'View Attendance'
-        });
-      }
-
-      // Check for upcoming exams (next 7 days)
-      const nextWeek = new Date();
-      nextWeek.setDate(nextWeek.getDate() + 7);
+      if (error) throw error;
       
-      const { data: upcomingExams, count: upcomingExamsCount } = await supabase
-        .from('exams')
-        .select('id', { count: 'exact' })
-        .gte('exam_date', new Date().toISOString().split('T')[0])
-        .lte('exam_date', nextWeek.toISOString().split('T')[0])
-        .eq('status', 'scheduled');
-
-      if (upcomingExamsCount && upcomingExamsCount > 0) {
-        notifications.push({
-          id: 'upcoming-exams',
-          title: 'Upcoming Exams',
-          message: 'exams scheduled in next 7 days',
-          count: upcomingExamsCount,
-          type: 'info',
-          action: 'View Exams'
-        });
-      }
-
-      // Check for recent course completions (potential certificate candidates)
-      const { data: recentGraduates, count: certificatePendingCount } = await supabase
-        .from('students')
-        .select('id', { count: 'exact' })
-        .eq('status', 'completed')
-        .gte('updated_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()); // Last 30 days
-
-      if (certificatePendingCount && certificatePendingCount > 0) {
-        notifications.push({
-          id: 'certificates-pending',
-          title: 'Certificates Pending',
-          message: 'course completion certificates to issue',
-          count: certificatePendingCount,
-          type: 'info',
-          action: 'Issue Certificates'
-        });
-      }
-
-      setNotifications(notifications);
+      const typedNotifications: Notification[] = (data || []).map((item: DatabaseNotification) => ({
+        ...item,
+        type: ['warning', 'error', 'info', 'success'].includes(item.type) 
+          ? item.type as 'warning' | 'error' | 'info' | 'success'
+          : 'info'
+      }));
+      
+      setNotifications(typedNotifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -158,5 +83,61 @@ export function useDashboardNotifications() {
     }
   };
 
-  return { notifications, loading, refetch: fetchNotifications };
+  const generateNotifications = async () => {
+    try {
+      await supabase.rpc('generate_role_based_notifications');
+    } catch (error) {
+      console.error('Error generating notifications:', error);
+    }
+  };
+
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false);
+
+      if (error) throw error;
+
+      setNotifications(prev => 
+        prev.map(n => ({ ...n, is_read: true }))
+      );
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  return { 
+    notifications, 
+    loading, 
+    unreadCount,
+    refetch: fetchNotifications, 
+    markAsRead,
+    markAllAsRead,
+    generateNotifications
+  };
 }

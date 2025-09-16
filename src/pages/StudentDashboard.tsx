@@ -2,9 +2,13 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, GraduationCap, FileText, Clock, Phone, Mail } from "lucide-react";
+import { Calendar, GraduationCap, FileText, Clock, Phone, Mail, DollarSign, AlertCircle, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { StudentNotifications } from "@/components/notifications/StudentNotifications";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface StudentData {
   id: number;
@@ -21,12 +25,17 @@ interface StudentData {
 
 export default function StudentDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [attendancePercentage, setAttendancePercentage] = useState(0);
+  const [feeStatus, setFeeStatus] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
       fetchStudentData();
+      fetchAttendanceData();
+      fetchFeeStatus();
     }
   }, [user]);
 
@@ -46,6 +55,49 @@ export default function StudentDashboard() {
       console.error('Error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAttendanceData = async () => {
+    try {
+      const { data: studentData } = await supabase.rpc('get_student_data');
+      if (studentData && studentData.length > 0) {
+        const student = studentData[0];
+        
+        const { data: attendanceData } = await supabase
+          .from('attendance_records')
+          .select('status')
+          .eq('student_id', student.id);
+
+        if (attendanceData && attendanceData.length > 0) {
+          const presentCount = attendanceData.filter(record => record.status === 'present').length;
+          const totalCount = attendanceData.length;
+          const percentage = (presentCount / totalCount) * 100;
+          setAttendancePercentage(percentage);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching attendance:', error);
+    }
+  };
+
+  const fetchFeeStatus = async () => {
+    try {
+      const { data: studentData } = await supabase.rpc('get_student_data');
+      if (studentData && studentData.length > 0) {
+        const student = studentData[0];
+        
+        const { data: feeData } = await supabase
+          .from('student_fees')
+          .select('*')
+          .eq('student_id', student.id);
+
+        if (feeData) {
+          setFeeStatus(feeData);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching fee status:', error);
     }
   };
 
@@ -169,6 +221,73 @@ export default function StudentDashboard() {
         </Card>
       </div>
 
+      {/* Notifications */}
+      <StudentNotifications />
+
+      {/* Academic Performance */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <GraduationCap className="h-5 w-5" />
+            Academic Performance
+          </CardTitle>
+          <CardDescription>Your recent academic progress</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Overall Attendance</span>
+              <Badge variant={attendancePercentage >= 75 ? "default" : "destructive"}>
+                {attendancePercentage.toFixed(1)}%
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Current CGPA</span>
+              <Badge variant="outline">8.5</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Completed Credits</span>
+              <Badge variant="outline">45/60</Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Fee Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Fee Status
+          </CardTitle>
+          <CardDescription>Your fee payment information</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {feeStatus.length > 0 ? (
+              feeStatus.map((fee, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div>
+                    <p className="font-medium">Semester {fee.semester || 'N/A'}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Due: {fee.due_date ? new Date(fee.due_date).toLocaleDateString() : 'Not set'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">₹{fee.balance_amount || 0}</p>
+                    <Badge variant={fee.status === 'paid' ? 'default' : fee.status === 'partial' ? 'secondary' : 'destructive'}>
+                      {fee.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-4">No fee records found</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Quick Actions */}
       <Card>
         <CardHeader>
@@ -179,28 +298,28 @@ export default function StudentDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => window.location.href = '/student-profile'}>
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/student-profile')}>
               <CardContent className="flex flex-col items-center justify-center p-6">
                 <GraduationCap className="h-8 w-8 text-primary mb-2" />
                 <span className="text-sm font-medium">My Profile</span>
               </CardContent>
             </Card>
             
-            <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => window.location.href = '/student-course'}>
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/student-course')}>
               <CardContent className="flex flex-col items-center justify-center p-6">
                 <FileText className="h-8 w-8 text-primary mb-2" />
                 <span className="text-sm font-medium">My Course</span>
               </CardContent>
             </Card>
             
-            <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => window.location.href = '/student-results'}>
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/student-results')}>
               <CardContent className="flex flex-col items-center justify-center p-6">
                 <Clock className="h-8 w-8 text-primary mb-2" />
                 <span className="text-sm font-medium">My Results</span>
               </CardContent>
             </Card>
             
-            <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => window.location.href = '/student-tests'}>
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/student-tests')}>
               <CardContent className="flex flex-col items-center justify-center p-6">
                 <Calendar className="h-8 w-8 text-primary mb-2" />
                 <span className="text-sm font-medium">MCQ Tests</span>

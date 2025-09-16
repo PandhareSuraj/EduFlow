@@ -1,4 +1,4 @@
-import { Bell, Search, User, LogOut, Settings, Menu } from "lucide-react";
+import { Search, User, LogOut, Settings, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
 
 export function Header() {
   const { user, userRole } = useAuth();
@@ -69,12 +70,7 @@ export function Header() {
             </Button>
           )}
           
-          <Button variant="ghost" size="icon" className="relative h-8 w-8 sm:h-9 sm:w-9">
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-[10px] sm:text-xs">
-              3
-            </span>
-          </Button>
+          <NotificationDropdown />
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

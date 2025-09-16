@@ -1300,6 +1300,51 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_url: string | null
+          college_id: string | null
+          count: number | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          college_id?: string | null
+          count?: number | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          college_id?: string | null
+          count?: number | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -2132,6 +2177,10 @@ export type Database = {
       }
       finalize_demo_setup: {
         Args: { demo: Json }
+        Returns: undefined
+      }
+      generate_role_based_notifications: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       get_current_user_email: {
