@@ -96,8 +96,30 @@ export function IDCardSettings() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex flex-col items-center justify-center p-8 space-y-4">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Loading ID card settings...</p>
+      </div>
+    );
+  }
+
+  // Show error state if no college info and no templates
+  if (!collegeInfo && templates.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 space-y-4">
+        <div className="text-center space-y-2">
+          <h3 className="text-lg font-semibold text-destructive">Setup Required</h3>
+          <p className="text-muted-foreground max-w-md">
+            Unable to load college information or ID card templates. Please ensure you have proper access permissions.
+          </p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline" 
+            size="sm"
+          >
+            Retry Loading
+          </Button>
+        </div>
       </div>
     );
   }
@@ -117,48 +139,77 @@ export function IDCardSettings() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Template Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {templates.map((template) => {
-              const TemplateComponent = templateComponents[template.code as keyof typeof templateComponents];
-              const isSelected = selectedTemplate?.id === template.id;
-              
-              return (
-                <div key={template.id} className="space-y-3">
-                  <div className={`relative border-2 rounded-lg overflow-hidden ${isSelected ? 'border-primary' : 'border-border'}`}>
-                    {isSelected && (
-                      <div className="absolute top-2 right-2 z-10 bg-primary text-white rounded-full p-1">
-                        <Check className="w-4 h-4" />
-                      </div>
-                    )}
-                    <div className="transform scale-50 origin-top-left w-[200%] h-[200%] overflow-hidden">
-                      {TemplateComponent && collegeInfo && (
-                        <TemplateComponent student={sampleStudent} college={collegeInfo} />
+          {templates.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {templates.map((template) => {
+                const TemplateComponent = templateComponents[template.code as keyof typeof templateComponents];
+                const isSelected = selectedTemplate?.id === template.id;
+                
+                return (
+                  <div key={template.id} className="space-y-3">
+                    <div className={`relative border-2 rounded-lg overflow-hidden ${isSelected ? 'border-primary' : 'border-border'} bg-white min-h-[300px] flex items-center justify-center`}>
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 z-10 bg-primary text-white rounded-full p-1">
+                          <Check className="w-4 h-4" />
+                        </div>
                       )}
+                      
+                      {/* Template Preview */}
+                      <div className="transform scale-50 origin-top-left w-[200%] h-[200%] overflow-hidden">
+                        {TemplateComponent && collegeInfo ? (
+                          <TemplateComponent 
+                            student={sampleStudent} 
+                            college={{
+                              name: collegeInfo.name || 'Your College Name',
+                              address: collegeInfo.address || 'College Address',
+                              logo_url: collegeInfo.logo_url,
+                              signature_url: collegeInfo.signature_url,
+                              signature_title: collegeInfo.signature_title
+                            }} 
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <div className="text-center space-y-2">
+                              <CreditCard className="w-12 h-12 mx-auto opacity-50" />
+                              <p className="text-sm">Preview not available</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="text-center space-y-2">
+                      <h3 className="font-semibold">{template.name}</h3>
+                      <p className="text-sm text-muted-foreground">{template.description}</p>
+                      <Button
+                        variant={isSelected ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleTemplateSelect(template.id)}
+                        disabled={isSelected}
+                      >
+                        {isSelected ? (
+                          <>
+                            <Check className="w-4 h-4 mr-2" />
+                            Selected
+                          </>
+                        ) : (
+                          'Select Template'
+                        )}
+                      </Button>
                     </div>
                   </div>
-                  <div className="text-center space-y-2">
-                    <h3 className="font-semibold">{template.name}</h3>
-                    <p className="text-sm text-muted-foreground">{template.description}</p>
-                    <Button
-                      variant={isSelected ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleTemplateSelect(template.id)}
-                      disabled={isSelected}
-                    >
-                      {isSelected ? (
-                        <>
-                          <Check className="w-4 h-4 mr-2" />
-                          Selected
-                        </>
-                      ) : (
-                        'Select Template'
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 space-y-4">
+              <CreditCard className="w-12 h-12 mx-auto text-muted-foreground opacity-50" />
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">No Templates Available</h3>
+                <p className="text-muted-foreground">ID card templates are not configured. Please contact administrator.</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

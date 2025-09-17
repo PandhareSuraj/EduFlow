@@ -33,18 +33,39 @@ export function useCollegeSettings() {
 
   const fetchCollegeInfo = async () => {
     try {
+      console.log('Fetching college info...');
+      
+      // Get user first
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('User not authenticated:', userError);
+        throw new Error('User not authenticated');
+      }
+
+      console.log('User ID:', user.id);
+
       // Get user's college from user_roles
       const { data: userRoleData, error: roleError } = await supabase
         .from('user_roles')
-        .select('college_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .select('college_id, role')
+        .eq('user_id', user.id)
         .single();
 
-      if (roleError || !userRoleData?.college_id) {
-        console.warn('No college associated with user');
-        setCollegeInfo(null);
-        return;
+      if (roleError) {
+        console.error('Error fetching user role:', roleError);
+        if (roleError.code === 'PGRST116') {
+          throw new Error('No role assigned to user. Please contact administrator.');
+        }
+        throw roleError;
       }
+
+      if (!userRoleData?.college_id) {
+        console.warn('No college associated with user role');
+        throw new Error('No college assigned to your account. Please contact administrator.');
+      }
+
+      console.log('User college ID:', userRoleData.college_id);
+      console.log('User role:', userRoleData.role);
 
       // Fetch the user's specific college
       const { data, error } = await supabase
@@ -54,15 +75,17 @@ export function useCollegeSettings() {
         .single();
 
       if (error) {
-        throw error;
+        console.error('Error fetching college:', error);
+        throw new Error('Failed to load college information');
       }
 
+      console.log('College data loaded:', data);
       setCollegeInfo(data);
     } catch (error: any) {
       console.error('Error fetching college info:', error);
       toast({
         title: "Error",
-        description: "Failed to load college information",
+        description: error.message || "Failed to load college information",
         variant: "destructive",
       });
       setCollegeInfo(null);
@@ -71,14 +94,20 @@ export function useCollegeSettings() {
 
   const fetchTemplates = async () => {
     try {
+      console.log('Fetching ID card templates...');
+      
       const { data, error } = await supabase
         .from('id_card_templates')
         .select('*')
         .eq('is_active', true)
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching templates:', error);
+        throw error;
+      }
 
+      console.log('Templates loaded:', data?.length || 0, 'templates');
       setTemplates(data || []);
     } catch (error: any) {
       console.error('Error fetching templates:', error);
@@ -87,6 +116,7 @@ export function useCollegeSettings() {
         description: "Failed to load ID card templates",
         variant: "destructive",
       });
+      setTemplates([]);
     }
   };
 
