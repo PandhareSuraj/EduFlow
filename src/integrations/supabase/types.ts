@@ -49,6 +49,81 @@ export type Database = {
           },
         ]
       }
+      amc_payments: {
+        Row: {
+          amount: number
+          base_fee: number
+          calculated_amount: number
+          college_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_number: string | null
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          payment_period_end: string
+          payment_period_start: string
+          per_student_fee: number
+          per_user_fee: number
+          receipt_number: string | null
+          status: string
+          student_count: number
+          transaction_reference: string | null
+          updated_at: string
+          updated_by: string | null
+          user_count: number
+        }
+        Insert: {
+          amount: number
+          base_fee?: number
+          calculated_amount?: number
+          college_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          payment_period_end: string
+          payment_period_start: string
+          per_student_fee?: number
+          per_user_fee?: number
+          receipt_number?: string | null
+          status?: string
+          student_count?: number
+          transaction_reference?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_count?: number
+        }
+        Update: {
+          amount?: number
+          base_fee?: number
+          calculated_amount?: number
+          college_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          payment_period_end?: string
+          payment_period_start?: string
+          per_student_fee?: number
+          per_user_fee?: number
+          receipt_number?: string | null
+          status?: string
+          student_count?: number
+          transaction_reference?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_count?: number
+        }
+        Relationships: []
+      }
       attendance_records: {
         Row: {
           college_id: string | null
@@ -2216,6 +2291,42 @@ export type Database = {
           status?: string
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      system_analytics: {
+        Row: {
+          college_id: string | null
+          created_at: string
+          id: string
+          metric_data: Json | null
+          metric_name: string
+          metric_value: number
+          period_end: string
+          period_start: string
+          updated_at: string
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string
+          id?: string
+          metric_data?: Json | null
+          metric_name: string
+          metric_value?: number
+          period_end: string
+          period_start: string
+          updated_at?: string
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string
+          id?: string
+          metric_data?: Json | null
+          metric_name?: string
+          metric_value?: number
+          period_end?: string
+          period_start?: string
+          updated_at?: string
         }
         Relationships: []
       }

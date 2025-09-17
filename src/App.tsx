@@ -23,6 +23,8 @@ import Settings from "./pages/Settings";
 import CollegeManagement from "./pages/CollegeManagement";
 import AuditTrail from "./pages/AuditTrail";
 import UserManagement from "./pages/UserManagement";
+import AMCRevenue from "./pages/AMCRevenue";
+import SystemAnalytics from "./pages/SystemAnalytics";
 import Auth from "./pages/Auth";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -154,6 +156,20 @@ const App = () => (
                 <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
                   <Layout>
                     <AuditTrail />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/amc-revenue" element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <Layout>
+                    <AMCRevenue />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/system-analytics" element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <Layout>
+                    <SystemAnalytics />
                   </Layout>
                 </ProtectedRoute>
               } />
