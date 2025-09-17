@@ -321,22 +321,24 @@ export default function Dashboard() {
                     onClick={() => window.location.href = '/colleges'}>
                     <Building2 className="mr-3 h-4 w-4 text-primary" />
                     <div>
-                      <p className="font-medium">Manage Colleges</p>
-                      <p className="text-sm text-muted-foreground">Add or manage colleges</p>
+                      <p className="font-medium">College Management</p>
+                      <p className="text-sm text-muted-foreground">Manage college portfolios</p>
                     </div>
                   </button>
-                  <button className="flex items-center p-3 bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors text-left w-full">
-                    <Users className="mr-3 h-4 w-4 text-accent" />
+                  <button className="flex items-center p-3 bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors text-left w-full"
+                    onClick={() => window.location.href = '/college-performance'}>
+                    <TrendingUp className="mr-3 h-4 w-4 text-accent" />
                     <div>
-                      <p className="font-medium">System Overview</p>
-                      <p className="text-sm text-muted-foreground">View all colleges performance</p>
+                      <p className="font-medium">Performance Monitor</p>
+                      <p className="text-sm text-muted-foreground">Track college performance</p>
                     </div>
                   </button>
-                  <button className="flex items-center p-3 bg-warning/10 hover:bg-warning/20 rounded-lg transition-colors text-left">
+                  <button className="flex items-center p-3 bg-warning/10 hover:bg-warning/20 rounded-lg transition-colors text-left w-full"
+                    onClick={() => window.location.href = '/multi-college-users'}>
                     <UserCheck className="mr-3 h-4 w-4 text-warning" />
                     <div>
-                      <p className="font-medium">User Management</p>
-                      <p className="text-sm text-muted-foreground">Manage system users</p>
+                      <p className="font-medium">Multi-College Users</p>
+                      <p className="text-sm text-muted-foreground">Manage users across colleges</p>
                     </div>
                   </button>
                 </>

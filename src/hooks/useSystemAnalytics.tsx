@@ -20,6 +20,25 @@ interface SystemAnalyticsData {
     dbHealth: string;
     apiResponseTime: string;
     uptime: string;
+    systemHealth: {
+      overall: number;
+      uptime: number;
+      performance: number;
+      database: number;
+      apiResponse: number;
+      memory: number;
+      storage: number;
+    };
+    dataIntegrity: {
+      overall: number;
+    };
+    security: {
+      overall: number;
+      authentication: number;
+      encryption: number;
+      accessControl: number;
+      auditCompliance: number;
+    };
   };
 }
 
@@ -28,10 +47,16 @@ interface CollegeMetric {
   name: string;
   code: string;
   studentCount: number;
-  facultyCount: number;
+  userCount: number;
+  facultyCount: number; 
   activityScore: number;
   dataQuality: number;
+  systemHealth: number;
+  revenue: number;
+  growthRate: number;
   status: string;
+  lastUpdated: string;
+  alerts?: string[];
 }
 
 interface RoleDistribution {
@@ -96,10 +121,16 @@ export function useSystemAnalytics() {
           name: college.name,
           code: college.code,
           studentCount: collegeStudents.length,
+          userCount: collegeUsers.length,
           facultyCount: collegeFaculty.length,
           activityScore: calculateActivityScore(college.id, collegeStudents.length, collegeFaculty.length),
           dataQuality: calculateDataQuality(college, collegeStudents.length, collegeFaculty.length),
-          status: college.status
+          systemHealth: calculateSystemHealth(collegeStudents.length, collegeFaculty.length),
+          revenue: calculateRevenue(collegeStudents.length, collegeUsers.length),
+          growthRate: calculateGrowthRate(collegeStudents.length),
+          status: college.status,
+          lastUpdated: new Date().toISOString(),
+          alerts: generateAlerts(collegeStudents.length, collegeFaculty.length)
         };
       });
 
@@ -135,10 +166,29 @@ export function useSystemAnalytics() {
           monthlyActiveUsers
         },
         performanceMetrics: {
-          dbHealth: 'Excellent',
-          apiResponseTime: '125ms',
-          uptime: '99.9%'
-        }
+          dbHealth: '99.2%',
+          apiResponseTime: '120ms',
+          uptime: '99.8%',
+          systemHealth: {
+            overall: 92,
+            uptime: 99,
+            performance: 88,
+            database: 95,
+            apiResponse: 85,
+            memory: 67,
+            storage: 45,
+          },
+          dataIntegrity: {
+            overall: 94,
+          },
+          security: {
+            overall: 89,
+            authentication: 95,
+            encryption: 98,
+            accessControl: 85,
+            auditCompliance: 78,
+          },
+        },
       });
     } catch (error) {
       console.error('Error fetching system analytics:', error);
@@ -147,9 +197,30 @@ export function useSystemAnalytics() {
     }
   };
 
-  const calculateSystemHealth = (): number => {
+  const calculateSystemHealth = (studentCount?: number, facultyCount?: number): number => {
     // Mock calculation - in real app, this would check various system metrics
-    return 95;
+    let score = 85;
+    if (studentCount && studentCount > 100) score += 5;
+    if (facultyCount && facultyCount > 10) score += 5;
+    return Math.min(score, 100);
+  };
+
+  const calculateRevenue = (studentCount: number, userCount: number): number => {
+    // Mock revenue calculation based on students and users
+    return Math.floor((studentCount * 1000) + (userCount * 500) + Math.random() * 10000);
+  };
+
+  const calculateGrowthRate = (studentCount: number): number => {
+    // Mock growth rate calculation
+    return Math.floor(Math.random() * 20) - 5; // Random between -5 to 15
+  };
+
+  const generateAlerts = (studentCount: number, facultyCount: number): string[] => {
+    const alerts = [];
+    if (studentCount > 200) alerts.push('High student enrollment - consider expanding faculty');
+    if (facultyCount < 5) alerts.push('Faculty shortage detected');
+    if (Math.random() > 0.7) alerts.push('System maintenance pending');
+    return alerts;
   };
 
   const calculateActivityScore = (collegeId: string, studentCount: number, facultyCount: number): number => {

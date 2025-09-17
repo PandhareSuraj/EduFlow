@@ -21,6 +21,9 @@ import Inventory from "./pages/Inventory";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import CollegeManagement from "./pages/CollegeManagement";
+import CollegePerformance from "./pages/CollegePerformance";
+import MultiCollegeUserManagement from "./pages/MultiCollegeUserManagement";
+import SystemHealthMonitoring from "./pages/SystemHealthMonitoring";
 import AuditTrail from "./pages/AuditTrail";
 import UserManagement from "./pages/UserManagement";
 import AMCRevenue from "./pages/AMCRevenue";
@@ -170,6 +173,27 @@ const App = () => (
                 <ProtectedRoute requiredRole="super_admin">
                   <Layout>
                     <SystemAnalytics />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/college-performance" element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <Layout>
+                    <CollegePerformance />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/multi-college-users" element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <Layout>
+                    <MultiCollegeUserManagement />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/system-health" element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <Layout>
+                    <SystemHealthMonitoring />
                   </Layout>
                 </ProtectedRoute>
               } />

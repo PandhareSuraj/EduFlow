@@ -15,7 +15,8 @@ import {
   Shield, 
   TrendingUp, 
   BookOpen,
-  Database
+  Database,
+  Activity
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,12 +43,14 @@ export function AppSidebar() {
   const getNavigation = () => {
     if (userRole === 'super_admin') {
       return [
-        { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-        { name: "College Management", href: "/colleges", icon: Building2 },
+        { name: "CRM Dashboard", href: "/dashboard", icon: BarChart3 },
+        { name: "College Portfolio", href: "/colleges", icon: Building2 },
+        { name: "Performance Monitor", href: "/college-performance", icon: TrendingUp },
+        { name: "Multi-College Users", href: "/multi-college-users", icon: Users },
         { name: "AMC Revenue", href: "/amc-revenue", icon: IndianRupee },
-        { name: "System Analytics", href: "/system-analytics", icon: TrendingUp },
+        { name: "System Analytics", href: "/system-analytics", icon: Activity },
+        { name: "System Health", href: "/system-health", icon: Shield },
         { name: "Reports", href: "/reports", icon: FileText },
-        { name: "User Management", href: "/user-management", icon: Shield },
         { name: "Audit Trail", href: "/audit-trail", icon: Database },
         { name: "Settings", href: "/settings", icon: Settings }
       ];
