@@ -1449,6 +1449,53 @@ export type Database = {
         }
         Relationships: []
       }
+      otp_verifications: {
+        Row: {
+          attempts: number
+          college_id: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          max_attempts: number
+          otp_code: string
+          phone_number: string
+          updated_at: string
+          verified: boolean
+        }
+        Insert: {
+          attempts?: number
+          college_id?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          max_attempts?: number
+          otp_code: string
+          phone_number: string
+          updated_at?: string
+          verified?: boolean
+        }
+        Update: {
+          attempts?: number
+          college_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          max_attempts?: number
+          otp_code?: string
+          phone_number?: string
+          updated_at?: string
+          verified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "otp_verifications_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1457,6 +1504,7 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
+          phone_verified: boolean | null
           updated_at: string
         }
         Insert: {
@@ -1466,6 +1514,7 @@ export type Database = {
           full_name?: string | null
           id: string
           phone?: string | null
+          phone_verified?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -1475,6 +1524,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          phone_verified?: boolean | null
           updated_at?: string
         }
         Relationships: []
@@ -1612,6 +1662,68 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_configurations: {
+        Row: {
+          api_key_name: string
+          channel: number
+          college_id: string | null
+          created_at: string
+          created_by: string | null
+          dcs: number
+          dlt_template_id: string | null
+          entity_id: string | null
+          flash_sms: number
+          id: string
+          is_active: boolean
+          route: string
+          sender_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          api_key_name?: string
+          channel?: number
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dcs?: number
+          dlt_template_id?: string | null
+          entity_id?: string | null
+          flash_sms?: number
+          id?: string
+          is_active?: boolean
+          route?: string
+          sender_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          api_key_name?: string
+          channel?: number
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dcs?: number
+          dlt_template_id?: string | null
+          entity_id?: string | null
+          flash_sms?: number
+          id?: string
+          is_active?: boolean
+          route?: string
+          sender_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_configurations_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
             referencedColumns: ["id"]
           },
         ]
@@ -2305,6 +2417,10 @@ export type Database = {
           preserve_structure?: boolean
         }
         Returns: Json
+      }
+      cleanup_expired_otps: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       export_college_data: {
         Args: { college_uuid: string }
