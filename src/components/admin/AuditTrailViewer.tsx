@@ -33,8 +33,8 @@ export function AuditTrailViewer({ onClose }: AuditTrailViewerProps) {
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [tableFilter, setTableFilter] = useState<string>("");
-  const [actionFilter, setActionFilter] = useState<string>("");
+  const [tableFilter, setTableFilter] = useState<string>("all");
+  const [actionFilter, setActionFilter] = useState<string>("all");
   const [userFilter, setUserFilter] = useState<string>("");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
@@ -65,11 +65,11 @@ export function AuditTrailViewer({ onClose }: AuditTrailViewerProps) {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (tableFilter) {
+      if (tableFilter && tableFilter !== 'all') {
         query = query.eq('table_name', tableFilter);
       }
 
-      if (actionFilter) {
+      if (actionFilter && actionFilter !== 'all') {
         query = query.eq('action', actionFilter);
       }
 
@@ -193,7 +193,7 @@ export function AuditTrailViewer({ onClose }: AuditTrailViewerProps) {
                 <SelectValue placeholder="All tables" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All tables</SelectItem>
+                <SelectItem value="all">All tables</SelectItem>
                 <SelectItem value="students">Students</SelectItem>
                 <SelectItem value="faculty">Faculty</SelectItem>
                 <SelectItem value="courses">Courses</SelectItem>
@@ -212,7 +212,7 @@ export function AuditTrailViewer({ onClose }: AuditTrailViewerProps) {
                 <SelectValue placeholder="All actions" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All actions</SelectItem>
+                <SelectItem value="all">All actions</SelectItem>
                 <SelectItem value="INSERT">Created</SelectItem>
                 <SelectItem value="UPDATE">Updated</SelectItem>
                 <SelectItem value="DELETE">Deleted</SelectItem>
