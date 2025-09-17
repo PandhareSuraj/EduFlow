@@ -16,6 +16,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useBranding } from "@/hooks/useBranding";
+import { useDashboardNotifications } from '@/hooks/useDashboardNotifications';
+import { useAMCConfig } from '@/hooks/useAMCConfig';
 import { AddStudentDialog } from "@/components/forms/StudentDialogs";
 import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
 import { Button } from "@/components/ui/button";
@@ -25,7 +27,6 @@ import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useDashboardNotifications } from "@/hooks/useDashboardNotifications";
 import { UpcomingEventsCard } from "@/components/dashboard/UpcomingEventsCard";
 import StudentDashboard from './StudentDashboard';
 
@@ -64,11 +65,7 @@ export default function Dashboard() {
   const [clearingData, setClearingData] = useState(false);
   const { notifications, loading: notificationsLoading } = useDashboardNotifications();
   const { toast } = useToast();
-
-  // AMC calculation constants
-  const AMC_BASE_FEE = 25000; // Base annual fee per college
-  const AMC_PER_STUDENT = 100; // Per student annual fee
-  const AMC_PER_USER = 500; // Per user annual fee
+  const { config: amcConfig, calculateAMC } = useAMCConfig();
 
   useEffect(() => {
     // Only fetch dashboard data for non-student users
@@ -154,7 +151,7 @@ export default function Dashboard() {
             const userCount = collegeUsers.length;
 
             // Calculate AMC amount
-            const amcAmount = AMC_BASE_FEE + (studentCount * AMC_PER_STUDENT) + (userCount * AMC_PER_USER);
+            const amcAmount = calculateAMC(studentCount, userCount);
             totalAMCRevenue += amcAmount;
 
             collegeAMCs.push({
@@ -439,7 +436,7 @@ export default function Dashboard() {
                   
                   <div className="flex items-center justify-between">
                     <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded flex-1 mr-3">
-                      AMC Calculation: Base ₹{AMC_BASE_FEE.toLocaleString()} + Students (₹{AMC_PER_STUDENT} × {college.studentCount}) + Users (₹{AMC_PER_USER} × {college.userCount})
+                      AMC Calculation: Base ₹{amcConfig.baseFee.toLocaleString()} + Students (₹{amcConfig.perStudent} × {college.studentCount}) + Users (₹{amcConfig.perUser} × {college.userCount})
                     </div>
                     <Button
                       variant="destructive"

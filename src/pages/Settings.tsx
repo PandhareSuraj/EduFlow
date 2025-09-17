@@ -15,8 +15,9 @@ import { DepartmentManagement } from '@/components/forms/DepartmentManagement';
 import { SubjectManagement } from '@/components/forms/SubjectManagement';
 import { IDCardSettings } from '@/components/settings/IDCardSettings';
 import { SMSSettings } from '@/components/settings/SMSSettings';
+import { AMCSettings } from '@/components/settings/AMCSettings';
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -213,10 +214,11 @@ export default function Settings() {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-11">
+        <TabsList className="grid w-full grid-cols-12">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="id-cards">ID Cards</TabsTrigger>
-          <TabsTrigger value="sms">SMS</TabsTrigger>
+          {userRole === 'super_admin' && <TabsTrigger value="sms">SMS</TabsTrigger>}
+          {userRole === 'super_admin' && <TabsTrigger value="amc">AMC</TabsTrigger>}
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="departments">Departments</TabsTrigger>
           <TabsTrigger value="subjects">Subjects</TabsTrigger>
@@ -313,9 +315,18 @@ export default function Settings() {
         </TabsContent>
 
         {/* SMS Settings */}
-        <TabsContent value="sms" className="space-y-6">
-          <SMSSettings />
-        </TabsContent>
+        {userRole === 'super_admin' && (
+          <TabsContent value="sms" className="space-y-6">
+            <SMSSettings />
+          </TabsContent>
+        )}
+
+        {/* AMC Settings */}
+        {userRole === 'super_admin' && (
+          <TabsContent value="amc" className="space-y-6">
+            <AMCSettings />
+          </TabsContent>
+        )}
 
         {/* User Management */}
         <TabsContent value="users" className="space-y-6">
