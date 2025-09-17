@@ -14,7 +14,8 @@ import {
   IndianRupee, 
   Shield, 
   TrendingUp, 
-  BookOpen 
+  BookOpen,
+  Database
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,6 +48,7 @@ export function AppSidebar() {
         { name: "System Analytics", href: "/system-analytics", icon: TrendingUp },
         { name: "Reports", href: "/reports", icon: FileText },
         { name: "User Management", href: "/user-management", icon: Shield },
+        { name: "Audit Trail", href: "/audit-trail", icon: Database },
         { name: "Settings", href: "/settings", icon: Settings }
       ];
     } else if (userRole === 'student') {
@@ -72,6 +74,7 @@ export function AppSidebar() {
         { name: "ID Cards", href: "/id-cards", icon: IdCard },
         { name: "Inventory", href: "/inventory", icon: Package },
         { name: "Reports", href: "/reports", icon: BarChart3 },
+        { name: "Audit Trail", href: "/audit-trail", icon: Database },
         { name: "Settings", href: "/settings", icon: Settings }
       ];
     } else if (userRole === 'teacher') {

@@ -53,6 +53,7 @@ export type Database = {
         Row: {
           college_id: string | null
           created_at: string
+          created_by: string | null
           id: string
           marked_at: string | null
           marked_by: string | null
@@ -61,10 +62,12 @@ export type Database = {
           status: string
           student_id: number
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           marked_at?: string | null
           marked_by?: string | null
@@ -73,10 +76,12 @@ export type Database = {
           status?: string
           student_id: number
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           marked_at?: string | null
           marked_by?: string | null
@@ -85,6 +90,7 @@ export type Database = {
           status?: string
           student_id?: number
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -96,6 +102,7 @@ export type Database = {
           college_id: string | null
           course_id: number
           created_at: string
+          created_by: string | null
           end_time: string | null
           faculty_id: string
           id: string
@@ -107,6 +114,7 @@ export type Database = {
           subject_id: string
           total_students: number | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           absent_count?: number | null
@@ -115,6 +123,7 @@ export type Database = {
           college_id?: string | null
           course_id: number
           created_at?: string
+          created_by?: string | null
           end_time?: string | null
           faculty_id: string
           id?: string
@@ -126,6 +135,7 @@ export type Database = {
           subject_id: string
           total_students?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           absent_count?: number | null
@@ -134,6 +144,7 @@ export type Database = {
           college_id?: string | null
           course_id?: number
           created_at?: string
+          created_by?: string | null
           end_time?: string | null
           faculty_id?: string
           id?: string
@@ -145,6 +156,43 @@ export type Database = {
           subject_id?: string
           total_students?: number | null
           updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          college_id: string | null
+          created_at: string | null
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          college_id?: string | null
+          created_at?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id: string
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          college_id?: string | null
+          created_at?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string
+          table_name?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -152,26 +200,32 @@ export type Database = {
         Row: {
           college_id: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           id: string
           name: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           name: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           name?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -180,6 +234,7 @@ export type Database = {
           book_id: string
           college_id: string | null
           created_at: string
+          created_by: string | null
           due_date: string
           id: string
           issue_date: string
@@ -192,11 +247,13 @@ export type Database = {
           returned_by: string | null
           status: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           book_id: string
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           due_date: string
           id?: string
           issue_date?: string
@@ -209,11 +266,13 @@ export type Database = {
           returned_by?: string | null
           status?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           book_id?: string
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           due_date?: string
           id?: string
           issue_date?: string
@@ -226,6 +285,7 @@ export type Database = {
           returned_by?: string | null
           status?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -236,6 +296,7 @@ export type Database = {
           category_id: string | null
           college_id: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           id: string
           isbn: string | null
@@ -249,6 +310,7 @@ export type Database = {
           title: string
           total_copies: number
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           author: string
@@ -256,6 +318,7 @@ export type Database = {
           category_id?: string | null
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           isbn?: string | null
@@ -269,6 +332,7 @@ export type Database = {
           title: string
           total_copies?: number
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           author?: string
@@ -276,6 +340,7 @@ export type Database = {
           category_id?: string | null
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           isbn?: string | null
@@ -289,6 +354,7 @@ export type Database = {
           title?: string
           total_copies?: number
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -410,6 +476,7 @@ export type Database = {
           code: string
           college_id: string | null
           created_at: string
+          created_by: string | null
           department: string | null
           description: string | null
           duration_months: number
@@ -419,11 +486,13 @@ export type Database = {
           status: string
           total_semesters: number | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           code: string
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           department?: string | null
           description?: string | null
           duration_months?: number
@@ -433,11 +502,13 @@ export type Database = {
           status?: string
           total_semesters?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           code?: string
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           department?: string | null
           description?: string | null
           duration_months?: number
@@ -447,6 +518,7 @@ export type Database = {
           status?: string
           total_semesters?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -463,31 +535,37 @@ export type Database = {
           code: string | null
           college_id: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           id: string
           name: string
           status: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           code?: string | null
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           name: string
           status?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           code?: string | null
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           name?: string
           status?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -505,6 +583,7 @@ export type Database = {
           college_id: string | null
           course: string
           created_at: string
+          created_by: string | null
           email: string | null
           follow_up_date: string | null
           id: string
@@ -514,12 +593,14 @@ export type Database = {
           source: string
           status: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           assigned_to?: string | null
           college_id?: string | null
           course: string
           created_at?: string
+          created_by?: string | null
           email?: string | null
           follow_up_date?: string | null
           id?: string
@@ -529,12 +610,14 @@ export type Database = {
           source?: string
           status?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           assigned_to?: string | null
           college_id?: string | null
           course?: string
           created_at?: string
+          created_by?: string | null
           email?: string | null
           follow_up_date?: string | null
           id?: string
@@ -544,6 +627,7 @@ export type Database = {
           source?: string
           status?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -552,6 +636,7 @@ export type Database = {
           college_id: string | null
           course_id: number
           created_at: string
+          created_by: string | null
           description: string | null
           duration_minutes: number | null
           end_time: string | null
@@ -567,11 +652,13 @@ export type Database = {
           total_marks: number
           total_questions: number | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           college_id?: string | null
           course_id: number
           created_at?: string
+          created_by?: string | null
           description?: string | null
           duration_minutes?: number | null
           end_time?: string | null
@@ -587,11 +674,13 @@ export type Database = {
           total_marks?: number
           total_questions?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           college_id?: string | null
           course_id?: number
           created_at?: string
+          created_by?: string | null
           description?: string | null
           duration_minutes?: number | null
           end_time?: string | null
@@ -607,6 +696,7 @@ export type Database = {
           total_marks?: number
           total_questions?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -623,6 +713,7 @@ export type Database = {
           address: string | null
           college_id: string | null
           created_at: string
+          created_by: string | null
           department: string
           designation: string
           email: string
@@ -634,12 +725,14 @@ export type Database = {
           status: string
           subjects: string[] | null
           updated_at: string
+          updated_by: string | null
           user_id: string | null
         }
         Insert: {
           address?: string | null
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           department: string
           designation: string
           email: string
@@ -651,12 +744,14 @@ export type Database = {
           status?: string
           subjects?: string[] | null
           updated_at?: string
+          updated_by?: string | null
           user_id?: string | null
         }
         Update: {
           address?: string | null
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           department?: string
           designation?: string
           email?: string
@@ -668,6 +763,7 @@ export type Database = {
           status?: string
           subjects?: string[] | null
           updated_at?: string
+          updated_by?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -750,6 +846,7 @@ export type Database = {
           cheque_number: string | null
           college_id: string | null
           created_at: string
+          created_by: string | null
           id: string
           payment_date: string
           payment_method: string
@@ -759,6 +856,7 @@ export type Database = {
           student_id: number
           transaction_id: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           amount: number
@@ -766,6 +864,7 @@ export type Database = {
           cheque_number?: string | null
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           payment_date?: string
           payment_method?: string
@@ -775,6 +874,7 @@ export type Database = {
           student_id: number
           transaction_id?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           amount?: number
@@ -782,6 +882,7 @@ export type Database = {
           cheque_number?: string | null
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           payment_date?: string
           payment_method?: string
@@ -791,6 +892,7 @@ export type Database = {
           student_id?: number
           transaction_id?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -884,6 +986,7 @@ export type Database = {
           college_id: string | null
           course_id: number
           created_at: string
+          created_by: string | null
           due_date: string | null
           id: string
           lab_fee: number | null
@@ -894,11 +997,13 @@ export type Database = {
           total_fee: number
           tuition_fee: number | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           college_id?: string | null
           course_id: number
           created_at?: string
+          created_by?: string | null
           due_date?: string | null
           id?: string
           lab_fee?: number | null
@@ -909,11 +1014,13 @@ export type Database = {
           total_fee?: number
           tuition_fee?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           college_id?: string | null
           course_id?: number
           created_at?: string
+          created_by?: string | null
           due_date?: string | null
           id?: string
           lab_fee?: number | null
@@ -924,6 +1031,7 @@ export type Database = {
           total_fee?: number
           tuition_fee?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -965,6 +1073,7 @@ export type Database = {
           category: string
           college_id: string | null
           created_at: string
+          created_by: string | null
           current_stock: number
           description: string | null
           id: string
@@ -978,11 +1087,13 @@ export type Database = {
           supplier_id: string | null
           unit: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           category: string
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           current_stock?: number
           description?: string | null
           id?: string
@@ -996,11 +1107,13 @@ export type Database = {
           supplier_id?: string | null
           unit?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           category?: string
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           current_stock?: number
           description?: string | null
           id?: string
@@ -1014,6 +1127,7 @@ export type Database = {
           supplier_id?: string | null
           unit?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -1029,6 +1143,7 @@ export type Database = {
         Row: {
           college_id: string | null
           created_at: string
+          created_by: string | null
           department: string | null
           id: string
           issued_to: string | null
@@ -1041,10 +1156,12 @@ export type Database = {
           transaction_date: string
           transaction_type: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           department?: string | null
           id?: string
           issued_to?: string | null
@@ -1057,10 +1174,12 @@ export type Database = {
           transaction_date?: string
           transaction_type: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           department?: string | null
           id?: string
           issued_to?: string | null
@@ -1073,6 +1192,7 @@ export type Database = {
           transaction_date?: string
           transaction_type?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -1145,6 +1265,7 @@ export type Database = {
         Row: {
           college_id: string | null
           created_at: string
+          created_by: string | null
           faculty_id: string | null
           id: string
           max_books: number
@@ -1155,11 +1276,13 @@ export type Database = {
           status: string
           student_id: number | null
           updated_at: string
+          updated_by: string | null
           user_id: string | null
         }
         Insert: {
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           faculty_id?: string | null
           id?: string
           max_books?: number
@@ -1170,11 +1293,13 @@ export type Database = {
           status?: string
           student_id?: number | null
           updated_at?: string
+          updated_by?: string | null
           user_id?: string | null
         }
         Update: {
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           faculty_id?: string | null
           id?: string
           max_books?: number
@@ -1185,6 +1310,7 @@ export type Database = {
           status?: string
           student_id?: number | null
           updated_at?: string
+          updated_by?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -1224,6 +1350,7 @@ export type Database = {
           college_id: string | null
           correct_answer: string
           created_at: string
+          created_by: string | null
           difficulty: string | null
           exam_id: string
           explanation: string | null
@@ -1233,11 +1360,13 @@ export type Database = {
           question_number: number
           question_text: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           college_id?: string | null
           correct_answer: string
           created_at?: string
+          created_by?: string | null
           difficulty?: string | null
           exam_id: string
           explanation?: string | null
@@ -1247,11 +1376,13 @@ export type Database = {
           question_number: number
           question_text: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           college_id?: string | null
           correct_answer?: string
           created_at?: string
+          created_by?: string | null
           difficulty?: string | null
           exam_id?: string
           explanation?: string | null
@@ -1261,6 +1392,7 @@ export type Database = {
           question_number?: number
           question_text?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -1390,6 +1522,7 @@ export type Database = {
         Row: {
           college_id: string | null
           created_at: string
+          created_by: string | null
           exam_id: string
           grade: string | null
           id: string
@@ -1399,10 +1532,12 @@ export type Database = {
           subject_id: string
           total_marks: number
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           exam_id: string
           grade?: string | null
           id?: string
@@ -1412,10 +1547,12 @@ export type Database = {
           subject_id: string
           total_marks?: number
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           exam_id?: string
           grade?: string | null
           id?: string
@@ -1425,6 +1562,7 @@ export type Database = {
           subject_id?: string
           total_marks?: number
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -1483,6 +1621,7 @@ export type Database = {
           answered_at: string | null
           college_id: string | null
           created_at: string
+          created_by: string | null
           id: string
           is_correct: boolean | null
           marks_obtained: number | null
@@ -1491,11 +1630,13 @@ export type Database = {
           session_id: string
           time_spent_seconds: number | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           answered_at?: string | null
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           is_correct?: boolean | null
           marks_obtained?: number | null
@@ -1504,11 +1645,13 @@ export type Database = {
           session_id: string
           time_spent_seconds?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           answered_at?: string | null
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           is_correct?: boolean | null
           marks_obtained?: number | null
@@ -1517,6 +1660,7 @@ export type Database = {
           session_id?: string
           time_spent_seconds?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -1602,6 +1746,7 @@ export type Database = {
           attempt_number: number
           college_id: string | null
           created_at: string
+          created_by: string | null
           duration_minutes: number | null
           end_time: string | null
           exam_id: string
@@ -1616,12 +1761,14 @@ export type Database = {
           total_marks: number | null
           total_questions: number | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           answered_questions?: number | null
           attempt_number?: number
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           duration_minutes?: number | null
           end_time?: string | null
           exam_id: string
@@ -1636,12 +1783,14 @@ export type Database = {
           total_marks?: number | null
           total_questions?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           answered_questions?: number | null
           attempt_number?: number
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           duration_minutes?: number | null
           end_time?: string | null
           exam_id?: string
@@ -1656,6 +1805,7 @@ export type Database = {
           total_marks?: number | null
           total_questions?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -1686,6 +1836,7 @@ export type Database = {
           balance_amount: number
           college_id: string | null
           created_at: string
+          created_by: string | null
           discount_amount: number | null
           discount_percentage: number | null
           discount_reason: string | null
@@ -1698,11 +1849,13 @@ export type Database = {
           student_id: number
           total_amount: number
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           balance_amount?: number
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           discount_amount?: number | null
           discount_percentage?: number | null
           discount_reason?: string | null
@@ -1715,11 +1868,13 @@ export type Database = {
           student_id: number
           total_amount?: number
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           balance_amount?: number
           college_id?: string | null
           created_at?: string
+          created_by?: string | null
           discount_amount?: number | null
           discount_percentage?: number | null
           discount_reason?: string | null
@@ -1732,6 +1887,7 @@ export type Database = {
           student_id?: number
           total_amount?: number
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -1778,6 +1934,7 @@ export type Database = {
           college_id: string | null
           course_id: number | null
           created_at: string
+          created_by: string | null
           email: string
           id: number
           mobile_number: string
@@ -1787,6 +1944,7 @@ export type Database = {
           status: string
           student_id: string
           updated_at: string
+          updated_by: string | null
           user_id: string | null
           year: number | null
         }
@@ -1796,6 +1954,7 @@ export type Database = {
           college_id?: string | null
           course_id?: number | null
           created_at?: string
+          created_by?: string | null
           email: string
           id?: number
           mobile_number: string
@@ -1805,6 +1964,7 @@ export type Database = {
           status?: string
           student_id?: string
           updated_at?: string
+          updated_by?: string | null
           user_id?: string | null
           year?: number | null
         }
@@ -1814,6 +1974,7 @@ export type Database = {
           college_id?: string | null
           course_id?: number | null
           created_at?: string
+          created_by?: string | null
           email?: string
           id?: number
           mobile_number?: string
@@ -1823,6 +1984,7 @@ export type Database = {
           status?: string
           student_id?: string
           updated_at?: string
+          updated_by?: string | null
           user_id?: string | null
           year?: number | null
         }
@@ -1856,33 +2018,39 @@ export type Database = {
           college_id: string | null
           course_id: number
           created_at: string
+          created_by: string | null
           credits: number | null
           description: string | null
           id: string
           name: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           code: string
           college_id?: string | null
           course_id: number
           created_at?: string
+          created_by?: string | null
           credits?: number | null
           description?: string | null
           id?: string
           name: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           code?: string
           college_id?: string | null
           course_id?: number
           created_at?: string
+          created_by?: string | null
           credits?: number | null
           description?: string | null
           id?: string
           name?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -1900,36 +2068,42 @@ export type Database = {
           college_id: string | null
           contact_person: string | null
           created_at: string
+          created_by: string | null
           email: string | null
           id: string
           name: string
           phone: string | null
           status: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           address?: string | null
           college_id?: string | null
           contact_person?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           id?: string
           name: string
           phone?: string | null
           status?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           address?: string | null
           college_id?: string | null
           contact_person?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           id?: string
           name?: string
           phone?: string | null
           status?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -2177,6 +2351,10 @@ export type Database = {
       }
       get_user_college: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_user_email_by_id: {
+        Args: { user_uuid: string }
         Returns: string
       }
       has_role: {

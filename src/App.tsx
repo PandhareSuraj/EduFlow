@@ -21,6 +21,7 @@ import Inventory from "./pages/Inventory";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import CollegeManagement from "./pages/CollegeManagement";
+import AuditTrail from "./pages/AuditTrail";
 import UserManagement from "./pages/UserManagement";
 import Auth from "./pages/Auth";
 import Index from "./pages/Index";
@@ -146,6 +147,13 @@ const App = () => (
                 <ProtectedRoute requiredRole="super_admin">
                   <Layout>
                     <UserManagement />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/audit-trail" element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <Layout>
+                    <AuditTrail />
                   </Layout>
                 </ProtectedRoute>
               } />
