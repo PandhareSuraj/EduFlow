@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.clean-college-data]
 verify_jwt = true
+
+[functions.send-sms-otp]
+verify_jwt = false
+
+[functions.verify-sms-otp]
+verify_jwt = false

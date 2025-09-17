@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { createDemoUsers } from '@/utils/createDemoUsers';
 import { supabase } from '@/integrations/supabase/client';
+import { ThreeStepSignup } from '@/components/auth/ThreeStepSignup';
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -292,51 +293,20 @@ export default function Auth() {
                </TabsContent>
 
               <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
-                    <Input id="signup-name" type="text" placeholder="Enter your full name" value={signupForm.fullName} onChange={e => setSignupForm({
-                    ...signupForm,
-                    fullName: e.target.value
-                  })} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-phone">Phone Number</Label>
-                    <Input id="signup-phone" type="tel" placeholder="Enter your phone number" value={signupForm.phone} onChange={e => setSignupForm({
-                    ...signupForm,
-                    phone: e.target.value
-                  })} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input id="signup-email" type="email" placeholder="Enter your email" value={signupForm.email} onChange={e => setSignupForm({
-                    ...signupForm,
-                    email: e.target.value
-                  })} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <div className="relative">
-                      <Input id="signup-password" type={showPassword ? "text" : "password"} placeholder="Create a password" value={signupForm.password} onChange={e => setSignupForm({
-                      ...signupForm,
-                      password: e.target.value
-                    })} required />
-                      <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-                    <Input id="signup-confirm-password" type={showPassword ? "text" : "password"} placeholder="Confirm your password" value={signupForm.confirmPassword} onChange={e => setSignupForm({
-                    ...signupForm,
-                    confirmPassword: e.target.value
-                  })} required />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Creating account...' : 'Create Account'}
-                  </Button>
-                </form>
+                <div className="space-y-4">
+                  <ThreeStepSignup 
+                    onSuccess={() => {
+                      // Switch back to login tab after successful signup
+                      const loginTab = document.querySelector('[value="login"]') as HTMLElement;
+                      loginTab?.click();
+                    }}
+                    onBack={() => {
+                      // Switch back to login tab
+                      const loginTab = document.querySelector('[value="login"]') as HTMLElement;
+                      loginTab?.click();
+                    }}
+                  />
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>

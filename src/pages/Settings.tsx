@@ -14,6 +14,7 @@ import { RoleGuard } from '@/components/permissions/RoleGuard';
 import { DepartmentManagement } from '@/components/forms/DepartmentManagement';
 import { SubjectManagement } from '@/components/forms/SubjectManagement';
 import { IDCardSettings } from '@/components/settings/IDCardSettings';
+import { SMSSettings } from '@/components/settings/SMSSettings';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -212,9 +213,10 @@ export default function Settings() {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-10">
+        <TabsList className="grid w-full grid-cols-11">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="id-cards">ID Cards</TabsTrigger>
+          <TabsTrigger value="sms">SMS</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="departments">Departments</TabsTrigger>
           <TabsTrigger value="subjects">Subjects</TabsTrigger>
@@ -308,6 +310,11 @@ export default function Settings() {
         {/* ID Card Settings */}
         <TabsContent value="id-cards" className="space-y-6">
           <IDCardSettings />
+        </TabsContent>
+
+        {/* SMS Settings */}
+        <TabsContent value="sms" className="space-y-6">
+          <SMSSettings />
         </TabsContent>
 
         {/* User Management */}
