@@ -24,24 +24,31 @@ export const useGoogleDriveSettings = () => {
   const { toast } = useToast();
   const { userRole } = useAuth();
   
-  // Get college ID from user_roles table
+  // Get college ID using the database function
   const [collegeId, setCollegeId] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchCollegeId = async () => {
-      const { data } = await supabase
-        .from('user_roles')
-        .select('college_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-      
-      if (data?.college_id) {
-        setCollegeId(data.college_id);
+      try {
+        const { data, error } = await supabase.rpc('get_user_college');
+        
+        if (error) {
+          console.error('Error fetching user college:', error);
+          return;
+        }
+        
+        if (data) {
+          setCollegeId(data);
+        }
+      } catch (error) {
+        console.error('Error fetching user college:', error);
       }
     };
     
-    fetchCollegeId();
-  }, []);
+    if (userRole) {
+      fetchCollegeId();
+    }
+  }, [userRole]);
 
   const fetchSettings = async () => {
     if (!collegeId) {

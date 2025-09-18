@@ -35,14 +35,16 @@ export function CollegeProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       
-      // Get user's college from user_roles
-      const { data: userRoleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('college_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+      // Get user's college using database function
+      const { data: collegeId, error: collegeIdError } = await supabase.rpc('get_user_college');
 
-      if (roleError || !userRoleData?.college_id) {
+      if (collegeIdError) {
+        console.error('Error fetching user college:', collegeIdError);
+        setCollege(null);
+        return;
+      }
+
+      if (!collegeId) {
         console.warn('No college associated with user');
         setCollege(null);
         return;
@@ -52,7 +54,7 @@ export function CollegeProvider({ children }: { children: ReactNode }) {
       const { data: collegeData, error: collegeError } = await supabase
         .from('colleges')
         .select('*')
-        .eq('id', userRoleData.college_id)
+        .eq('id', collegeId)
         .single();
 
       if (collegeError) {
