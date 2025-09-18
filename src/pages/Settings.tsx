@@ -16,6 +16,7 @@ import { SubjectManagement } from '@/components/forms/SubjectManagement';
 import { IDCardSettings } from '@/components/settings/IDCardSettings';
 import { SMSSettings } from '@/components/settings/SMSSettings';
 import { AMCSettings } from '@/components/settings/AMCSettings';
+import { PersonalGoogleDriveSettings } from '@/components/settings/PersonalGoogleDriveSettings';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from "@/integrations/supabase/client";
@@ -567,8 +568,21 @@ export default function Settings() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                Personal Google Drive Storage
+              </CardTitle>
+              <CardDescription>Connect your personal Google account for document storage</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PersonalGoogleDriveSettings />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
                 <Mail className="h-5 w-5" />
-                Third-party Integrations
+                Other Integrations
               </CardTitle>
               <CardDescription>Connect with external services and APIs</CardDescription>
             </CardHeader>
@@ -577,8 +591,7 @@ export default function Settings() {
                 { service: "SMS Gateway", status: "Connected", description: "Send SMS notifications" },
                 { service: "WhatsApp Business API", status: "Not Connected", description: "WhatsApp messaging" },
                 { service: "Email Service", status: "Connected", description: "Email notifications" },
-                { service: "Payment Gateway", status: "Not Connected", description: "Online fee payments" },
-                { service: "Google Drive", status: "Connected", description: "Document storage" }
+                { service: "Payment Gateway", status: "Not Connected", description: "Online fee payments" }
               ].map((integration, index) => (
                 <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
                   <div>

@@ -2685,6 +2685,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      exec_sql: {
+        Args: { params?: string[]; query: string }
+        Returns: Json[]
+      }
       export_college_data: {
         Args: { college_uuid: string }
         Returns: Json

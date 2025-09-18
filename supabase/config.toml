@@ -26,3 +26,9 @@ verify_jwt = true
 
 [functions.google-drive-upload]
 verify_jwt = true
+
+[functions.personal-google-auth]
+verify_jwt = true
+
+[functions.personal-google-upload]
+verify_jwt = true
