@@ -5,8 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Upload, CreditCard, Check } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Loader2, Upload, CreditCard, Check, Cloud, CloudOff, HardDrive } from 'lucide-react';
 import { useCollegeSettings } from '@/hooks/useCollegeSettings';
+import { useGoogleDriveSettings } from '@/hooks/useGoogleDriveSettings';
+import { useToast } from '@/hooks/use-toast';
 import { ClassicCorporateTemplate } from '@/components/id-card/templates/ClassicCorporateTemplate';
 import { ModernMinimalTemplate } from '@/components/id-card/templates/ModernMinimalTemplate';
 import { AcademicTraditionalTemplate } from '@/components/id-card/templates/AcademicTraditionalTemplate';
@@ -44,7 +47,18 @@ export function IDCardSettings() {
     getSelectedTemplate
   } = useCollegeSettings();
 
+  const { 
+    settings: driveSettings, 
+    loading: driveLoading, 
+    connectGoogleDrive, 
+    disconnectGoogleDrive, 
+    getStorageUsage, 
+    formatStorageSize 
+  } = useGoogleDriveSettings();
+
+  const { toast } = useToast();
   const [uploading, setUploading] = useState<'logo' | 'signature' | null>(null);
+  const [driveEmail, setDriveEmail] = useState("");
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -93,8 +107,30 @@ export function IDCardSettings() {
   };
 
   const selectedTemplate = getSelectedTemplate();
+  const storageUsage = getStorageUsage();
 
-  if (loading) {
+  const handleConnectDrive = async () => {
+    if (!driveEmail.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a Gmail address",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      await connectGoogleDrive(driveEmail);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to connect Google Drive",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading || driveLoading) {
     return (
       <div className="flex flex-col items-center justify-center p-8 space-y-4">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -211,9 +247,90 @@ export function IDCardSettings() {
             </div>
           )}
         </CardContent>
-      </Card>
+        </Card>
 
-      {/* College Branding */}
+        {/* Google Drive Integration */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <HardDrive className="h-5 w-5" />
+              Google Drive Integration
+            </CardTitle>
+            <CardDescription>
+              Connect Google Drive for document storage (15GB free per college)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {driveSettings?.drive_connected ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Cloud className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium">Connected to {driveSettings.drive_email}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={disconnectGoogleDrive}
+                  >
+                    <CloudOff className="h-4 w-4 mr-2" />
+                    Disconnect
+                  </Button>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Storage Usage</span>
+                    <span>{formatStorageSize(storageUsage.used)} / {formatStorageSize(storageUsage.total)}</span>
+                  </div>
+                  <Progress value={storageUsage.percentage} className="h-2" />
+                  <p className="text-xs text-muted-foreground">
+                    {storageUsage.percentage.toFixed(1)}% of available space used
+                  </p>
+                </div>
+                
+                {driveSettings.drive_folder_id && (
+                  <div className="text-xs text-muted-foreground">
+                    Folder ID: {driveSettings.drive_folder_id}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="drive-email">Gmail Address</Label>
+                  <Input
+                    id="drive-email"
+                    type="email"
+                    placeholder="college@gmail.com"
+                    value={driveEmail}
+                    onChange={(e) => setDriveEmail(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the Gmail address you want to use for Google Drive storage
+                  </p>
+                </div>
+                
+                <Button 
+                  onClick={handleConnectDrive}
+                  disabled={!driveEmail.trim()}
+                  className="w-full"
+                >
+                  <Cloud className="h-4 w-4 mr-2" />
+                  Connect Google Drive
+                </Button>
+                
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>• Each college gets 15GB of free storage</p>
+                  <p>• Documents will be organized in folders by student</p>
+                  <p>• You can access files directly from Google Drive</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* College Branding */}
       <Card>
         <CardHeader>
           <CardTitle>College Branding</CardTitle>

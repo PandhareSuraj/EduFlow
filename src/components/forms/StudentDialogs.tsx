@@ -269,19 +269,62 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
     setLoading(true);
 
     try {
-      // Get user's college_id using RPC function
-      const { data: collegeId, error: collegeError } = await supabase
-        .rpc('get_user_college');
+    const uploadDocument = async (file: File, type: string) => {
+      // Check if Google Drive is available and connected for this college
+      const { data: driveSettings } = await supabase
+        .from('google_drive_settings')
+        .select('drive_connected')
+        .eq('college_id', collegeId)
+        .eq('drive_connected', true)
+        .single();
 
-      if (collegeError || !collegeId) {
-        console.error('Error getting user college:', collegeError);
-        toast({
-          title: "Error",
-          description: "Unable to determine your college association. Please contact support.",
-          variant: "destructive",
+      if (driveSettings?.drive_connected) {
+        // Upload to Google Drive
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('collegeId', collegeId);
+        formData.append('studentId', studentData.student_id);
+        formData.append('documentType', type);
+
+        const { data, error } = await supabase.functions.invoke('google-drive-upload', {
+          body: formData
         });
-        return;
-      }
+
+        if (error) throw error;
+
+        return {
+          file_name: file.name,
+          file_path: data.webViewLink,
+          file_type: type,
+          file_size: file.size,
+          upload_date: new Date().toISOString(),
+          college_id: collegeId,
+          storage_type: 'google_drive',
+          google_drive_file_id: data.fileId,
+        };
+      } else {
+        // Fallback to Supabase storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${studentData.student_id}/${type}/${fileName}`;
+
+        const { data, error } = await supabase.storage
+          .from('student-documents')
+          .upload(filePath, file);
+
+        if (error) throw error;
+        
+        return {
+          file_name: file.name,
+          file_path: filePath,
+          file_type: type,
+          file_size: file.size,
+          upload_date: new Date().toISOString(),
+          college_id: collegeId,
+          storage_type: 'supabase',
+        };
+        }
+      };
 
       // Check if email already exists
       const { data: existingStudent } = await supabase
@@ -328,7 +371,7 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
       // Upload documents if any
       if (Object.keys(documents).length > 0 && studentData) {
         const documentPromises = Object.entries(documents).map(([docType, file]) =>
-          uploadDocument(studentData.id, docType, file, collegeId)
+          uploadDocument(file, docType)
         );
         await Promise.all(documentPromises);
       }

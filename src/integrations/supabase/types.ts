@@ -1110,6 +1110,65 @@ export type Database = {
         }
         Relationships: []
       }
+      google_drive_settings: {
+        Row: {
+          access_token_encrypted: string | null
+          college_id: string
+          created_at: string
+          created_by: string | null
+          drive_connected: boolean | null
+          drive_email: string
+          drive_folder_id: string | null
+          id: string
+          quota_limit: number | null
+          quota_used: number | null
+          refresh_token_encrypted: string | null
+          token_expires_at: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          college_id: string
+          created_at?: string
+          created_by?: string | null
+          drive_connected?: boolean | null
+          drive_email: string
+          drive_folder_id?: string | null
+          id?: string
+          quota_limit?: number | null
+          quota_used?: number | null
+          refresh_token_encrypted?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          college_id?: string
+          created_at?: string
+          created_by?: string | null
+          drive_connected?: boolean | null
+          drive_email?: string
+          drive_folder_id?: string | null
+          id?: string
+          quota_limit?: number | null
+          quota_used?: number | null
+          refresh_token_encrypted?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_drive_settings_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: true
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       id_card_templates: {
         Row: {
           code: string
@@ -1874,7 +1933,9 @@ export type Database = {
           file_name: string
           file_size: number | null
           file_url: string
+          google_drive_file_id: string | null
           id: string
+          storage_type: string | null
           student_id: number | null
           updated_at: string
           uploaded_at: string
@@ -1886,7 +1947,9 @@ export type Database = {
           file_name: string
           file_size?: number | null
           file_url: string
+          google_drive_file_id?: string | null
           id?: string
+          storage_type?: string | null
           student_id?: number | null
           updated_at?: string
           uploaded_at?: string
@@ -1898,7 +1961,9 @@ export type Database = {
           file_name?: string
           file_size?: number | null
           file_url?: string
+          google_drive_file_id?: string | null
           id?: string
+          storage_type?: string | null
           student_id?: number | null
           updated_at?: string
           uploaded_at?: string
