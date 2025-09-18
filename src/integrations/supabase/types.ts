@@ -1639,6 +1639,51 @@ export type Database = {
           },
         ]
       }
+      personal_google_drive: {
+        Row: {
+          access_token: string | null
+          connected: boolean
+          created_at: string
+          drive_folder_id: string | null
+          google_email: string
+          id: string
+          quota_limit: number
+          quota_used: number
+          refresh_token: string | null
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          connected?: boolean
+          created_at?: string
+          drive_folder_id?: string | null
+          google_email: string
+          id?: string
+          quota_limit?: number
+          quota_used?: number
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          connected?: boolean
+          created_at?: string
+          drive_folder_id?: string | null
+          google_email?: string
+          id?: string
+          quota_limit?: number
+          quota_used?: number
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

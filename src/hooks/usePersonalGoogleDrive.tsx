@@ -32,13 +32,16 @@ export const usePersonalGoogleDrive = () => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('personal_google_drive')
-        .select('*')
-        .eq('user_id', user.user.id)
-        .single();
+      // Use raw SQL query since types aren't updated yet
+      const { data, error } = await supabase.rpc('exec_sql', {
+        query: `
+          SELECT * FROM personal_google_drive 
+          WHERE user_id = $1
+        `,
+        params: [user.user.id]
+      });
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching personal Google Drive settings:', error);
         toast({
           title: "Error",
@@ -48,7 +51,8 @@ export const usePersonalGoogleDrive = () => {
         return;
       }
 
-      setSettings(data);
+      const settings = data && data.length > 0 ? data[0] as PersonalGoogleDriveSettings : null;
+      setSettings(settings);
     } catch (error) {
       console.error('Error fetching personal Google Drive settings:', error);
       toast({
@@ -115,16 +119,19 @@ export const usePersonalGoogleDrive = () => {
     if (!settings?.id) return;
 
     try {
-      const { error } = await supabase
-        .from('personal_google_drive')
-        .update({
-          connected: false,
-          access_token: null,
-          refresh_token: null,
-          token_expires_at: null,
-          google_email: '',
-        })
-        .eq('id', settings.id);
+      // Use raw SQL query since types aren't updated yet
+      const { error } = await supabase.rpc('exec_sql', {
+        query: `
+          UPDATE personal_google_drive 
+          SET connected = false, 
+              access_token = NULL, 
+              refresh_token = NULL, 
+              token_expires_at = NULL, 
+              google_email = ''
+          WHERE id = $1
+        `,
+        params: [settings.id]
+      });
 
       if (error) throw error;
 
