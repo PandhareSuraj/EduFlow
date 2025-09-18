@@ -8,8 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, Upload, CreditCard, Check, Cloud, CloudOff, HardDrive } from 'lucide-react';
 import { useCollegeSettings } from '@/hooks/useCollegeSettings';
-import { useGoogleDriveSettings } from '@/hooks/useGoogleDriveSettings';
-import { GoogleOAuthSetupWizard } from './GoogleOAuthSetupWizard';
+import { PersonalGoogleDriveSettings } from './PersonalGoogleDriveSettings';
 import { useToast } from '@/hooks/use-toast';
 import { ClassicCorporateTemplate } from '@/components/id-card/templates/ClassicCorporateTemplate';
 import { ModernMinimalTemplate } from '@/components/id-card/templates/ModernMinimalTemplate';
@@ -48,19 +47,8 @@ export function IDCardSettings() {
     getSelectedTemplate
   } = useCollegeSettings();
 
-  const { 
-    settings: driveSettings, 
-    loading: driveLoading, 
-    connectGoogleDrive, 
-    disconnectGoogleDrive, 
-    saveOAuthCredentials,
-    getStorageUsage, 
-    formatStorageSize 
-  } = useGoogleDriveSettings();
-
   const { toast } = useToast();
   const [uploading, setUploading] = useState<'logo' | 'signature' | null>(null);
-  const [driveEmail, setDriveEmail] = useState("");
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -109,40 +97,9 @@ export function IDCardSettings() {
   };
 
   const selectedTemplate = getSelectedTemplate();
-  const storageUsage = getStorageUsage();
 
-  const handleConnectDrive = async () => {
-    if (!driveEmail.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a Gmail address",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    if (!driveSettings?.google_client_id_encrypted) {
-      toast({
-        title: "Error",
-        description: "OAuth credentials not configured. Please set up Google OAuth first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await connectGoogleDrive(driveEmail.trim(), driveSettings.google_client_id_encrypted);
-    } catch (error) {
-      console.error('Failed to connect Google Drive:', error);
-      toast({
-        title: "Error",
-        description: "Failed to initiate Google Drive connection",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (loading || driveLoading) {
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-8 space-y-4">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -261,76 +218,8 @@ export function IDCardSettings() {
         </CardContent>
         </Card>
 
-        {/* Google Drive Integration */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Cloud className="h-5 w-5" />
-              Google Drive Integration
-            </CardTitle>
-            <CardDescription>
-              Connect your Google Drive to automatically backup student documents and ID cards.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {driveLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm text-muted-foreground">Loading Google Drive settings...</span>
-              </div>
-            ) : !driveSettings?.oauth_setup_completed ? (
-              <GoogleOAuthSetupWizard 
-                onSave={saveOAuthCredentials}
-                loading={driveLoading}
-              />
-            ) : driveSettings?.drive_connected ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-green-600">
-                  <div className="h-2 w-2 bg-green-600 rounded-full" />
-                  <span className="text-sm font-medium">Connected to {driveSettings.drive_email}</span>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Storage Usage</span>
-                    <span>{Math.round(getStorageUsage().percentage)}%</span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div 
-                      className="bg-primary h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${getStorageUsage().percentage}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{formatStorageSize(getStorageUsage().used)} used</span>
-                    <span>{formatStorageSize(getStorageUsage().total)} total</span>
-                  </div>
-                </div>
-                
-                <Button variant="outline" onClick={disconnectGoogleDrive} className="w-full">
-                  Disconnect Google Drive
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="driveEmail">Gmail Address</Label>
-                  <Input
-                    id="driveEmail"
-                    type="email"
-                    placeholder="Enter Gmail address for Google Drive"
-                    value={driveEmail}
-                    onChange={(e) => setDriveEmail(e.target.value)}
-                  />
-                </div>
-                
-                <Button onClick={handleConnectDrive} className="w-full">
-                  Connect Google Drive
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Google Drive Integration - Simplified Personal Storage */}
+        <PersonalGoogleDriveSettings />
 
         {/* College Branding */}
       <Card>

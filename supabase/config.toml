@@ -21,12 +21,6 @@ verify_jwt = false
 [functions.verify-sms-otp]
 verify_jwt = false
 
-[functions.google-drive-auth]
-verify_jwt = true
-
-[functions.google-drive-upload]
-verify_jwt = true
-
 [functions.personal-google-auth]
 verify_jwt = true
 

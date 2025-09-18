@@ -272,23 +272,21 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
 
     try {
     const uploadDocument = async (file: File, type: string) => {
-      // Check if Google Drive is available and connected for this college
-      const { data: driveSettings } = await supabase
-        .from('google_drive_settings')
-        .select('drive_connected')
-        .eq('college_id', college?.id)
-        .eq('drive_connected', true)
+      // Check if user has personal Google Drive connected
+      const { data: personalDriveSettings } = await supabase
+        .from('personal_google_drive')
+        .select('connected')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('connected', true)
         .single();
 
-      if (driveSettings?.drive_connected) {
-        // Upload to Google Drive
+      if (personalDriveSettings?.connected) {
+        // Upload to personal Google Drive
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('collegeId', college?.id || '');
-        formData.append('studentId', studentData.student_id);
         formData.append('documentType', type);
 
-        const { data, error } = await supabase.functions.invoke('google-drive-upload', {
+        const { data, error } = await supabase.functions.invoke('personal-google-upload', {
           body: formData
         });
 
@@ -301,7 +299,7 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
           file_size: file.size,
           upload_date: new Date().toISOString(),
           college_id: college?.id,
-          storage_type: 'google_drive',
+          storage_type: 'personal_google_drive',
           google_drive_file_id: data.fileId,
         };
       } else {
