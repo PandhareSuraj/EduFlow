@@ -48,14 +48,26 @@ serve(async (req) => {
 
     if (now >= expiresAt) {
       // Refresh the token
+      // Get college's OAuth credentials for token refresh
+      const { data: oauthSettings, error: oauthError } = await supabase
+        .from('google_drive_settings')
+        .select('google_client_id_encrypted, google_client_secret_encrypted')
+        .eq('college_id', collegeId)
+        .eq('oauth_setup_completed', true)
+        .single();
+
+      if (oauthError || !oauthSettings?.google_client_id_encrypted || !oauthSettings?.google_client_secret_encrypted) {
+        throw new Error('OAuth credentials not configured for this college');
+      }
+
       const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          client_id: Deno.env.get('GOOGLE_CLIENT_ID') ?? '',
-          client_secret: Deno.env.get('GOOGLE_CLIENT_SECRET') ?? '',
+          client_id: oauthSettings.google_client_id_encrypted,
+          client_secret: oauthSettings.google_client_secret_encrypted,
           refresh_token: driveSettings.refresh_token_encrypted,
           grant_type: 'refresh_token',
         }),

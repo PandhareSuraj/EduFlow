@@ -1,1 +1,28 @@
 project_id = "velhefqnjmevluskffzp"
+
+[functions.create-general-user]
+verify_jwt = false
+
+[functions.create-faculty-user]
+verify_jwt = true
+
+[functions.reset-faculty-password]
+verify_jwt = false
+
+[functions.create-student-user]
+verify_jwt = false
+
+[functions.clean-college-data]
+verify_jwt = true
+
+[functions.send-sms-otp]
+verify_jwt = false
+
+[functions.verify-sms-otp]
+verify_jwt = false
+
+[functions.google-drive-auth]
+verify_jwt = true
+
+[functions.google-drive-upload]
+verify_jwt = true

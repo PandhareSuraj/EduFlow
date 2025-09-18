@@ -1119,7 +1119,10 @@ export type Database = {
           drive_connected: boolean | null
           drive_email: string
           drive_folder_id: string | null
+          google_client_id_encrypted: string | null
+          google_client_secret_encrypted: string | null
           id: string
+          oauth_setup_completed: boolean | null
           quota_limit: number | null
           quota_used: number | null
           refresh_token_encrypted: string | null
@@ -1135,7 +1138,10 @@ export type Database = {
           drive_connected?: boolean | null
           drive_email: string
           drive_folder_id?: string | null
+          google_client_id_encrypted?: string | null
+          google_client_secret_encrypted?: string | null
           id?: string
+          oauth_setup_completed?: boolean | null
           quota_limit?: number | null
           quota_used?: number | null
           refresh_token_encrypted?: string | null
@@ -1151,7 +1157,10 @@ export type Database = {
           drive_connected?: boolean | null
           drive_email?: string
           drive_folder_id?: string | null
+          google_client_id_encrypted?: string | null
+          google_client_secret_encrypted?: string | null
           id?: string
+          oauth_setup_completed?: boolean | null
           quota_limit?: number | null
           quota_used?: number | null
           refresh_token_encrypted?: string | null

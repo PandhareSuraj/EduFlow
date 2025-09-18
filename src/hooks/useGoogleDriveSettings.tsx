@@ -11,6 +11,9 @@ interface GoogleDriveSettings {
   quota_used: number;
   quota_limit: number;
   drive_connected: boolean;
+  google_client_id_encrypted?: string;
+  google_client_secret_encrypted?: string;
+  oauth_setup_completed: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -76,14 +79,18 @@ export const useGoogleDriveSettings = () => {
     }
   };
 
-  const connectGoogleDrive = async (driveEmail: string) => {
+  const connectGoogleDrive = async (driveEmail: string, clientId: string) => {
     if (!collegeId) {
       throw new Error('College ID not found');
     }
 
-    // Generate Google OAuth URL
+    if (!clientId) {
+      throw new Error('Google Client ID is required');
+    }
+
+    // Generate Google OAuth URL with college's own client ID
     const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-    googleAuthUrl.searchParams.set('client_id', 'YOUR_GOOGLE_CLIENT_ID');
+    googleAuthUrl.searchParams.set('client_id', clientId);
     googleAuthUrl.searchParams.set('redirect_uri', `${window.location.origin}/settings`);
     googleAuthUrl.searchParams.set('scope', 'https://www.googleapis.com/auth/drive.file');
     googleAuthUrl.searchParams.set('response_type', 'code');
@@ -93,6 +100,45 @@ export const useGoogleDriveSettings = () => {
 
     // Redirect to Google OAuth
     window.location.href = googleAuthUrl.toString();
+  };
+
+  const saveOAuthCredentials = async (clientId: string, clientSecret: string) => {
+    if (!collegeId) {
+      throw new Error('College ID not found');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('google_drive_settings')
+        .upsert({
+          college_id: collegeId,
+          google_client_id_encrypted: clientId, // In production, encrypt this
+          google_client_secret_encrypted: clientSecret, // In production, encrypt this
+          oauth_setup_completed: true,
+          drive_connected: false,
+          quota_used: 0,
+          quota_limit: 16106127360, // 15GB default
+          drive_email: '',
+        })
+        .select();
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "OAuth credentials saved successfully",
+      });
+
+      await fetchSettings();
+    } catch (error) {
+      console.error('Error saving OAuth credentials:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save OAuth credentials",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
   const disconnectGoogleDrive = async () => {
@@ -106,12 +152,13 @@ export const useGoogleDriveSettings = () => {
           access_token_encrypted: null,
           refresh_token_encrypted: null,
           token_expires_at: null,
+          drive_email: '',
         })
         .eq('id', settings.id);
 
       if (error) throw error;
 
-      setSettings(prev => prev ? { ...prev, drive_connected: false } : null);
+      setSettings(prev => prev ? { ...prev, drive_connected: false, drive_email: '' } : null);
       
       toast({
         title: "Success",
@@ -198,6 +245,7 @@ export const useGoogleDriveSettings = () => {
     loading,
     connectGoogleDrive,
     disconnectGoogleDrive,
+    saveOAuthCredentials,
     getStorageUsage,
     formatStorageSize,
     refreshSettings: fetchSettings,

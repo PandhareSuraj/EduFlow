@@ -25,6 +25,18 @@ serve(async (req) => {
       throw new Error('Missing required parameters: code, collegeId, or driveEmail');
     }
 
+    // Get college's OAuth credentials from database
+    const { data: driveSettings, error: settingsError } = await supabase
+      .from('google_drive_settings')
+      .select('google_client_id_encrypted, google_client_secret_encrypted')
+      .eq('college_id', collegeId)
+      .eq('oauth_setup_completed', true)
+      .single();
+
+    if (settingsError || !driveSettings?.google_client_id_encrypted || !driveSettings?.google_client_secret_encrypted) {
+      throw new Error('OAuth credentials not configured for this college. Please set up Google OAuth first.');
+    }
+
     // Exchange authorization code for access token
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -32,8 +44,8 @@ serve(async (req) => {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: Deno.env.get('GOOGLE_CLIENT_ID') ?? '',
-        client_secret: Deno.env.get('GOOGLE_CLIENT_SECRET') ?? '',
+        client_id: driveSettings.google_client_id_encrypted,
+        client_secret: driveSettings.google_client_secret_encrypted,
         code: code,
         grant_type: 'authorization_code',
         redirect_uri: `${Deno.env.get('SUPABASE_URL')}/functions/v1/google-drive-auth/callback`
