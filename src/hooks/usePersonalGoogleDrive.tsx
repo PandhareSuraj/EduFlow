@@ -57,8 +57,7 @@ export const usePersonalGoogleDrive = () => {
       // Start OAuth flow by invoking edge function to get proper auth URL
       const { data, error } = await supabase.functions.invoke('personal-google-auth', {
         body: { 
-          action: 'start_oauth',
-          redirectUri: `${window.location.origin}/settings`
+          action: 'start_oauth'
         }
       });
 
@@ -159,63 +158,59 @@ export const usePersonalGoogleDrive = () => {
     }
   }, [userRole]);
 
-  // Handle OAuth callback
+  // Handle OAuth success/error from edge function redirect
   useEffect(() => {
-    const handleOAuthCallback = async () => {
+    const handleOAuthResult = async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      const state = urlParams.get('state');
+      const success = urlParams.get('success');
+      const error = urlParams.get('error');
 
-      if (code && state) {
-        try {
-          const stateData = JSON.parse(state);
-          if (stateData.type === 'personal_drive') {
-            const { data, error } = await supabase.functions.invoke('personal-google-auth', {
-              body: {
-                action: 'complete_oauth',
-                code,
-                state: stateData,
-                redirectUri: `${window.location.origin}/settings`
-              }
-            });
+      if (success === 'google_drive_connected') {
+        toast({
+          title: "Success",
+          description: "Google Drive connected successfully",
+        });
 
-            if (error) throw error;
-
-            toast({
-              title: "Success",
-              description: "Google Drive connected successfully",
-            });
-
-            // Clear URL parameters
-            window.history.replaceState({}, document.title, window.location.pathname);
-            
-            // Update settings with connected state
-            if (data) {
-              setSettings({
-                id: 'temp-id',
-                user_id: stateData.userId,
-                google_email: data.email || '',
-                connected: true,
-                quota_used: 0,
-                quota_limit: 16106127360
-              });
-            }
-            
-            // Refresh settings
-            fetchSettings();
-          }
-        } catch (error) {
-          console.error('OAuth callback error:', error);
-          toast({
-            title: "Error",
-            description: "Failed to connect Google Drive",
-            variant: "destructive",
-          });
+        // Clear URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // Refresh settings
+        fetchSettings();
+      } else if (error) {
+        let errorMessage = "Failed to connect Google Drive";
+        switch (error) {
+          case 'oauth_error':
+            errorMessage = "OAuth authorization was denied";
+            break;
+          case 'missing_params':
+            errorMessage = "Invalid OAuth response";
+            break;
+          case 'token_exchange_failed':
+            errorMessage = "Failed to exchange authorization code";
+            break;
+          case 'user_info_failed':
+            errorMessage = "Failed to get user information from Google";
+            break;
+          case 'folder_creation_failed':
+            errorMessage = "Failed to create storage folder in Google Drive";
+            break;
+          case 'database_error':
+            errorMessage = "Failed to save Google Drive settings";
+            break;
         }
+
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+
+        // Clear URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
     };
 
-    handleOAuthCallback();
+    handleOAuthResult();
   }, [toast]);
 
   return {

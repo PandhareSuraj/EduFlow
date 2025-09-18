@@ -7,11 +7,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Fixed redirect URI for OAuth callback
+const SUPABASE_REF = "velhefqnjmevluskffzp";
+const REDIRECT_URI = `https://${SUPABASE_REF}.functions.supabase.co/personal-google-auth`;
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const url = new URL(req.url);
+  const pathname = url.pathname;
+
+  console.log(`Personal Google Auth request: ${req.method} ${pathname}`);
 
   try {
     const supabase = createClient(
@@ -19,63 +28,44 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { action, code, state, redirectUri } = await req.json();
+    // Handle OAuth callback from Google (GET request)
+    if (req.method === 'GET' && url.searchParams.has('code')) {
+      const code = url.searchParams.get('code');
+      const state = url.searchParams.get('state');
+      const error = url.searchParams.get('error');
 
-    // Get application-level Google OAuth credentials
-    const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
-    const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
+      console.log('OAuth callback received:', { code: !!code, state, error });
 
-    if (!clientId || !clientSecret) {
-      throw new Error('Google OAuth credentials not configured');
-    }
-
-    if (action === 'start_oauth') {
-      // Generate OAuth URL with application credentials
-      const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-      googleAuthUrl.searchParams.set('client_id', clientId);
-      googleAuthUrl.searchParams.set('redirect_uri', redirectUri);
-      googleAuthUrl.searchParams.set('scope', [
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/userinfo.email',
-        'https://www.googleapis.com/auth/userinfo.profile'
-      ].join(' '));
-      googleAuthUrl.searchParams.set('response_type', 'code');
-      googleAuthUrl.searchParams.set('access_type', 'offline');
-      googleAuthUrl.searchParams.set('prompt', 'consent');
-      
-      // Get current user
-      const authHeader = req.headers.get('Authorization');
-      if (!authHeader) {
-        throw new Error('No authorization header');
+      if (error) {
+        console.error('OAuth error:', error);
+        return new Response(null, {
+          status: 302,
+          headers: {
+            'Location': `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}.lovable.app/settings?error=oauth_error`
+          }
+        });
       }
 
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-      
-      if (userError || !user) {
-        throw new Error('Unable to get user from token');
+      if (!code || !state) {
+        console.error('Missing code or state in callback');
+        return new Response(null, {
+          status: 302,
+          headers: {
+            'Location': `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}.lovable.app/settings?error=missing_params`
+          }
+        });
       }
 
-      googleAuthUrl.searchParams.set('state', JSON.stringify({ 
-        userId: user.id,
-        type: 'personal_drive' 
-      }));
+      // Continue with existing OAuth completion logic
+      const stateData = JSON.parse(state);
+      const userId = stateData.userId;
 
-      console.log(`Starting OAuth for user ${user.id}`);
+      // Get application-level Google OAuth credentials
+      const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+      const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
 
-      return new Response(
-        JSON.stringify({ authUrl: googleAuthUrl.toString() }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    if (action === 'complete_oauth') {
-      const { userId } = state;
-
-      if (!code || !userId) {
-        throw new Error('Missing required parameters: code or userId');
+      if (!clientId || !clientSecret) {
+        throw new Error('Google OAuth credentials not configured');
       }
 
       // Exchange authorization code for access token
@@ -89,7 +79,7 @@ serve(async (req) => {
           client_secret: clientSecret,
           code: code,
           grant_type: 'authorization_code',
-          redirect_uri: redirectUri
+          redirect_uri: REDIRECT_URI
         }),
       });
 
@@ -97,10 +87,16 @@ serve(async (req) => {
       
       if (!tokenResponse.ok) {
         console.error('Token exchange error:', tokenData);
-        throw new Error(`Token exchange failed: ${tokenData.error_description || tokenData.error}`);
+        return new Response(null, {
+          status: 302,
+          headers: {
+            'Location': `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}.lovable.app/settings?error=token_exchange_failed`
+          }
+        });
       }
 
-      // Get user info from Google
+      // Continue with the rest of the OAuth completion process...
+      // (The existing code from complete_oauth action)
       const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: {
           'Authorization': `Bearer ${tokenData.access_token}`,
@@ -111,7 +107,12 @@ serve(async (req) => {
       
       if (!userInfoResponse.ok) {
         console.error('User info error:', userInfo);
-        throw new Error(`Failed to get user info: ${userInfo.error?.message}`);
+        return new Response(null, {
+          status: 302,
+          headers: {
+            'Location': `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}.lovable.app/settings?error=user_info_failed`
+          }
+        });
       }
 
       // Create main storage folder in user's Google Drive
@@ -132,7 +133,12 @@ serve(async (req) => {
       
       if (!folderResponse.ok) {
         console.error('Folder creation error:', folderData);
-        throw new Error(`Failed to create storage folder: ${folderData.error?.message}`);
+        return new Response(null, {
+          status: 302,
+          headers: {
+            'Location': `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}.lovable.app/settings?error=folder_creation_failed`
+          }
+        });
       }
 
       // Get drive quota information
@@ -169,23 +175,91 @@ serve(async (req) => {
 
       if (error) {
         console.error('Database error:', error);
-        throw error;
+        return new Response(null, {
+          status: 302,
+          headers: {
+            'Location': `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}.lovable.app/settings?error=database_error`
+          }
+        });
       }
 
       console.log(`Personal Google Drive connected successfully for user ${userId}`);
 
+      // Redirect back to frontend with success
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}.lovable.app/settings?success=google_drive_connected`
+        }
+      });
+    }
+
+    // Handle POST requests (start OAuth or other actions)
+    const body = await req.json();
+    const { action } = body;
+
+    // Get application-level Google OAuth credentials
+    const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+    const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
+
+    if (!clientId || !clientSecret) {
+      throw new Error('Google OAuth credentials not configured');
+    }
+
+    if (action === 'start_oauth') {
+      // Get application-level Google OAuth credentials
+      const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+      const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
+
+      if (!clientId || !clientSecret) {
+        throw new Error('Google OAuth credentials not configured');
+      }
+
+      // Generate OAuth URL with application credentials
+      const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+      googleAuthUrl.searchParams.set('client_id', clientId);
+      googleAuthUrl.searchParams.set('redirect_uri', REDIRECT_URI);
+      googleAuthUrl.searchParams.set('scope', [
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile'
+      ].join(' '));
+      googleAuthUrl.searchParams.set('response_type', 'code');
+      googleAuthUrl.searchParams.set('access_type', 'offline');
+      googleAuthUrl.searchParams.set('prompt', 'consent');
+      
+      // Get current user
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        throw new Error('No authorization header');
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      
+      if (userError || !user) {
+        throw new Error('Unable to get user from token');
+      }
+
+      googleAuthUrl.searchParams.set('state', JSON.stringify({ 
+        userId: user.id,
+        type: 'personal_drive' 
+      }));
+
+      console.log(`Starting OAuth for user ${user.id}`);
+      console.log('AUTH_URL:', googleAuthUrl.toString());
+      console.log('REDIRECT_URI:', REDIRECT_URI);
+      console.log('CLIENT_ID:', clientId);
+
       return new Response(
-        JSON.stringify({
-          success: true,
-          folderId: folderData.id,
-          email: userInfo.email,
-          message: 'Personal Google Drive connected successfully'
-        }),
+        JSON.stringify({ authUrl: googleAuthUrl.toString() }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
+
+    // This complete_oauth action is no longer needed since OAuth callback is handled via GET
 
     throw new Error('Invalid action');
 
