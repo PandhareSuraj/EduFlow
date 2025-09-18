@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, FileText, User, IndianRupee, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useCollege } from "@/contexts/CollegeContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Export the individual dialog components
@@ -87,6 +88,7 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
   const [loadingFeeStructure, setLoadingFeeStructure] = useState(false);
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const { toast } = useToast();
+  const { college } = useCollege();
 
   // Calculate final fee amount
   const calculateFinalFee = () => {
@@ -274,7 +276,7 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
       const { data: driveSettings } = await supabase
         .from('google_drive_settings')
         .select('drive_connected')
-        .eq('college_id', collegeId)
+        .eq('college_id', college?.id)
         .eq('drive_connected', true)
         .single();
 
@@ -282,7 +284,7 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
         // Upload to Google Drive
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('collegeId', collegeId);
+        formData.append('collegeId', college?.id || '');
         formData.append('studentId', studentData.student_id);
         formData.append('documentType', type);
 
@@ -298,7 +300,7 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
           file_type: type,
           file_size: file.size,
           upload_date: new Date().toISOString(),
-          college_id: collegeId,
+          college_id: college?.id,
           storage_type: 'google_drive',
           google_drive_file_id: data.fileId,
         };
@@ -320,7 +322,7 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
           file_type: type,
           file_size: file.size,
           upload_date: new Date().toISOString(),
-          college_id: collegeId,
+          college_id: college?.id,
           storage_type: 'supabase',
         };
         }
@@ -352,7 +354,7 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
           course_id: parseInt(formData.course_id),
           year: formData.year || 1,
           semester: formData.semester || 1,
-          college_id: collegeId,
+          college_id: college?.id,
           status: 'active'
         }])
         .select()
