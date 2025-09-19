@@ -35,11 +35,63 @@ export default function Settings() {
   const { userRole } = useAuth();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [roleStats, setRoleStats] = useState<{ role: string; count: number; description: string }[]>([]);
 
   // Fetch users and their roles
   useEffect(() => {
     fetchUsers();
+    fetchRoleStats();
   }, []);
+
+  const fetchRoleStats = async () => {
+    try {
+      console.debug('Fetching role statistics...');
+      
+      // Use the new RPC function to get role counts for current user's college
+      const { data: roleCounts, error } = await supabase.rpc('get_role_counts_for_college', {
+        college_uuid: await getCurrentUserCollege()
+      });
+
+      if (error) {
+        console.error('Error fetching role stats:', error);
+        // Fallback to basic role stats
+        setRoleStats([
+          { role: "admin", count: 0, description: "Full System Access" },
+          { role: "teacher", count: 0, description: "Teaching & Assessment" },
+          { role: "clerk", count: 0, description: "Administrative Tasks" },
+          { role: "librarian", count: 0, description: "Library Management" },
+          { role: "accountant", count: 0, description: "Financial Management" },
+          { role: "assistant", count: 0, description: "Basic Operations" },
+        ]);
+        return;
+      }
+
+      console.debug('Role counts from RPC:', roleCounts);
+
+      const roleStatsMap = roleCounts?.reduce((acc: any, rc: any) => {
+        acc[rc.role] = Number(rc.count);
+        return acc;
+      }, {}) || {};
+
+      setRoleStats([
+        { role: "admin", count: roleStatsMap.admin || 0, description: "Full System Access" },
+        { role: "teacher", count: roleStatsMap.teacher || 0, description: "Teaching & Assessment" },
+        { role: "clerk", count: roleStatsMap.clerk || 0, description: "Administrative Tasks" },
+        { role: "librarian", count: roleStatsMap.librarian || 0, description: "Library Management" },
+        { role: "accountant", count: roleStatsMap.accountant || 0, description: "Financial Management" },
+        { role: "assistant", count: roleStatsMap.assistant || 0, description: "Basic Operations" },
+      ]);
+    } catch (error) {
+      console.error('Error in fetchRoleStats:', error);
+      setRoleStats([]);
+    }
+  };
+
+  const getCurrentUserCollege = async () => {
+    const { data, error } = await supabase.rpc('get_user_college');
+    if (error) throw error;
+    return data;
+  };
 
   const fetchUsers = async () => {
     try {
@@ -123,6 +175,7 @@ export default function Settings() {
 
       // Refresh users list
       fetchUsers();
+      fetchRoleStats();
     } catch (error) {
       console.error('Unexpected error:', error);
       toast({
@@ -146,19 +199,7 @@ export default function Settings() {
   };
 
   const getRoleStats = () => {
-    const roleStats = users.reduce((acc, user) => {
-      acc[user.role] = (acc[user.role] || 0) + 1;
-      return acc;
-    }, {} as Record<AppRole, number>);
-
-    return [
-      { role: "admin", count: roleStats.admin || 0, description: "Full System Access" },
-      { role: "teacher", count: roleStats.teacher || 0, description: "Teaching & Assessment" },
-      { role: "clerk", count: roleStats.clerk || 0, description: "Administrative Tasks" },
-      { role: "librarian", count: roleStats.librarian || 0, description: "Library Management" },
-      { role: "accountant", count: roleStats.accountant || 0, description: "Financial Management" },
-      { role: "assistant", count: roleStats.assistant || 0, description: "Basic Operations" },
-    ];
+    return roleStats;
   };
 
   const handleSaveSettings = () => {

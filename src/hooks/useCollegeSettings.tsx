@@ -44,34 +44,35 @@ export function useCollegeSettings() {
 
       console.log('User ID:', user.id);
 
-      // Get user's college from user_roles
-      const { data: userRoleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('college_id, role')
-        .eq('user_id', user.id)
-        .single();
-
+      // Get user's college from RPC function (avoids PGRST116 error with multiple roles)
+      const { data: userRole, error: roleError } = await supabase.rpc('get_current_user_role');
+      
       if (roleError) {
-        console.error('Error fetching user role:', roleError);
-        if (roleError.code === 'PGRST116') {
-          throw new Error('No role assigned to user. Please contact administrator.');
-        }
-        throw roleError;
+        console.error('Error fetching user role via RPC:', roleError);
+        throw new Error('Unable to fetch user role. Please contact administrator.');
       }
 
-      if (!userRoleData?.college_id) {
-        console.warn('No college associated with user role');
+      // Get user's college from get_user_college RPC
+      const { data: collegeId, error: collegeError } = await supabase.rpc('get_user_college');
+      
+      if (collegeError) {
+        console.error('Error fetching user college:', collegeError);
+        throw new Error('Unable to fetch college information. Please contact administrator.');
+      }
+
+      if (!collegeId) {
+        console.warn('No college associated with user');
         throw new Error('No college assigned to your account. Please contact administrator.');
       }
 
-      console.log('User college ID:', userRoleData.college_id);
-      console.log('User role:', userRoleData.role);
+      console.log('User college ID:', collegeId);
+      console.log('User role:', userRole);
 
       // Fetch the user's specific college
       const { data, error } = await supabase
         .from('colleges')
         .select('*')
-        .eq('id', userRoleData.college_id)
+        .eq('id', collegeId)
         .single();
 
       if (error) {

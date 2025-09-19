@@ -25,16 +25,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.debug('Auth state changed:', event, 'User:', !!session?.user, 'Loading will be set to false');
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
         
         // Defer role fetching to avoid callback blocking
         if (session?.user) {
+          console.debug('User exists, fetching role...');
           setTimeout(() => {
             fetchUserRole(session.user.id);
           }, 0);
         } else {
+          console.debug('No user, setting role to null');
           setUserRole(null);
         }
       }
@@ -56,19 +59,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserRole = async (userId: string) => {
     try {
-      console.log('Fetching user role for user ID:', userId);
+      console.debug('Fetching user role for user ID:', userId);
       const { data, error } = await supabase.rpc('get_current_user_role');
 
       if (error) {
-        console.error('Error fetching user role:', error);
+        console.error('Error fetching user role via RPC:', error);
         setUserRole(null);
         return;
       }
 
-      console.log('User role from RPC:', data);
+      console.debug('User role from RPC result:', data);
       setUserRole(data || null);
     } catch (error) {
-      console.error('Error fetching user role:', error);
+      console.error('Exception in fetchUserRole:', error);
       setUserRole(null);
     }
   };

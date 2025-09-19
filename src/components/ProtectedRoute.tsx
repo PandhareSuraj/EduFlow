@@ -36,12 +36,12 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
 
   // If user is authenticated but role is still loading and we need role-based access
   if (user && userRole === null && (requiredRole || allowedRoles)) {
-    // Wait a moment for role to load
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
           <p className="text-muted-foreground">Loading user permissions...</p>
+          <p className="text-xs text-muted-foreground">This may take a moment...</p>
         </div>
       </div>
     );

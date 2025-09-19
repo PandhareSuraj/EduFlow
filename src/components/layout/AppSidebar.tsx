@@ -40,8 +40,8 @@ export function AppSidebar() {
   const location = useLocation();
   const { state } = useSidebar();
 
-  // Show loading state if authenticated but role not yet loaded
-  const isRoleLoading = user && !loading && !userRole;
+  // Show loading state if authenticated but role not yet loaded  
+  const isRoleLoading = user && !loading && userRole === null;
 
   const getNavigation = () => {
     if (userRole === 'super_admin') {
@@ -135,7 +135,7 @@ export function AppSidebar() {
   };
 
   const getPortalTitle = () => {
-    if (isRoleLoading) return 'Loading...';
+    if (isRoleLoading || userRole === null) return 'Loading...';
     switch (userRole) {
       case 'super_admin': return 'Multi-College ERP';
       case 'student': return 'Student Portal';
@@ -148,7 +148,7 @@ export function AppSidebar() {
   };
 
   const getPortalSubtitle = () => {
-    if (isRoleLoading) return 'Fetching permissions...';
+    if (isRoleLoading || userRole === null) return 'Loading permissions...';
     switch (userRole) {
       case 'super_admin': return 'System Management';
       case 'student': return 'Student Dashboard';
@@ -183,9 +183,9 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {isRoleLoading ? (
-                // Show loading skeleton while role is being fetched
-                Array.from({ length: 3 }).map((_, i) => (
+              {isRoleLoading || userRole === null ? (
+                // Show more skeleton items while role is being fetched
+                Array.from({ length: 8 }).map((_, i) => (
                   <SidebarMenuItem key={i}>
                     <div className="flex items-center gap-3 px-3 py-2 rounded-lg">
                       <div className="h-4 w-4 bg-sidebar-accent/30 rounded animate-pulse" />

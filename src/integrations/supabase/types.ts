@@ -2713,6 +2713,20 @@ export type Database = {
         Args: { faculty_id: string }
         Returns: boolean
       }
+      get_role_counts_for_college: {
+        Args: { college_uuid: string }
+        Returns: {
+          count: number
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
+      get_role_counts_global: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          count: number
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       get_student_data: {
         Args: Record<PropertyKey, never>
         Returns: {
