@@ -18,8 +18,10 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
     }
   }, [user, loading, navigate]);
 
-  // Show loading while authentication is being checked OR while userRole is being fetched
-  if (loading || (user && userRole === null && (requiredRole || allowedRoles))) {
+  console.log('ProtectedRoute - User:', !!user, 'Loading:', loading, 'UserRole:', userRole, 'Required:', requiredRole || allowedRoles);
+
+  // Show loading while authentication is being checked
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -32,23 +34,40 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
     return null;
   }
 
+  // If user is authenticated but role is still loading and we need role-based access
+  if (user && userRole === null && (requiredRole || allowedRoles)) {
+    // Wait a moment for role to load
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading user permissions...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Check role-based access if required
   const hasAccess = () => {
-    // No role restrictions
+    // No role restrictions - allow access
     if (!requiredRole && !allowedRoles) return true;
     
-    // Super admin and admin always have access
-    if (userRole === 'super_admin' || userRole === 'admin') return true;
+    // If role is still null after loading and we need role-based access, deny
+    if (userRole === null) return false;
+    
+    // Super admin always has access
+    if (userRole === 'super_admin') return true;
     
     // Check single required role
     if (requiredRole && userRole === requiredRole) return true;
     
     // Check multiple allowed roles
-    if (allowedRoles && allowedRoles.includes(userRole || '')) return true;
+    if (allowedRoles && allowedRoles.includes(userRole)) return true;
     
     return false;
   };
 
+  // Only show access denied if we actually have role restrictions
   if ((requiredRole || allowedRoles) && !hasAccess()) {
     console.log('Access denied - User role:', userRole, 'Required:', requiredRole || allowedRoles);
     return (
