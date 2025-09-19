@@ -35,10 +35,13 @@ import {
 } from "@/components/ui/sidebar";
 
 export function AppSidebar() {
-  const { userRole } = useAuth();
+  const { userRole, user, loading } = useAuth();
   const { collegeName, logoUrl } = useBranding();
   const location = useLocation();
   const { state } = useSidebar();
+
+  // Show loading state if authenticated but role not yet loaded
+  const isRoleLoading = user && !loading && !userRole;
 
   const getNavigation = () => {
     if (userRole === 'super_admin') {
@@ -132,6 +135,7 @@ export function AppSidebar() {
   };
 
   const getPortalTitle = () => {
+    if (isRoleLoading) return 'Loading...';
     switch (userRole) {
       case 'super_admin': return 'Multi-College ERP';
       case 'student': return 'Student Portal';
@@ -144,6 +148,7 @@ export function AppSidebar() {
   };
 
   const getPortalSubtitle = () => {
+    if (isRoleLoading) return 'Fetching permissions...';
     switch (userRole) {
       case 'super_admin': return 'System Management';
       case 'student': return 'Student Dashboard';
@@ -178,22 +183,34 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {navigation.map((item) => (
-                <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton 
-                    asChild 
-                    className={getNavClassName(item.href)}
-                  >
-                    <NavLink 
-                      to={item.href} 
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
+              {isRoleLoading ? (
+                // Show loading skeleton while role is being fetched
+                Array.from({ length: 3 }).map((_, i) => (
+                  <SidebarMenuItem key={i}>
+                    <div className="flex items-center gap-3 px-3 py-2 rounded-lg">
+                      <div className="h-4 w-4 bg-sidebar-accent/30 rounded animate-pulse" />
+                      {!isCollapsed && <div className="h-4 bg-sidebar-accent/30 rounded animate-pulse flex-1" />}
+                    </div>
+                  </SidebarMenuItem>
+                ))
+              ) : (
+                navigation.map((item) => (
+                  <SidebarMenuItem key={item.name}>
+                    <SidebarMenuButton 
+                      asChild 
+                      className={getNavClassName(item.href)}
                     >
-                      <item.icon className="h-4 w-4 flex-shrink-0" />
-                      {!isCollapsed && <span className="truncate">{item.name}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                      <NavLink 
+                        to={item.href} 
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
+                      >
+                        <item.icon className="h-4 w-4 flex-shrink-0" />
+                        {!isCollapsed && <span className="truncate">{item.name}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

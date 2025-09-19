@@ -57,11 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUserRole = async (userId: string) => {
     try {
       console.log('Fetching user role for user ID:', userId);
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role, created_at, college_id')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.rpc('get_current_user_role');
 
       if (error) {
         console.error('Error fetching user role:', error);
@@ -69,32 +65,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      console.log('User roles data:', data);
-
-      if (!data || data.length === 0) {
-        console.log('No roles found for user');
-        setUserRole(null);
-        return;
-      }
-
-      // Prefer the highest-privilege role if multiple exist
-      const priority = [
-        'super_admin',
-        'admin',
-        'teacher',
-        'accountant',
-        'librarian',
-        'clerk',
-        'assistant',
-        'student',
-      ] as const;
-
-      const top = data
-        .map((r) => r.role as string)
-        .sort((a, b) => priority.indexOf(a as any) - priority.indexOf(b as any))[0];
-
-      console.log('Selected role:', top);
-      setUserRole(top || null);
+      console.log('User role from RPC:', data);
+      setUserRole(data || null);
     } catch (error) {
       console.error('Error fetching user role:', error);
       setUserRole(null);
