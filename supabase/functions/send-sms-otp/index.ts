@@ -10,6 +10,7 @@ const corsHeaders = {
 interface SendSMSRequest {
   phone_number: string;
   college_id?: string;
+  sms_type?: 'signup' | 'login' | 'general';
 }
 
 serve(async (req) => {
@@ -19,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    const { phone_number, college_id }: SendSMSRequest = await req.json();
+    const { phone_number, college_id, sms_type = 'general' }: SendSMSRequest = await req.json();
     console.log('Send SMS OTP request:', { phone_number, college_id });
 
     // Validate phone number format (basic validation)
@@ -58,7 +59,7 @@ serve(async (req) => {
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
 
-    // Get SMS configuration
+    // Get SMS configuration with templates
     const { data: smsConfig, error: configError } = await supabase
       .from('sms_configurations')
       .select('*')
@@ -80,6 +81,29 @@ serve(async (req) => {
       );
     }
 
+    // Get the appropriate template based on SMS type
+    let messageTemplate = smsConfig.general_otp_template || 'Your verification code is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Do not share with anyone.';
+    
+    if (sms_type === 'signup') {
+      messageTemplate = smsConfig.signup_otp_template || 'Welcome to {{APP_NAME}}! Your signup OTP is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Do not share this code.';
+    } else if (sms_type === 'login') {
+      messageTemplate = smsConfig.login_otp_template || 'Your login OTP for {{APP_NAME}} is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Keep it confidential.';
+    }
+
+    // Get college information if college_id is provided
+    let collegeName = 'App';
+    if (college_id) {
+      const { data: college } = await supabase
+        .from('colleges')
+        .select('name')
+        .eq('id', college_id)
+        .single();
+      
+      if (college) {
+        collegeName = college.name;
+      }
+    }
+
     // Get API key from secrets
     const apiKey = Deno.env.get('SMS_GATEWAY_API_KEY');
     if (!apiKey) {
@@ -90,8 +114,12 @@ serve(async (req) => {
       );
     }
 
-    // Prepare SMS message
-    const message = `Your OTP for registration is: ${otpCode}. Valid for 5 minutes. Do not share this code with anyone.`;
+    // Replace template variables with actual values
+    const message = messageTemplate
+      .replace(/\{\{OTP\}\}/g, otpCode)
+      .replace(/\{\{EXPIRY_MINUTES\}\}/g, '5')
+      .replace(/\{\{COLLEGE_NAME\}\}/g, collegeName)
+      .replace(/\{\{APP_NAME\}\}/g, collegeName);
     
     // Clean phone number for SMS API (remove spaces, dashes)
     const cleanPhone = phone_number.replace(/[\s-]/g, '');

@@ -21,6 +21,10 @@ interface SMSConfig {
   entity_id: string;
   dlt_template_id: string;
   is_active: boolean;
+  signup_otp_template: string;
+  login_otp_template: string;
+  general_otp_template: string;
+  default_country_code: string;
 }
 
 export const SMSSettings: React.FC = () => {
@@ -32,7 +36,11 @@ export const SMSSettings: React.FC = () => {
     route: 'clickhere',
     entity_id: '',
     dlt_template_id: '',
-    is_active: true
+    is_active: true,
+    signup_otp_template: 'Welcome to {{APP_NAME}}! Your signup OTP is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Do not share this code.',
+    login_otp_template: 'Your login OTP for {{APP_NAME}} is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Keep it confidential.',
+    general_otp_template: 'Your verification code is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Do not share with anyone.',
+    default_country_code: '+91'
   });
   const [loading, setLoading] = useState(false);
   const [testPhone, setTestPhone] = useState('');
@@ -89,7 +97,11 @@ export const SMSSettings: React.FC = () => {
           route: data.route,
           entity_id: data.entity_id || '',
           dlt_template_id: data.dlt_template_id || '',
-          is_active: data.is_active
+          is_active: data.is_active,
+          signup_otp_template: data.signup_otp_template || 'Welcome to {{APP_NAME}}! Your signup OTP is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Do not share this code.',
+          login_otp_template: data.login_otp_template || 'Your login OTP for {{APP_NAME}} is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Keep it confidential.',
+          general_otp_template: data.general_otp_template || 'Your verification code is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Do not share with anyone.',
+          default_country_code: data.default_country_code || '+91'
         });
       }
     } catch (err) {
@@ -110,7 +122,11 @@ export const SMSSettings: React.FC = () => {
         route: config.route,
         entity_id: config.entity_id,
         dlt_template_id: config.dlt_template_id,
-        is_active: config.is_active
+        is_active: config.is_active,
+        signup_otp_template: config.signup_otp_template,
+        login_otp_template: config.login_otp_template,
+        general_otp_template: config.general_otp_template,
+        default_country_code: config.default_country_code
       };
 
       if (config.id) {
@@ -154,8 +170,9 @@ export const SMSSettings: React.FC = () => {
     setError('');
 
     try {
+      const formattedPhone = testPhone.startsWith('+') ? testPhone : `${config.default_country_code}${testPhone}`;
       const { data, error } = await supabase.functions.invoke('send-sms-otp', {
-        body: { phone_number: testPhone }
+        body: { phone_number: formattedPhone, sms_type: 'general' }
       });
 
       if (error) throw error;
@@ -261,6 +278,16 @@ export const SMSSettings: React.FC = () => {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="default_country_code">Default Country Code</Label>
+            <Input
+              id="default_country_code"
+              value={config.default_country_code}
+              onChange={(e) => handleInputChange('default_country_code', e.target.value)}
+              placeholder="+91"
+            />
+          </div>
+
           <div className="flex items-center space-x-2">
             <Switch
               id="is_active"
@@ -279,6 +306,66 @@ export const SMSSettings: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            SMS Templates Configuration
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="signup_template">Signup OTP Template</Label>
+              <Textarea
+                id="signup_template"
+                value={config.signup_otp_template}
+                onChange={(e) => handleInputChange('signup_otp_template', e.target.value)}
+                placeholder="Welcome to {{APP_NAME}}! Your signup OTP is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes."
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="login_template">Login OTP Template</Label>
+              <Textarea
+                id="login_template"
+                value={config.login_otp_template}
+                onChange={(e) => handleInputChange('login_otp_template', e.target.value)}
+                placeholder="Your login OTP for {{APP_NAME}} is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes."
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="general_template">General OTP Template</Label>
+              <Textarea
+                id="general_template"
+                value={config.general_otp_template}
+                onChange={(e) => handleInputChange('general_otp_template', e.target.value)}
+                placeholder="Your verification code is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes."
+                rows={3}
+              />
+            </div>
+
+            <Alert>
+              <MessageSquare className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Available Template Variables:</strong>
+                <br />
+                <code>{'{{OTP}}'}</code> - The actual OTP code
+                <br />
+                <code>{'{{EXPIRY_MINUTES}}'}</code> - Minutes until expiry (default: 5)
+                <br />
+                <code>{'{{COLLEGE_NAME}}'}</code> - Name of the college (if applicable)
+                <br />
+                <code>{'{{APP_NAME}}'}</code> - Application name
+              </AlertDescription>
+            </Alert>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             <TestTube className="h-5 w-5" />
             Test SMS Service
           </CardTitle>
@@ -286,15 +373,25 @@ export const SMSSettings: React.FC = () => {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="test_phone">Test Phone Number</Label>
-            <Input
-              id="test_phone"
-              type="tel"
-              value={testPhone}
-              onChange={(e) => setTestPhone(e.target.value)}
-              placeholder="+1234567890"
-            />
+            <div className="flex gap-2">
+              <div className="w-20">
+                <Input
+                  value={config.default_country_code}
+                  readOnly
+                  className="text-center"
+                />
+              </div>
+              <Input
+                id="test_phone"
+                type="tel"
+                value={testPhone}
+                onChange={(e) => setTestPhone(e.target.value)}
+                placeholder="1234567890"
+                className="flex-1"
+              />
+            </div>
             <p className="text-sm text-muted-foreground">
-              Include country code (e.g., +91 for India, +1 for US)
+              Phone number will be formatted with the default country code: {config.default_country_code}
             </p>
           </div>
 

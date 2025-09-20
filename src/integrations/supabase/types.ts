@@ -1862,13 +1862,17 @@ export type Database = {
           created_at: string
           created_by: string | null
           dcs: number
+          default_country_code: string | null
           dlt_template_id: string | null
           entity_id: string | null
           flash_sms: number
+          general_otp_template: string | null
           id: string
           is_active: boolean
+          login_otp_template: string | null
           route: string
           sender_id: string
+          signup_otp_template: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -1879,13 +1883,17 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           dcs?: number
+          default_country_code?: string | null
           dlt_template_id?: string | null
           entity_id?: string | null
           flash_sms?: number
+          general_otp_template?: string | null
           id?: string
           is_active?: boolean
+          login_otp_template?: string | null
           route?: string
           sender_id?: string
+          signup_otp_template?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1896,13 +1904,17 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           dcs?: number
+          default_country_code?: string | null
           dlt_template_id?: string | null
           entity_id?: string | null
           flash_sms?: number
+          general_otp_template?: string | null
           id?: string
           is_active?: boolean
+          login_otp_template?: string | null
           route?: string
           sender_id?: string
+          signup_otp_template?: string | null
           updated_at?: string
           updated_by?: string | null
         }
