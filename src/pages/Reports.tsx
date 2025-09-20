@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, BarChart3, Users, CreditCard, FileText, Download, PieChart } from "lucide-react";
+import { Calendar, BarChart3, Users, CreditCard, FileText, Download, PieChart, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useReportData } from "@/hooks/useReportData";
 import { ReportGenerator, ReportConfigs } from "@/utils/reportGenerator";
@@ -66,6 +66,17 @@ const reportCategories = [
       { name: "Faculty Workload Report", description: "Teaching hours and subject allocation", type: "enquiry_report" },
       { name: "Inventory Status Report", description: "Stock levels and equipment status", type: "enquiry_report" },
       { name: "Facility Utilization Report", description: "Lab and classroom usage statistics", type: "enquiry_report" }
+    ]
+  },
+  {
+    title: "Security & Authentication Reports",
+    icon: Shield,
+    description: "OTP verification and security analytics",
+    reports: [
+      { name: "OTP Verification Report", description: "Phone numbers that requested OTP for signup", type: "otp_verification" },
+      { name: "Failed Login Attempts", description: "Unsuccessful authentication attempts", type: "otp_verification" },
+      { name: "Signup Conversion Rate", description: "OTP to successful registration ratio", type: "otp_verification" },
+      { name: "Security Activity Log", description: "All authentication-related activities", type: "otp_verification" }
     ]
   },
   {
@@ -180,6 +191,11 @@ export default function Reports() {
               }
             }
           };
+          break;
+        case 'otp_verification':
+          reportData = data.otpVerifications;
+          reportName = "OTP Verification Report";
+          config = ReportConfigs.otpVerification(reportData, currentFilters);
           break;
         default:
           throw new Error('Invalid report type');
@@ -396,6 +412,26 @@ export default function Reports() {
               loading={loading}
               onExport={generateReport}
               searchPlaceholder="Search by name, phone, email..."
+            />
+          )}
+
+          {currentFilters.reportType === 'otp_verification' && (
+            <ReportDataTable
+              title="OTP Verification Report"
+              description={`Showing ${data.otpVerifications.length} OTP verification attempts`}
+              data={data.otpVerifications}
+              columns={[
+                { key: 'phone_number', label: 'Phone Number' },
+                { key: 'verified', label: 'Verified', formatter: (value) => <Badge variant={value ? 'default' : 'destructive'}>{value ? 'Yes' : 'No'}</Badge> },
+                { key: 'attempts', label: 'Attempts' },
+                { key: 'created_at', label: 'Requested At', formatter: (value) => value ? formatDate(new Date(value), 'PPP p') : '' },
+                { key: 'updated_at', label: 'Last Updated', formatter: (value) => value ? formatDate(new Date(value), 'PPP p') : '' },
+                { key: 'colleges.name', label: 'College' },
+                { key: 'expires_at', label: 'Expires At', formatter: (value) => value ? formatDate(new Date(value), 'PPP p') : '' }
+              ]}
+              loading={loading}
+              onExport={generateReport}
+              searchPlaceholder="Search by phone number..."
             />
           )}
         </>

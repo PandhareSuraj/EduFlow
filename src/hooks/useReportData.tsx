@@ -24,6 +24,7 @@ export interface ReportData {
   exams: any[];
   faculty: any[];
   enquiries: any[];
+  otpVerifications: any[];
 }
 
 export const useReportData = () => {
@@ -34,7 +35,8 @@ export const useReportData = () => {
     attendance: [],
     exams: [],
     faculty: [],
-    enquiries: []
+    enquiries: [],
+    otpVerifications: []
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -164,6 +166,25 @@ export const useReportData = () => {
 
       promises.push(enquiriesQuery);
 
+      // Fetch OTP verifications data (super admin only)
+      let otpQuery = supabase
+        .from('otp_verifications')
+        .select(`
+          *,
+          colleges(name)
+        `);
+
+      if (filters.dateRange) {
+        otpQuery = otpQuery
+          .gte('created_at', filters.dateRange.from.toISOString())
+          .lte('created_at', filters.dateRange.to.toISOString());
+      }
+      if (filters.searchTerm) {
+        otpQuery = otpQuery.ilike('phone_number', `%${filters.searchTerm}%`);
+      }
+
+      promises.push(otpQuery);
+
       const results = await Promise.all(promises);
 
       // Apply additional filtering for course-based data
@@ -193,7 +214,8 @@ export const useReportData = () => {
         attendance: results[3].data || [],
         exams: results[4].data || [],
         faculty: results[5].data || [],
-        enquiries: filteredEnquiries
+        enquiries: filteredEnquiries,
+        otpVerifications: results[7].data || []
       });
 
     } catch (error) {

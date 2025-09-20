@@ -3,7 +3,7 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 
-export type ReportType = 'student' | 'financial' | 'attendance' | 'academic' | 'operational';
+export type ReportType = 'student' | 'financial' | 'attendance' | 'academic' | 'operational' | 'security';
 export type ExportFormat = 'pdf' | 'excel';
 
 export interface ReportConfig {
@@ -255,6 +255,31 @@ export const ReportConfigs = {
       additionalInfo: {
         'Average Attendance': `${(data.reduce((sum, item) => sum + (item.attendance_percentage || 0), 0) / data.length || 0).toFixed(2)}%`,
         'Total Sessions': data.length
+      }
+    }
+  }),
+
+  otpVerification: (data: any[], filters: any): ReportConfig => ({
+    title: 'OTP Verification Report',
+    type: 'security',
+    data,
+    columns: [
+      { key: 'phone_number', label: 'Phone Number', formatter: (value) => value ? (value.startsWith('+91') ? value : `+91${value}`) : '' },
+      { key: 'verified', label: 'Verified', formatter: (value) => value ? 'Yes' : 'No' },
+      { key: 'attempts', label: 'Attempts' },
+      { key: 'created_at', label: 'Requested At', formatter: (value) => value ? format(new Date(value), 'PPP p') : '' },
+      { key: 'updated_at', label: 'Last Updated', formatter: (value) => value ? format(new Date(value), 'PPP p') : '' },
+      { key: 'colleges.name', label: 'College' },
+      { key: 'expires_at', label: 'Expires At', formatter: (value) => value ? format(new Date(value), 'PPP p') : '' }
+    ],
+    filters,
+    summary: {
+      totalRecords: data.length,
+      additionalInfo: {
+        'Verified OTPs': data.filter(otp => otp.verified).length,
+        'Unverified OTPs': data.filter(otp => !otp.verified).length,
+        'Failed Attempts (>1)': data.filter(otp => otp.attempts > 1).length,
+        'Unique Phone Numbers': new Set(data.map(otp => otp.phone_number)).size
       }
     }
   })
