@@ -11,6 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCollege } from "@/contexts/CollegeContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ValidatedInput } from "@/components/ui/validated-input";
+import { ValidatedForm, ValidatedFormField } from "@/components/ui/validated-form";
+import { FormSchemas } from "@/lib/validationSchemas";
 
 // Export the individual dialog components
 export { ViewStudentDialog } from "./ViewStudentDialog";

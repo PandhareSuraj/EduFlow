@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { ValidatedInput } from "@/components/ui/validated-input";
+import { ValidationHelpers } from "@/lib/validationSchemas";
 
 interface AddFacultyDialogProps {
   trigger?: React.ReactNode;
@@ -139,34 +141,39 @@ export function AddFacultyDialog({ trigger, onSuccess }: AddFacultyDialogProps) 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="name">Full Name *</Label>
-              <Input
+              <ValidatedInput
                 id="name"
+                label="Full Name"
+                validationType="name"
                 value={formData.name}
-                onChange={(e) => handleChange("name", e.target.value)}
+                onChange={(value) => handleChange("name", value)}
+                required
                 placeholder="Enter full name"
-                required
               />
             </div>
             <div>
-              <Label htmlFor="email">Email *</Label>
-              <Input
+              <ValidatedInput
                 id="email"
+                label="Email"
                 type="email"
+                validationType="email"
                 value={formData.email}
-                onChange={(e) => handleChange("email", e.target.value)}
-                placeholder="Enter email address"
+                onChange={(value) => handleChange("email", value)}
                 required
+                placeholder="Enter email address"
               />
             </div>
             <div>
-              <Label htmlFor="phone">Phone Number *</Label>
-              <Input
+              <ValidatedInput
                 id="phone"
+                label="Phone Number"
+                validationType="phone"
                 value={formData.phone}
-                onChange={(e) => handleChange("phone", e.target.value)}
-                placeholder="Enter phone number"
+                onChange={(value) => handleChange("phone", ValidationHelpers.cleanPhone(value))}
                 required
+                mask="phone"
+                formatValue
+                placeholder="Enter 10-digit phone number"
               />
             </div>
             <div>
