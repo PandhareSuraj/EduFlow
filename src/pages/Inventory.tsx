@@ -14,15 +14,17 @@ import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 
 export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { 
-    items, 
-    transactions, 
-    suppliers, 
-    stats, 
-    loading, 
-    addItem, 
+  const {
+    items,
+    transactions,
+    suppliers,
+    stats,
+    loading,
+    addItem,
     addTransaction,
-    refreshData 
+    checkItemCodeExists,
+    generateNextItemCode,
+    refreshData
   } = useInventoryData();
 
   const filteredItems = items.filter(item =>
@@ -56,7 +58,12 @@ export default function Inventory() {
         </div>
         <div className="flex gap-2">
           <PermissionWrapper permission="INVENTORY_MANAGE">
-            <AddInventoryItemDialog onAdd={addItem} suppliers={suppliers} />
+            <AddInventoryItemDialog
+              onAdd={addItem}
+              suppliers={suppliers}
+              checkItemCodeExists={checkItemCodeExists}
+              generateNextItemCode={generateNextItemCode}
+            />
           </PermissionWrapper>
           <Button variant="outline" onClick={refreshData}>
             <RefreshCw className="h-4 w-4 mr-2" />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -8,8 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Plus } from "lucide-react";
+import { Plus, Wand2, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Supplier } from "@/hooks/useInventoryData";
+import { useToast } from "@/hooks/use-toast";
+import { debounce } from "lodash";
 
 const formSchema = z.object({
   item_code: z.string().min(1, "Item code is required"),
@@ -29,11 +31,18 @@ type FormData = z.infer<typeof formSchema>;
 interface AddInventoryItemDialogProps {
   onAdd: (data: FormData) => Promise<void>;
   suppliers: Supplier[];
+  checkItemCodeExists: (code: string) => Promise<boolean>;
+  generateNextItemCode: () => Promise<string>;
 }
 
-export function AddInventoryItemDialog({ onAdd, suppliers }: AddInventoryItemDialogProps) {
+export function AddInventoryItemDialog({ onAdd, suppliers, checkItemCodeExists, generateNextItemCode }: AddInventoryItemDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [codeValidation, setCodeValidation] = useState<{
+    status: 'idle' | 'checking' | 'available' | 'taken';
+    message?: string;
+  }>({ status: 'idle' });
+  const { toast } = useToast();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -51,7 +60,62 @@ export function AddInventoryItemDialog({ onAdd, suppliers }: AddInventoryItemDia
     },
   });
 
+  const validateItemCode = useCallback(
+    debounce(async (code: string) => {
+      if (!code.trim()) {
+        setCodeValidation({ status: 'idle' });
+        return;
+      }
+      
+      setCodeValidation({ status: 'checking' });
+      
+      try {
+        const exists = await checkItemCodeExists(code);
+        if (exists) {
+          setCodeValidation({ 
+            status: 'taken', 
+            message: 'This item code is already in use' 
+          });
+        } else {
+          setCodeValidation({ 
+            status: 'available', 
+            message: 'Item code is available' 
+          });
+        }
+      } catch (error) {
+        setCodeValidation({ status: 'idle' });
+      }
+    }, 500),
+    [checkItemCodeExists]
+  );
+
+  const handleGenerateCode = async () => {
+    try {
+      const newCode = await generateNextItemCode();
+      form.setValue('item_code', newCode);
+      setCodeValidation({ 
+        status: 'available', 
+        message: 'Auto-generated code is available' 
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate item code",
+        variant: "destructive",
+      });
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
+    if (codeValidation.status === 'taken') {
+      toast({
+        title: "Invalid Item Code",
+        description: "Please use a different item code",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       await onAdd({
@@ -60,6 +124,7 @@ export function AddInventoryItemDialog({ onAdd, suppliers }: AddInventoryItemDia
         status: 'active'
       } as any);
       form.reset();
+      setCodeValidation({ status: 'idle' });
       setOpen(false);
     } catch (error) {
       console.error('Error adding item:', error);
@@ -117,9 +182,52 @@ export function AddInventoryItemDialog({ onAdd, suppliers }: AddInventoryItemDia
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Item Code</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., INV001" {...field} />
-                    </FormControl>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <div className="relative flex-1">
+                          <Input 
+                            placeholder="e.g., INV001" 
+                            {...field}
+                            onChange={(e) => {
+                              const value = e.target.value.toUpperCase();
+                              field.onChange(value);
+                              validateItemCode(value);
+                            }}
+                            className={
+                              codeValidation.status === 'available' ? 'pr-10 border-green-500' :
+                              codeValidation.status === 'taken' ? 'pr-10 border-red-500' : 'pr-10'
+                            }
+                          />
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            {codeValidation.status === 'checking' && (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            )}
+                            {codeValidation.status === 'available' && (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            )}
+                            {codeValidation.status === 'taken' && (
+                              <XCircle className="h-4 w-4 text-red-500" />
+                            )}
+                          </div>
+                        </div>
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={handleGenerateCode}
+                        title="Auto-generate item code"
+                      >
+                        <Wand2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {codeValidation.message && (
+                      <p className={`text-sm ${
+                        codeValidation.status === 'available' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {codeValidation.message}
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -296,7 +404,10 @@ export function AddInventoryItemDialog({ onAdd, suppliers }: AddInventoryItemDia
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button 
+                type="submit" 
+                disabled={loading || codeValidation.status === 'checking' || codeValidation.status === 'taken'}
+              >
                 {loading ? "Adding..." : "Add Item"}
               </Button>
             </DialogFooter>

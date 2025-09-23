@@ -119,13 +119,72 @@ export function useInventoryData() {
     }
   };
 
-  const addItem = async (itemData: Omit<InventoryItem, 'id' | 'supplier'>) => {
+  const checkItemCodeExists = async (itemCode: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('inventory_items')
-        .insert([itemData]);
+        .select('id')
+        .eq('item_code', itemCode.trim().toUpperCase())
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return !!data;
+    } catch (error) {
+      console.error('Error checking item code:', error);
+      return false;
+    }
+  };
+
+  const generateNextItemCode = async (): Promise<string> => {
+    try {
+      const { data, error } = await supabase
+        .from('inventory_items')
+        .select('item_code')
+        .like('item_code', 'INV%')
+        .order('item_code', { ascending: false })
+        .limit(1);
 
       if (error) throw error;
+      
+      if (data && data.length > 0) {
+        const lastCode = data[0].item_code;
+        const match = lastCode.match(/^INV(\d+)$/);
+        if (match) {
+          const nextNumber = parseInt(match[1]) + 1;
+          return `INV${nextNumber.toString().padStart(3, '0')}`;
+        }
+      }
+      
+      return 'INV001';
+    } catch (error) {
+      console.error('Error generating item code:', error);
+      return 'INV001';
+    }
+  };
+
+  const addItem = async (itemData: Omit<InventoryItem, 'id' | 'supplier'>) => {
+    try {
+      // Ensure item_code is uppercase and trimmed
+      const processedData = {
+        ...itemData,
+        item_code: itemData.item_code.trim().toUpperCase()
+      };
+
+      const { error } = await supabase
+        .from('inventory_items')
+        .insert([processedData]);
+
+      if (error) {
+        if (error.code === '23505' && error.message.includes('inventory_items_item_code_key')) {
+          toast({
+            title: "Duplicate Item Code",
+            description: `Item code "${processedData.item_code}" already exists. Please use a different code.`,
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
       
       toast({
         title: "Success",
@@ -137,7 +196,7 @@ export function useInventoryData() {
       console.error('Error adding item:', error);
       toast({
         title: "Error",
-        description: "Failed to add item",
+        description: "Failed to add item. Please try again.",
         variant: "destructive",
       });
     }
@@ -255,6 +314,8 @@ export function useInventoryData() {
     updateItem,
     addTransaction,
     addSupplier,
+    checkItemCodeExists,
+    generateNextItemCode,
     refreshData: () => Promise.all([fetchItems(), fetchTransactions(), fetchSuppliers()])
   };
 }
