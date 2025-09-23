@@ -11,6 +11,8 @@ import { AddInventoryItemDialog } from "@/components/forms/AddInventoryItemDialo
 import { AddTransactionDialog } from "@/components/forms/AddTransactionDialog";
 import { format } from "date-fns";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
+import { ReportGenerator, ReportConfigs } from "@/utils/reportGenerator";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,6 +28,7 @@ export default function Inventory() {
     generateNextItemCode,
     refreshData
   } = useInventoryData();
+  const { toast } = useToast();
 
   const filteredItems = items.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -38,6 +41,41 @@ export default function Inventory() {
     if (item.current_stock <= item.min_stock) return { status: 'Critical', variant: 'destructive' as const };
     if (item.current_stock <= item.min_stock * 1.5) return { status: 'Low Stock', variant: 'secondary' as const };
     return { status: 'In Stock', variant: 'default' as const };
+  };
+
+  const handleGenerateReport = async (reportType: 'stock' | 'lowStock' | 'usage' | 'supplier') => {
+    try {
+      let config;
+      
+      switch (reportType) {
+        case 'stock':
+          config = ReportConfigs.inventoryStock(items, {});
+          break;
+        case 'lowStock':
+          config = ReportConfigs.inventoryLowStock(items, {});
+          break;
+        case 'usage':
+          config = ReportConfigs.inventoryUsage(transactions, {});
+          break;
+        case 'supplier':
+          config = ReportConfigs.inventorySupplier(items, {});
+          break;
+        default:
+          return;
+      }
+
+      await ReportGenerator.generatePDF(config);
+      toast({
+        title: "Report Generated",
+        description: "The report has been downloaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate report. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -287,19 +325,35 @@ export default function Inventory() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" className="h-20 flex-col">
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex-col"
+                  onClick={() => handleGenerateReport('stock')}
+                >
                   <Package className="h-6 w-6 mb-2" />
                   Stock Report
                 </Button>
-                <Button variant="outline" className="h-20 flex-col">
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex-col"
+                  onClick={() => handleGenerateReport('lowStock')}
+                >
                   <AlertTriangle className="h-6 w-6 mb-2" />
                   Low Stock Alert
                 </Button>
-                <Button variant="outline" className="h-20 flex-col">
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex-col"
+                  onClick={() => handleGenerateReport('usage')}
+                >
                   <TrendingUp className="h-6 w-6 mb-2" />
                   Usage Report
                 </Button>
-                <Button variant="outline" className="h-20 flex-col">
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex-col"
+                  onClick={() => handleGenerateReport('supplier')}
+                >
                   <TrendingDown className="h-6 w-6 mb-2" />
                   Supplier Report
                 </Button>

@@ -3,7 +3,7 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 
-export type ReportType = 'student' | 'financial' | 'attendance' | 'academic' | 'operational' | 'security';
+export type ReportType = 'student' | 'financial' | 'attendance' | 'academic' | 'operational' | 'security' | 'inventory';
 export type ExportFormat = 'pdf' | 'excel';
 
 export interface ReportConfig {
@@ -280,6 +280,108 @@ export const ReportConfigs = {
         'Unverified OTPs': data.filter(otp => !otp.verified).length,
         'Failed Attempts (>1)': data.filter(otp => otp.attempts > 1).length,
         'Unique Phone Numbers': new Set(data.map(otp => otp.phone_number)).size
+      }
+    }
+  }),
+
+  // Inventory Reports
+  inventoryStock: (data: any[], filters: any): ReportConfig => ({
+    title: 'Inventory Stock Report',
+    type: 'inventory',
+    data,
+    columns: [
+      { key: 'item_code', label: 'Item Code' },
+      { key: 'name', label: 'Item Name' },
+      { key: 'category', label: 'Category' },
+      { key: 'current_stock', label: 'Current Stock' },
+      { key: 'min_stock', label: 'Min Stock' },
+      { key: 'max_stock', label: 'Max Stock' },
+      { key: 'unit', label: 'Unit' },
+      { key: 'price_per_unit', label: 'Price/Unit', formatter: (value) => `₹${value?.toLocaleString() || 0}` },
+      { key: 'supplier_name', label: 'Supplier' },
+      { key: 'status', label: 'Status' }
+    ],
+    filters,
+    summary: {
+      totalRecords: data.length,
+      additionalInfo: {
+        'Total Value': `₹${data.reduce((sum, item) => sum + ((item.current_stock || 0) * (item.price_per_unit || 0)), 0).toLocaleString()}`,
+        'Active Items': data.filter(item => item.status === 'active').length,
+        'Low Stock Items': data.filter(item => (item.current_stock || 0) <= (item.min_stock || 0)).length
+      }
+    }
+  }),
+
+  inventoryLowStock: (data: any[], filters: any): ReportConfig => ({
+    title: 'Low Stock Alert Report',
+    type: 'inventory',
+    data: data.filter(item => (item.current_stock || 0) <= (item.min_stock || 0)),
+    columns: [
+      { key: 'item_code', label: 'Item Code' },
+      { key: 'name', label: 'Item Name' },
+      { key: 'category', label: 'Category' },
+      { key: 'current_stock', label: 'Current Stock' },
+      { key: 'min_stock', label: 'Min Stock' },
+      { key: 'unit', label: 'Unit' },
+      { key: 'supplier_name', label: 'Supplier' },
+      { key: 'last_restocked', label: 'Last Restocked', formatter: (value) => value ? format(new Date(value), 'PPP') : 'Never' }
+    ],
+    filters,
+    summary: {
+      totalRecords: data.filter(item => (item.current_stock || 0) <= (item.min_stock || 0)).length,
+      additionalInfo: {
+        'Critical Items (0 stock)': data.filter(item => (item.current_stock || 0) === 0).length,
+        'Items to Restock': data.filter(item => (item.current_stock || 0) <= (item.min_stock || 0)).length
+      }
+    }
+  }),
+
+  inventoryUsage: (data: any[], filters: any): ReportConfig => ({
+    title: 'Inventory Usage Report',
+    type: 'inventory',
+    data,
+    columns: [
+      { key: 'transaction_code', label: 'Transaction Code' },
+      { key: 'item_name', label: 'Item Name' },
+      { key: 'transaction_type', label: 'Type' },
+      { key: 'quantity', label: 'Quantity' },
+      { key: 'transaction_date', label: 'Date', formatter: (value) => value ? format(new Date(value), 'PPP') : '' },
+      { key: 'issued_to', label: 'Issued To' },
+      { key: 'department', label: 'Department' },
+      { key: 'purpose', label: 'Purpose' }
+    ],
+    filters,
+    summary: {
+      totalRecords: data.length,
+      additionalInfo: {
+        'Issues': data.filter(t => t.transaction_type === 'issue').length,
+        'Returns': data.filter(t => t.transaction_type === 'return').length,
+        'Restocks': data.filter(t => t.transaction_type === 'restock').length,
+        'Total Quantity Issued': data.filter(t => t.transaction_type === 'issue').reduce((sum, t) => sum + (t.quantity || 0), 0)
+      }
+    }
+  }),
+
+  inventorySupplier: (data: any[], filters: any): ReportConfig => ({
+    title: 'Supplier-wise Inventory Report',
+    type: 'inventory',
+    data,
+    columns: [
+      { key: 'supplier_name', label: 'Supplier Name' },
+      { key: 'item_code', label: 'Item Code' },
+      { key: 'name', label: 'Item Name' },
+      { key: 'category', label: 'Category' },
+      { key: 'current_stock', label: 'Stock' },
+      { key: 'price_per_unit', label: 'Price/Unit', formatter: (value) => `₹${value?.toLocaleString() || 0}` },
+      { key: 'unit', label: 'Unit' }
+    ],
+    filters,
+    summary: {
+      totalRecords: data.length,
+      additionalInfo: {
+        'Unique Suppliers': new Set(data.map(item => item.supplier_name).filter(Boolean)).size,
+        'Total Items': data.length,
+        'Total Value': `₹${data.reduce((sum, item) => sum + ((item.current_stock || 0) * (item.price_per_unit || 0)), 0).toLocaleString()}`
       }
     }
   })
