@@ -5,11 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Calendar, FileText, Award, Download, Clock, Users, BookOpen, TrendingUp, CheckCircle, Loader2, AlertCircle } from "lucide-react";
+import { Search, Plus, Calendar, FileText, Award, Download, Clock, Users, BookOpen, TrendingUp, CheckCircle, Loader2, AlertCircle, Eye, Play, Trash2 } from "lucide-react";
 // Update existing ExamDialogs import and add MCQ components
 import { ScheduleExamDialog, ViewExamsDialog } from "@/components/forms/ExamDialogs";
 import { MCQExamCreationDialog } from "@/components/exams/MCQExamCreationDialog";
 import { MCQQuestionBuilder } from "@/components/exams/MCQQuestionBuilder";
+import { AdminExamPreview } from "@/components/exams/AdminExamPreview";
+import { DeleteExamDialog } from "@/components/exams/DeleteExamDialog";
+import { RunExamNowDialog } from "@/components/exams/RunExamNowDialog";
 import { ViewResultsDialog } from "@/components/forms/ResultDialogs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -627,7 +630,23 @@ export default function Exams() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap">
+                            {/* Admin Actions - Delete, Preview, Run Now */}
+                            <PermissionWrapper permission="EXAMS_DELETE" fallback={null}>
+                              <DeleteExamDialog 
+                                exam={exam} 
+                                onExamDeleted={fetchData}
+                              />
+                            </PermissionWrapper>
+                            
+                            <PermissionWrapper permission="EXAMS_PREVIEW" fallback={null}>
+                              <AdminExamPreview exam={exam} />
+                            </PermissionWrapper>
+                            
+                            <PermissionWrapper permission="EXAMS_RUN_NOW" fallback={null}>
+                              <RunExamNowDialog exam={exam} />
+                            </PermissionWrapper>
+
                             {/* MCQ Question Management - Only for MCQ exams */}
                             {exam.exam_type === 'mcq' && (
                               <PermissionWrapper 

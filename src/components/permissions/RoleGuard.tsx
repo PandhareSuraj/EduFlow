@@ -77,6 +77,9 @@ export const PERMISSIONS = {
   EXAMS_CREATE: ['admin', 'teacher'],
   EXAMS_CONDUCT: ['admin', 'teacher'],
   EXAMS_GRADE: ['admin', 'teacher'],
+  EXAMS_DELETE: ['admin'],
+  EXAMS_PREVIEW: ['admin'],
+  EXAMS_RUN_NOW: ['admin'],
 
   // Results Management
   RESULTS_VIEW: ['admin', 'teacher', 'student'],
