@@ -4,9 +4,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Combobox } from "@/components/ui/combobox";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrentFaculty } from "@/hooks/useCurrentFaculty";
+import { useClassNames } from "@/hooks/useClassNames";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, CheckCircle, XCircle, Clock, Users } from "lucide-react";
+import { Plus, CheckCircle, XCircle, Clock, Users, Info } from "lucide-react";
 import { getCurrentISTTime, formatISTDate } from "@/utils/dateUtils";
 
 interface Student {
@@ -45,6 +48,8 @@ interface AttendanceMarkingDialogProps {
 
 export function AttendanceMarkingDialog({ trigger }: AttendanceMarkingDialogProps = {}) {
   const { toast } = useToast();
+  const { currentFaculty, loading: facultyLoading } = useCurrentFaculty();
+  const { classNames } = useClassNames();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -70,6 +75,13 @@ export function AttendanceMarkingDialog({ trigger }: AttendanceMarkingDialogProp
       fetchFaculty();
     }
   }, [open]);
+
+  // Auto-select faculty if current user is faculty
+  useEffect(() => {
+    if (currentFaculty && !facultyLoading && open) {
+      setSelectedFaculty(currentFaculty.id);
+    }
+  }, [currentFaculty, facultyLoading, open]);
 
   // Fetch students when course is selected
   useEffect(() => {
@@ -208,10 +220,10 @@ export function AttendanceMarkingDialog({ trigger }: AttendanceMarkingDialogProp
   };
 
   const saveAttendance = async () => {
-    if (!selectedCourse || !selectedSubject || !selectedFaculty || !className.trim()) {
+    if (!selectedCourse || !selectedSubject || !selectedFaculty) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields",
+        title: "Missing Information", 
+        description: "Please select course, subject, and faculty",
         variant: "destructive",
       });
       return;
@@ -231,7 +243,7 @@ export function AttendanceMarkingDialog({ trigger }: AttendanceMarkingDialogProp
           course_id: parseInt(selectedCourse),
           subject_id: selectedSubject,
           faculty_id: selectedFaculty,
-          class_name: className,
+          class_name: className || null,
           session_date: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd'),
           start_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss'),
           status: 'completed',
@@ -331,26 +343,44 @@ export function AttendanceMarkingDialog({ trigger }: AttendanceMarkingDialogProp
               </SelectContent>
             </Select>
 
-            <Select value={selectedFaculty} onValueChange={setSelectedFaculty}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Faculty" />
-              </SelectTrigger>
-              <SelectContent>
-                {faculty.map(f => (
-                  <SelectItem key={f.id} value={f.id}>
-                    {f.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-1">
+              <Select 
+                value={selectedFaculty} 
+                onValueChange={setSelectedFaculty}
+                disabled={!!currentFaculty}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Faculty" />
+                </SelectTrigger>
+                <SelectContent>
+                  {faculty.map(f => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {currentFaculty && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Info className="h-3 w-3" />
+                  Auto-selected (you are faculty)
+                </div>
+              )}
+            </div>
 
-            <input
-              type="text"
-              placeholder="Class/Batch Name"
-              value={className}
-              onChange={(e) => setClassName(e.target.value)}
-              className="px-3 py-2 border border-input bg-background text-sm ring-offset-background rounded-md"
-            />
+            <div className="space-y-1">
+              <Combobox
+                options={classNames}
+                value={className}
+                onChange={setClassName}
+                placeholder="Class/Batch (Optional)"
+                emptyText="No existing classes found."
+                allowCustom={true}
+              />
+              <div className="text-xs text-muted-foreground">
+                Optional - Select existing or type new
+              </div>
+            </div>
           </div>
 
           {/* Stats and Bulk Actions */}
