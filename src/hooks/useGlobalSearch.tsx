@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { debounce } from 'lodash';
@@ -17,7 +17,7 @@ export function useGlobalSearch() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const searchDatabase = async (term: string) => {
+  const searchDatabase = useCallback(async (term: string) => {
     if (!term || term.length < 2) {
       setResults([]);
       return;
@@ -42,7 +42,7 @@ export function useGlobalSearch() {
       // Search students with college filtering
       const studentsQuery = supabase
         .from('students')
-        .select('id, name, email, student_id, course_id, mobile_number, courses(name)')
+        .select('id, name, email, student_id, course_id, mobile_number')
         .or(`name.ilike.${searchPattern},student_id.ilike.${searchPattern},email.ilike.${searchPattern},mobile_number.ilike.${searchPattern}`)
         .eq('college_id', userCollegeId)
         .limit(5);
@@ -80,7 +80,7 @@ export function useGlobalSearch() {
             id: student.id.toString(),
             type: 'student',
             title: student.name,
-            subtitle: `ID: ${student.student_id} • ${student.courses?.name || 'No Course'}${student.mobile_number ? ` • ${student.mobile_number}` : ''}`,
+            subtitle: `ID: ${student.student_id}${student.mobile_number ? ` • ${student.mobile_number}` : ''}`,
             route: `/students?search=${student.student_id}`
           });
         });
@@ -125,11 +125,11 @@ export function useGlobalSearch() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userRole]);
 
   const debouncedSearch = useMemo(
-    () => debounce(searchDatabase, 50),
-    [userRole]
+    () => debounce(searchDatabase, 300),
+    [searchDatabase]
   );
 
   useEffect(() => {
