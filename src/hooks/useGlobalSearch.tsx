@@ -29,27 +29,40 @@ export function useGlobalSearch() {
       const searchPattern = `%${term}%`;
       const searchResults: SearchResult[] = [];
 
-      // Search students
+      // Get user's college ID first
+      const { data: userCollegeId } = await supabase.rpc('get_user_college');
+      
+      if (!userCollegeId) {
+        console.error('No college ID found for user');
+        setResults([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Search students with college filtering
       const studentsQuery = supabase
         .from('students')
-        .select('id, name, email, student_id, course_id, courses(name)')
-        .or(`name.ilike.${searchPattern},student_id.ilike.${searchPattern},email.ilike.${searchPattern}`)
+        .select('id, name, email, student_id, course_id, mobile_number, courses(name)')
+        .or(`name.ilike.${searchPattern},student_id.ilike.${searchPattern},email.ilike.${searchPattern},mobile_number.ilike.${searchPattern}`)
+        .eq('college_id', userCollegeId)
         .limit(5);
 
-      // Search courses  
+      // Search courses with college filtering
       const coursesQuery = supabase
         .from('courses')
         .select('id, name, code')
         .or(`name.ilike.${searchPattern},code.ilike.${searchPattern}`)
+        .eq('college_id', userCollegeId)
         .limit(5);
 
-      // Search faculty (only for admin/teacher roles)
+      // Search faculty (only for admin/teacher roles) with college filtering
       let facultyQuery = null;
       if (userRole && ['admin', 'teacher', 'super_admin'].includes(userRole)) {
         facultyQuery = supabase
           .from('faculty')
           .select('id, name, email, department')
           .or(`name.ilike.${searchPattern},email.ilike.${searchPattern},department.ilike.${searchPattern}`)
+          .eq('college_id', userCollegeId)
           .limit(5);
       }
 
@@ -61,20 +74,22 @@ export function useGlobalSearch() {
       ]);
 
       // Process students
-      if (studentsResponse?.data) {
+      if (studentsResponse?.data && !studentsResponse.error) {
         studentsResponse.data.forEach((student: any) => {
           searchResults.push({
             id: student.id.toString(),
             type: 'student',
             title: student.name,
-            subtitle: `ID: ${student.student_id} • ${student.courses?.name || 'No Course'}`,
+            subtitle: `ID: ${student.student_id} • ${student.courses?.name || 'No Course'}${student.mobile_number ? ` • ${student.mobile_number}` : ''}`,
             route: `/students?search=${student.student_id}`
           });
         });
+      } else if (studentsResponse?.error) {
+        console.error('Students search error:', studentsResponse.error);
       }
 
       // Process courses
-      if (coursesResponse?.data) {
+      if (coursesResponse?.data && !coursesResponse.error) {
         coursesResponse.data.forEach((course: any) => {
           searchResults.push({
             id: course.id.toString(),
@@ -84,10 +99,12 @@ export function useGlobalSearch() {
             route: `/courses?highlight=${course.id}`
           });
         });
+      } else if (coursesResponse?.error) {
+        console.error('Courses search error:', coursesResponse.error);
       }
 
       // Process faculty
-      if (facultyResponse?.data) {
+      if (facultyResponse?.data && !facultyResponse.error) {
         facultyResponse.data.forEach((faculty: any) => {
           searchResults.push({
             id: faculty.id,
@@ -97,6 +114,8 @@ export function useGlobalSearch() {
             route: `/faculty?highlight=${faculty.id}`
           });
         });
+      } else if (facultyResponse?.error) {
+        console.error('Faculty search error:', facultyResponse.error);
       }
 
       setResults(searchResults);
@@ -109,7 +128,7 @@ export function useGlobalSearch() {
   };
 
   const debouncedSearch = useMemo(
-    () => debounce(searchDatabase, 300),
+    () => debounce(searchDatabase, 50),
     [userRole]
   );
 
