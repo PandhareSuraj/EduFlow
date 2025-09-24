@@ -1,4 +1,4 @@
-import { Search, User, LogOut, Settings, Menu, School } from "lucide-react";
+import { Search, User, LogOut, Settings, Menu, School, BookOpen, Users, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,6 +8,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -18,12 +23,16 @@ import { useNavigate } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
+import { useGlobalSearch, SearchResult } from "@/hooks/useGlobalSearch";
+import { useState } from "react";
 
 export function Header() {
   const { user, userRole } = useAuth();
   const { collegeName, logoUrl } = useBranding();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { searchTerm, setSearchTerm, results, isLoading, clearSearch } = useGlobalSearch();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -34,6 +43,20 @@ export function Header() {
     } catch (error) {
       console.error('Header: Logout error:', error);
       navigate('/auth');
+    }
+  };
+
+  const handleSearchResultClick = (result: SearchResult) => {
+    navigate(result.route);
+    clearSearch();
+    setSearchOpen(false);
+  };
+
+  const getResultIcon = (type: SearchResult['type']) => {
+    switch (type) {
+      case 'student': return <Users className="h-4 w-4" />;
+      case 'course': return <BookOpen className="h-4 w-4" />;
+      case 'faculty': return <GraduationCap className="h-4 w-4" />;
     }
   };
 
@@ -71,21 +94,140 @@ export function Header() {
           )}
           
           {!isMobile && (
-            <div className="relative ml-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search students, courses..."
-                className="pl-10 w-48 md:w-64 lg:w-80"
-              />
-            </div>
+            <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+              <PopoverTrigger asChild>
+                <div className="relative ml-4">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Search students, courses..."
+                    className="pl-10 w-48 md:w-64 lg:w-80"
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setSearchOpen(e.target.value.length >= 2);
+                    }}
+                    onFocus={() => searchTerm.length >= 2 && setSearchOpen(true)}
+                  />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-[320px] md:w-[384px] lg:w-[448px] p-0" align="start">
+                <div className="max-h-80 overflow-y-auto">
+                  {isLoading && (
+                    <div className="p-4 text-center text-muted-foreground">
+                      Searching...
+                    </div>
+                  )}
+                  
+                  {!isLoading && results.length === 0 && searchTerm.length >= 2 && (
+                    <div className="p-4 text-center text-muted-foreground">
+                      No results found for "{searchTerm}"
+                    </div>
+                  )}
+                  
+                  {!isLoading && results.length > 0 && (
+                    <div className="py-2">
+                      <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b">
+                        Search Results
+                      </div>
+                      {results.map((result) => (
+                        <button
+                          key={`${result.type}-${result.id}`}
+                          className="w-full px-3 py-3 text-left hover:bg-accent hover:text-accent-foreground transition-colors border-b border-border last:border-b-0"
+                          onClick={() => handleSearchResultClick(result)}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0">
+                              {getResultIcon(result.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {result.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {result.subtitle}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="text-xs">
+                              {result.type}
+                            </Badge>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {searchTerm.length > 0 && searchTerm.length < 2 && (
+                    <div className="p-4 text-center text-muted-foreground text-sm">
+                      Type at least 2 characters to search
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
         </div>
         
         <div className="flex items-center space-x-2 sm:space-x-4">
           {isMobile && (
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Search className="h-4 w-4" />
-            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="end">
+                <div className="p-3 border-b">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Search students, courses..."
+                      className="pl-10"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {isLoading && (
+                    <div className="p-4 text-center text-muted-foreground">
+                      Searching...
+                    </div>
+                  )}
+                  
+                  {!isLoading && results.length === 0 && searchTerm.length >= 2 && (
+                    <div className="p-4 text-center text-muted-foreground">
+                      No results found
+                    </div>
+                  )}
+                  
+                  {!isLoading && results.length > 0 && (
+                    <div className="py-2">
+                      {results.map((result) => (
+                        <button
+                          key={`${result.type}-${result.id}`}
+                          className="w-full px-3 py-3 text-left hover:bg-accent transition-colors"
+                          onClick={() => handleSearchResultClick(result)}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0">
+                              {getResultIcon(result.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {result.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {result.subtitle}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
           
           <NotificationDropdown />
