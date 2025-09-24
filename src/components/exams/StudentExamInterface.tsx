@@ -59,6 +59,9 @@ export function StudentExamInterface({ exam, studentId, onExamComplete }: Studen
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const { toast } = useToast();
 
+  // Check if this is admin test mode
+  const isAdminTestMode = studentId < 0;
+
   // Timer effect
   useEffect(() => {
     if (!examStarted || timeRemaining <= 0) return;
@@ -76,54 +79,67 @@ export function StudentExamInterface({ exam, studentId, onExamComplete }: Studen
     return () => clearInterval(timer);
   }, [examStarted, timeRemaining]);
 
-  // Auto-save answers periodically
+  // Auto-save answers periodically (skip for admin test mode)
   useEffect(() => {
-    if (!session || !examStarted) return;
+    if (!session || !examStarted || isAdminTestMode) return;
 
     const autoSave = setInterval(async () => {
       await saveAnswers(false);
     }, 30000); // Save every 30 seconds
 
     return () => clearInterval(autoSave);
-  }, [session, examStarted, answers]);
+  }, [session, examStarted, answers, isAdminTestMode]);
 
   const startExam = async () => {
     setLoading(true);
     try {
-      // Check for existing active session
-      const { data: existingSession } = await supabase
-        .from('student_exam_sessions')
-        .select('*')
-        .eq('student_id', studentId)
-        .eq('exam_id', exam.id)
-        .eq('status', 'in_progress')
-        .single();
-
       let sessionData;
-      if (existingSession) {
-        sessionData = existingSession;
-        // Calculate remaining time
-        const startTime = convertToIST(existingSession.start_time);
-        const currentTime = getCurrentISTTime();
-        const elapsed = Math.floor((currentTime.getTime() - startTime.getTime()) / 1000);
-        const remaining = Math.max(0, (exam.duration_minutes * 60) - elapsed);
-        setTimeRemaining(remaining);
+      
+      if (isAdminTestMode) {
+        // Admin test mode - create mock session without database
+        sessionData = {
+          id: 'admin-test-session',
+          exam_id: exam.id,
+          start_time: getCurrentISTTime().toISOString(),
+          duration_minutes: exam.duration_minutes,
+          status: 'in_progress' as const
+        };
+        setTimeRemaining(exam.duration_minutes * 60);
       } else {
-        // Create new session
-        const { data: newSession, error } = await supabase
+        // Regular student mode - use database
+        const { data: existingSession } = await supabase
           .from('student_exam_sessions')
-          .insert([{
-            student_id: studentId,
-            exam_id: exam.id,
-            duration_minutes: exam.duration_minutes,
-            status: 'in_progress'
-          }])
-          .select()
+          .select('*')
+          .eq('student_id', studentId)
+          .eq('exam_id', exam.id)
+          .eq('status', 'in_progress')
           .single();
 
-        if (error) throw error;
-        sessionData = newSession;
-        setTimeRemaining(exam.duration_minutes * 60);
+        if (existingSession) {
+          sessionData = existingSession;
+          // Calculate remaining time
+          const startTime = convertToIST(existingSession.start_time);
+          const currentTime = getCurrentISTTime();
+          const elapsed = Math.floor((currentTime.getTime() - startTime.getTime()) / 1000);
+          const remaining = Math.max(0, (exam.duration_minutes * 60) - elapsed);
+          setTimeRemaining(remaining);
+        } else {
+          // Create new session
+          const { data: newSession, error } = await supabase
+            .from('student_exam_sessions')
+            .insert([{
+              student_id: studentId,
+              exam_id: exam.id,
+              duration_minutes: exam.duration_minutes,
+              status: 'in_progress'
+            }])
+            .select()
+            .single();
+
+          if (error) throw error;
+          sessionData = newSession;
+          setTimeRemaining(exam.duration_minutes * 60);
+        }
       }
 
       setSession(sessionData);
@@ -144,8 +160,8 @@ export function StudentExamInterface({ exam, studentId, onExamComplete }: Studen
       
       setQuestions(formattedQuestions);
 
-      // Load existing answers if resuming
-      if (existingSession) {
+      // Load existing answers if resuming (skip for admin test mode)
+      if (!isAdminTestMode && sessionData.id !== 'admin-test-session') {
         const { data: answersData } = await supabase
           .from('student_answers')
           .select('question_id, selected_answer')
@@ -176,6 +192,17 @@ export function StudentExamInterface({ exam, studentId, onExamComplete }: Studen
 
   const saveAnswers = async (showToast = true) => {
     if (!session) return;
+
+    // Skip database operations for admin test mode
+    if (isAdminTestMode) {
+      if (showToast) {
+        toast({
+          title: "Admin Test Mode",
+          description: "Answers saved locally (test mode - no data stored)",
+        });
+      }
+      return;
+    }
 
     try {
       const answerUpdates = Object.entries(answers).map(([questionId, answer]) => ({
@@ -218,24 +245,33 @@ export function StudentExamInterface({ exam, studentId, onExamComplete }: Studen
       // Save final answers
       await saveAnswers(false);
 
-      // Update session status
-      const { error } = await supabase
-        .from('student_exam_sessions')
-        .update({ 
-          status: 'completed',
-          submit_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss'),
-          end_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss')
-        })
-        .eq('id', session.id);
+      if (isAdminTestMode) {
+        // Admin test mode - just show completion message
+        toast({
+          title: "Admin Test Completed",
+          description: "Test session completed successfully (no data stored)",
+        });
+        onExamComplete?.(session.id);
+      } else {
+        // Regular student mode - update database
+        const { error } = await supabase
+          .from('student_exam_sessions')
+          .update({ 
+            status: 'completed',
+            submit_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss'),
+            end_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss')
+          })
+          .eq('id', session.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Exam Submitted",
-        description: "Your exam has been submitted successfully",
-      });
+        toast({
+          title: "Exam Submitted",
+          description: "Your exam has been submitted successfully",
+        });
 
-      onExamComplete?.(session.id);
+        onExamComplete?.(session.id);
+      }
     } catch (error: any) {
       toast({
         title: "Submit Failed",
@@ -254,28 +290,39 @@ export function StudentExamInterface({ exam, studentId, onExamComplete }: Studen
     try {
       await saveAnswers(false);
       
-      const { error } = await supabase
-        .from('student_exam_sessions')
-        .update({ 
-          status: 'timed_out',
-          submit_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss'),
-          end_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss')
-        })
-        .eq('id', session.id);
+      if (isAdminTestMode) {
+        // Admin test mode - just show timeout message
+        toast({
+          title: "Admin Test Time's Up!",
+          description: "Test session timed out (no data stored)",
+          variant: "destructive"
+        });
+        onExamComplete?.(session.id);
+      } else {
+        // Regular student mode - update database
+        const { error } = await supabase
+          .from('student_exam_sessions')
+          .update({ 
+            status: 'timed_out',
+            submit_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss'),
+            end_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss')
+          })
+          .eq('id', session.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Time's Up!",
-        description: "Exam has been auto-submitted due to time limit",
-        variant: "destructive"
-      });
+        toast({
+          title: "Time's Up!",
+          description: "Exam has been auto-submitted due to time limit",
+          variant: "destructive"
+        });
 
-      onExamComplete?.(session.id);
+        onExamComplete?.(session.id);
+      }
     } catch (error: any) {
       console.error('Auto-submit failed:', error);
     }
-  }, [session, onExamComplete]);
+  }, [session, onExamComplete, isAdminTestMode]);
 
   const selectAnswer = (questionId: string, answer: 'A' | 'B' | 'C' | 'D') => {
     setAnswers(prev => ({
@@ -357,9 +404,17 @@ export function StudentExamInterface({ exam, studentId, onExamComplete }: Studen
       {/* Header with timer and progress */}
       <div className="flex justify-between items-center p-4 border rounded-lg bg-card">
         <div>
-          <h1 className="text-xl font-bold">{exam.name}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold">{exam.name}</h1>
+            {isAdminTestMode && (
+              <Badge variant="destructive" className="bg-yellow-500 text-yellow-900">
+                ADMIN TEST MODE
+              </Badge>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">
             Question {currentQuestionIndex + 1} of {questions.length}
+            {isAdminTestMode && " • No data will be saved"}
           </p>
         </div>
         <div className="text-right">
