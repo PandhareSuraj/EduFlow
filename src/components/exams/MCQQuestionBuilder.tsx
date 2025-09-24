@@ -304,16 +304,16 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
           Manage Questions ({exam.actual_question_count || 0}/{exam.total_questions || 30})
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[1000px] h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>MCQ Questions - {exam.name}</DialogTitle>
           <DialogDescription>
             Add and manage multiple choice questions for this exam.
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 py-4">
-          <div className="space-y-6 pr-4">
+        <ScrollArea className="flex-1 overflow-hidden">
+          <div className="space-y-6 pr-4 pb-4">
           {/* Question Form */}
           <Card>
             <CardHeader>
