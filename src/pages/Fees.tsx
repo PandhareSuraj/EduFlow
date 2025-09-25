@@ -1,48 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  Search, 
-  Plus, 
-  DollarSign, 
-  Clock, 
-  TrendingUp, 
-  Calendar,
-  Download,
-  Filter,
-  Eye,
-  CreditCard,
-  Loader2,
-  Settings,
-  Calculator,
-  FileText
-} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Plus, Search, Download, Eye, DollarSign, Users, Percent, Receipt, Calendar, Clock, Settings, Calculator, FileText, Filter, Loader2, TrendingUp, CreditCard } from "lucide-react";
+import { toast } from "sonner";
 import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
-import { FeeStructureDialog } from "@/components/forms/FeeStructureDialog";
-import { StudentFeeLedger } from "@/components/fees/StudentFeeLedger";
 import { PaymentHistoryDialog } from "@/components/fees/PaymentHistoryDialog";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { StudentFeeLedger } from "@/components/fees/StudentFeeLedger";
+import { TodaysDueReport } from "@/components/fees/TodaysDueReport";
+import { FeeStructureDialog } from "@/components/forms/FeeStructureDialog";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
-import { useCourses } from "@/hooks/useCourses";
-import { useCollege } from "@/contexts/CollegeContext";
 
 interface StudentFeeData {
   id: string;
@@ -87,9 +57,8 @@ export default function Fees() {
   const [feeRecords, setFeeRecords] = useState<StudentFeeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStudentForHistory, setSelectedStudentForHistory] = useState<{id: number, name: string} | null>(null);
-  const { toast } = useToast();
-  const { courses, loading: coursesLoading } = useCourses();
-  const { college } = useCollege();
+  const { courses, loading: coursesLoading } = { courses: [], loading: false };
+  const { college } = { college: { id: null } };
 
   const fetchFeeRecords = async () => {
     try {
@@ -111,11 +80,7 @@ export default function Fees() {
 
       if (error) {
         console.error('Error fetching fee records:', error);
-        toast({
-          title: "Error",
-          description: `Failed to load fee records: ${error.message}`,
-          variant: "destructive",
-        });
+        toast("Error", `Failed to load fee records: ${error.message}`);
         return;
       }
 
@@ -156,11 +121,7 @@ export default function Fees() {
       setFeeRecords(transformedData);
     } catch (error) {
       console.error('Error fetching fee records:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
+      toast("Error", "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -251,34 +212,43 @@ export default function Fees() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Fee Management</h1>
-          <p className="text-muted-foreground">Manage student fee collections and payments</p>
+          <h1 className="text-3xl font-bold tracking-tight">Fee Management</h1>
+          <p className="text-muted-foreground">
+            Manage student fees, payments, and generate reports with follow-up tracking
+          </p>
         </div>
-        <div className="flex gap-2">
-          <StudentFeeLedger />
-          <PermissionWrapper permission="FEES_STRUCTURE">
-            <FeeStructureDialog
+          <div className="flex items-center gap-2">
+            <TodaysDueReport 
               trigger={
-                <Button variant="outline">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Fee Structure
+                <Button variant="outline" className="gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Today's Due
                 </Button>
               }
-              onSuccess={fetchFeeRecords}
             />
-          </PermissionWrapper>
-          <PermissionWrapper permission="FEES_COLLECT">
-            <CollectFeeDialog
-              trigger={
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Collect Payment
-                </Button>
-              }
-              onSuccess={fetchFeeRecords}
-            />
-          </PermissionWrapper>
-        </div>
+            <PermissionWrapper permission="FEES_STRUCTURE">
+              <FeeStructureDialog
+                trigger={
+                  <Button variant="outline">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Fee Structure
+                  </Button>
+                }
+                onSuccess={fetchFeeRecords}
+              />
+            </PermissionWrapper>
+            <PermissionWrapper permission="FEES_COLLECT">
+              <CollectFeeDialog
+                trigger={
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Collect Payment
+                  </Button>
+                }
+                onSuccess={fetchFeeRecords}
+              />
+            </PermissionWrapper>
+          </div>
       </div>
 
       {/* Summary Cards */}

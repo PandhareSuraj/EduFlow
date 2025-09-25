@@ -2152,6 +2152,7 @@ export type Database = {
       student_fees: {
         Row: {
           balance_amount: number
+          collection_stage: string | null
           college_id: string | null
           created_at: string
           created_by: string | null
@@ -2160,9 +2161,16 @@ export type Database = {
           discount_reason: string | null
           due_date: string | null
           fee_structure_id: string
+          follow_up_count: number | null
+          follow_up_notes: string | null
+          follow_up_status: string | null
           id: string
+          last_follow_up_date: string | null
+          next_follow_up_date: string | null
           original_amount: number | null
           paid_amount: number
+          priority_level: string | null
+          promised_payment_date: string | null
           status: string
           student_id: number
           total_amount: number
@@ -2171,6 +2179,7 @@ export type Database = {
         }
         Insert: {
           balance_amount?: number
+          collection_stage?: string | null
           college_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -2179,9 +2188,16 @@ export type Database = {
           discount_reason?: string | null
           due_date?: string | null
           fee_structure_id: string
+          follow_up_count?: number | null
+          follow_up_notes?: string | null
+          follow_up_status?: string | null
           id?: string
+          last_follow_up_date?: string | null
+          next_follow_up_date?: string | null
           original_amount?: number | null
           paid_amount?: number
+          priority_level?: string | null
+          promised_payment_date?: string | null
           status?: string
           student_id: number
           total_amount?: number
@@ -2190,6 +2206,7 @@ export type Database = {
         }
         Update: {
           balance_amount?: number
+          collection_stage?: string | null
           college_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -2198,9 +2215,16 @@ export type Database = {
           discount_reason?: string | null
           due_date?: string | null
           fee_structure_id?: string
+          follow_up_count?: number | null
+          follow_up_notes?: string | null
+          follow_up_status?: string | null
           id?: string
+          last_follow_up_date?: string | null
+          next_follow_up_date?: string | null
           original_amount?: number | null
           paid_amount?: number
+          priority_level?: string | null
+          promised_payment_date?: string | null
           status?: string
           student_id?: number
           total_amount?: number

@@ -25,7 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, DollarSign, CreditCard, Loader2 } from "lucide-react";
+import { CalendarIcon, DollarSign, CreditCard, Loader2, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { PaymentReceipt } from "./PaymentReceipt";
@@ -34,6 +34,8 @@ interface CollectFeeDialogProps {
   trigger?: React.ReactNode;
   studentId?: number;
   onSuccess?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 interface Student {
@@ -59,6 +61,7 @@ interface StudentFee {
   discount_amount?: number;
   discount_percentage?: number;
   discount_reason?: string;
+  follow_up_count?: number;
 }
 
 interface PaymentReceiptData {
@@ -90,8 +93,10 @@ interface PaymentReceiptData {
   };
 }
 
-export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDialogProps) {
-  const [open, setOpen] = useState(false);
+export function CollectFeeDialog({ trigger, studentId, onSuccess, open: externalOpen, onOpenChange: externalOnOpenChange }: CollectFeeDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = externalOnOpenChange || setInternalOpen;
   const [students, setStudents] = useState<Student[]>([]);
   const [studentFees, setStudentFees] = useState<StudentFee[]>([]);
   const [loading, setLoading] = useState(false);
@@ -110,6 +115,14 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess }: CollectFeeDi
     bankName: '',
     paymentDate: new Date(),
     remarks: ''
+  });
+  
+  // Follow-up management state
+  const [followUpData, setFollowUpData] = useState({
+    nextFollowUpDate: '',
+    followUpStatus: 'contacted' as 'pending' | 'contacted' | 'promised' | 'escalated' | 'no_response',
+    promisedPaymentDate: '',
+    followUpNotes: ''
   });
 
   useEffect(() => {
