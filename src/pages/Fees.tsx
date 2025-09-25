@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Plus, Search, Download, Eye, DollarSign, Users, Percent, Receipt, Calendar, Clock, Settings, Calculator, FileText, Filter, Loader2, TrendingUp, CreditCard } from "lucide-react";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
 import { PaymentHistoryDialog } from "@/components/fees/PaymentHistoryDialog";
 import { StudentFeeLedger } from "@/components/fees/StudentFeeLedger";
@@ -59,6 +60,7 @@ export default function Fees() {
   const [selectedStudentForHistory, setSelectedStudentForHistory] = useState<{id: number, name: string} | null>(null);
   const { courses, loading: coursesLoading } = { courses: [], loading: false };
   const { college } = { college: { id: null } };
+  const { toast } = useToast();
 
   const fetchFeeRecords = async () => {
     try {
@@ -80,7 +82,11 @@ export default function Fees() {
 
       if (error) {
         console.error('Error fetching fee records:', error);
-        toast("Error", `Failed to load fee records: ${error.message}`);
+        toast({
+          title: "Error",
+          description: `Failed to load fee records: ${error.message}`,
+          variant: "destructive"
+        });
         return;
       }
 
@@ -121,7 +127,11 @@ export default function Fees() {
       setFeeRecords(transformedData);
     } catch (error) {
       console.error('Error fetching fee records:', error);
-      toast("Error", "An unexpected error occurred");
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
