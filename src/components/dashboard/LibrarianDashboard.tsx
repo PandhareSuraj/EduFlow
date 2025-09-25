@@ -116,18 +116,9 @@ export function LibrarianDashboard() {
           .select('id', { count: 'exact' })
           .gte('membership_start_date', firstDayOfMonth.toISOString().split('T')[0]),
         
-        // Recent issues for display
+        // Recent issues for display - simplified query to avoid relationship issues
         supabase.from('book_issues')
-          .select(`
-            id,
-            issue_date,
-            due_date,
-            status,
-            books!inner(title),
-            library_members!inner(
-              students(name)
-            )
-          `)
+          .select('id, issue_date, due_date, status, book_id, member_id')
           .order('created_at', { ascending: false })
           .limit(5)
       ]);
@@ -140,27 +131,65 @@ export function LibrarianDashboard() {
       
       const finesCollected = finesResult.data?.reduce((sum, fine) => sum + (fine.paid_amount || 0), 0) || 0;
 
-      // Process recent issues
-      const issues: BookIssue[] = (recentIssuesResult.data || []).map(issue => {
-        const dueDate = new Date(issue.due_date);
-        const issueDate = new Date(issue.issue_date);
-        const daysDiff = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-        
-        let status: 'issued' | 'overdue' | 'returned' = issue.status as any;
-        if (issue.status === 'issued' && daysDiff > 0) {
-          status = 'overdue';
-        }
+      // Process recent issues with manual joins to avoid relationship errors
+      const issues: BookIssue[] = [];
+      
+      if (recentIssuesResult.data) {
+        // Get book titles
+        const bookIds = recentIssuesResult.data.map(issue => issue.book_id);
+        const { data: booksData } = await supabase
+          .from('books')
+          .select('id, title')
+          .in('id', bookIds);
+          
+        // Get member names
+        const memberIds = recentIssuesResult.data.map(issue => issue.member_id);
+        const { data: membersData } = await supabase
+          .from('library_members')
+          .select('id, student_id, faculty_id')
+          .in('id', memberIds);
+          
+        // Get student names
+        const studentIds = membersData?.filter(m => m.student_id).map(m => m.student_id) || [];
+        const { data: studentsData } = studentIds.length > 0 ? await supabase
+          .from('students')
+          .select('id, name')
+          .in('id', studentIds) : { data: [] };
+          
+        // Get faculty names  
+        const facultyIds = membersData?.filter(m => m.faculty_id).map(m => m.faculty_id) || [];
+        const { data: facultyData } = facultyIds.length > 0 ? await supabase
+          .from('faculty')
+          .select('id, name')
+          .in('id', facultyIds) : { data: [] };
 
-        return {
-          id: issue.id,
-          bookTitle: issue.books?.title || 'Unknown Book',
-          memberName: issue.library_members?.students?.name || 'Unknown Member',
-          issueDate: issueDate.toLocaleDateString(),
-          dueDate: dueDate.toLocaleDateString(),
-          status,
-          daysOverdue: status === 'overdue' ? daysDiff : undefined
-        };
-      });
+        // Manually join the data
+        for (const issue of recentIssuesResult.data) {
+          const dueDate = new Date(issue.due_date);
+          const issueDate = new Date(issue.issue_date);
+          const daysDiff = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+
+          let status: 'issued' | 'overdue' | 'returned' = issue.status as any;
+          if (issue.status === 'issued' && daysDiff > 0) {
+            status = 'overdue';
+          }
+
+          const book = booksData?.find(b => b.id === issue.book_id);
+          const member = membersData?.find(m => m.id === issue.member_id);
+          const student = studentsData?.find(s => s.id === member?.student_id);
+          const faculty = facultyData?.find(f => f.id === member?.faculty_id);
+
+          issues.push({
+            id: issue.id,
+            bookTitle: book?.title || 'Unknown Book',
+            memberName: student?.name || faculty?.name || 'Unknown Member',
+            issueDate: issueDate.toLocaleDateString(),
+            dueDate: dueDate.toLocaleDateString(),
+            status,
+            daysOverdue: status === 'overdue' ? daysDiff : undefined
+          });
+        }
+      }
 
       // Generate library alerts
       const alerts: LibraryAlert[] = [];

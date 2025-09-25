@@ -106,7 +106,7 @@ export function AccountantDashboard() {
             amount,
             payment_method,
             payment_date,
-            students!inner(name)
+            students!student_id(name)
           `)
           .order('created_at', { ascending: false })
           .limit(5),
