@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Plus, Search, Download, Eye, DollarSign, Users, Percent, Receipt, Calendar, Clock, Settings, Calculator, FileText, Filter, Loader2, TrendingUp, CreditCard } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useCollege } from "@/contexts/CollegeContext";
+import { useCourses } from "@/hooks/useCourses";
 import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
 import { PaymentHistoryDialog } from "@/components/fees/PaymentHistoryDialog";
 import { StudentFeeLedger } from "@/components/fees/StudentFeeLedger";
@@ -58,8 +60,8 @@ export default function Fees() {
   const [feeRecords, setFeeRecords] = useState<StudentFeeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStudentForHistory, setSelectedStudentForHistory] = useState<{id: number, name: string} | null>(null);
-  const { courses, loading: coursesLoading } = { courses: [], loading: false };
-  const { college } = { college: { id: null } };
+  const { courses, loading: coursesLoading } = useCourses();
+  const { college, loading: collegeLoading } = useCollege();
   const { toast } = useToast();
 
   const fetchFeeRecords = async () => {
@@ -138,10 +140,10 @@ export default function Fees() {
   };
 
   useEffect(() => {
-    if (college?.id) {
+    if (college?.id && !collegeLoading) {
       fetchFeeRecords();
     }
-  }, [college?.id]);
+  }, [college?.id, collegeLoading]);
 
   // Filter records based on search term, status, and course
   const filteredRecords = feeRecords.filter(record => {
@@ -382,10 +384,18 @@ export default function Fees() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {loading || collegeLoading ? (
             <div className="flex items-center justify-center p-8">
               <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="ml-2">Loading fee records...</span>
+              <span className="ml-2">
+                {collegeLoading ? "Loading college info..." : "Loading fee records..."}
+              </span>
+            </div>
+          ) : !college?.id ? (
+            <div className="text-center p-8">
+              <p className="text-muted-foreground">
+                No college association found. Please contact your administrator.
+              </p>
             </div>
           ) : filteredRecords.length === 0 ? (
             <div className="text-center p-8">

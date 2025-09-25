@@ -114,6 +114,7 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
     chequeNumber: '',
     bankName: '',
     paymentDate: new Date(),
+    dueDate: null as Date | null,
     remarks: ''
   });
   
@@ -310,6 +311,19 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
         return;
       }
 
+      // Update due date if provided
+      if (formData.dueDate) {
+        const { error: dueDateError } = await supabase
+          .from('student_fees')
+          .update({ due_date: format(formData.dueDate, 'yyyy-MM-dd') })
+          .eq('id', formData.studentFeeId);
+
+        if (dueDateError) {
+          console.error('Error updating due date:', dueDateError);
+          // Don't fail the whole operation, just log the error
+        }
+      }
+
       // Get student data separately
       const selectedStudent = students.find(s => s.id === parseInt(formData.studentId));
       
@@ -372,6 +386,7 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
         chequeNumber: '',
         bankName: '',
         paymentDate: new Date(),
+        dueDate: null,
         remarks: ''
       });
       
@@ -444,18 +459,19 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
                   <SelectValue placeholder="Select fee record" />
                 </SelectTrigger>
                 <SelectContent>
-                  {studentFees.map((fee) => (
-                    <SelectItem key={fee.id} value={fee.id}>
-                      <div>
-                        <div>Balance: ₹{fee.balance_amount.toLocaleString('en-IN')} | Total: ₹{fee.total_amount.toLocaleString('en-IN')}</div>
-                        {fee.discount_amount > 0 && (
-                          <div className="text-xs text-muted-foreground">
-                            (Original: ₹{fee.original_amount?.toLocaleString('en-IN')} - Discount: ₹{fee.discount_amount.toLocaleString('en-IN')})
-                          </div>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
+                   {studentFees.map((fee) => (
+                     <SelectItem key={fee.id} value={fee.id}>
+                       <div>
+                         <div>Balance: ₹{fee.balance_amount.toLocaleString('en-IN')} | Total: ₹{fee.total_amount.toLocaleString('en-IN')}</div>
+                         <div className="text-xs text-muted-foreground">Due: {fee.due_date || 'No due date'}</div>
+                         {fee.discount_amount > 0 && (
+                           <div className="text-xs text-muted-foreground">
+                             (Original: ₹{fee.original_amount?.toLocaleString('en-IN')} - Discount: ₹{fee.discount_amount.toLocaleString('en-IN')})
+                           </div>
+                         )}
+                       </div>
+                     </SelectItem>
+                   ))}
                 </SelectContent>
               </Select>
             </div>
@@ -564,6 +580,37 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
               </div>
             </div>
           ) : null}
+
+          <div className="space-y-2">
+            <Label>Update Due Date (Optional)</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !formData.dueDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.dueDate ? format(formData.dueDate, "PPP") : "Set new due date (optional)"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  className="p-3 pointer-events-auto"
+                  mode="single"
+                  selected={formData.dueDate}
+                  onSelect={(date) => setFormData(prev => ({ ...prev, dueDate: date }))}
+                  initialFocus
+                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                />
+              </PopoverContent>
+            </Popover>
+            <p className="text-xs text-muted-foreground">
+              Leave blank to keep the current due date unchanged
+            </p>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="remarks">Remarks</Label>
