@@ -28,6 +28,10 @@ import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UpcomingEventsCard } from "@/components/dashboard/UpcomingEventsCard";
+import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
+import { FacultyDashboard } from "@/components/dashboard/FacultyDashboard";
+import { AccountantDashboard } from "@/components/dashboard/AccountantDashboard";
+import { LibrarianDashboard } from "@/components/dashboard/LibrarianDashboard";
 import StudentDashboard from './StudentDashboard';
 
 interface DashboardStats {
@@ -383,9 +387,13 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
+        {/* Role-based Dashboard Content */}
         <div className="lg:col-span-2">
-          <RecentActivity />
+          {userRole === 'admin' && <AdminDashboard />}
+          {userRole === 'teacher' && <FacultyDashboard />}
+          {userRole === 'accountant' && <AccountantDashboard />}
+          {userRole === 'librarian' && <LibrarianDashboard />}
+          {!['admin', 'teacher', 'accountant', 'librarian'].includes(userRole) && <RecentActivity />}
         </div>
       </div>
 
