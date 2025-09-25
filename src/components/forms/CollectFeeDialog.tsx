@@ -6,6 +6,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { StudentSearchCombobox } from "@/components/ui/student-search-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,7 @@ import { CalendarIcon, DollarSign, CreditCard, Loader2, Clock } from "lucide-rea
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { PaymentReceipt } from "./PaymentReceipt";
+import { StudentSearchResult } from "@/hooks/useStudentSearch";
 
 interface CollectFeeDialogProps {
   trigger?: React.ReactNode;
@@ -97,7 +99,7 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
   const [internalOpen, setInternalOpen] = useState(false);
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const setOpen = externalOnOpenChange || setInternalOpen;
-  const [students, setStudents] = useState<Student[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<StudentSearchResult | null>(null);
   const [studentFees, setStudentFees] = useState<StudentFee[]>([]);
   const [loading, setLoading] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
@@ -105,8 +107,6 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
-    studentId: studentId?.toString() || '',
-    studentName: '',
     studentFeeId: '',
     amount: '',
     paymentMode: 'cash',
@@ -127,50 +127,12 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
   });
 
   useEffect(() => {
-    if (open) {
-      fetchStudents();
+    if (selectedStudent?.id) {
+      fetchStudentFees(selectedStudent.id);
+    } else {
+      setStudentFees([]);
     }
-  }, [open]);
-
-  useEffect(() => {
-    if (formData.studentId) {
-      fetchStudentFees(parseInt(formData.studentId));
-    }
-  }, [formData.studentId]);
-
-  const fetchStudents = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('students')
-        .select(`
-          id, 
-          student_id, 
-          name, 
-          email, 
-          mobile_number,
-          courses!students_course_id_fkey (
-            name,
-            code
-          )
-        `)
-        .eq('status', 'active')
-        .order('name');
-
-      if (error) {
-        console.error('Error fetching students:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch students",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setStudents(data || []);
-    } catch (error) {
-      console.error('Error fetching students:', error);
-    }
-  };
+  }, [selectedStudent?.id]);
 
   const fetchStudentFees = async (studentId: number) => {
     try {
@@ -214,7 +176,7 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
     e.preventDefault();
     
     // Validation
-    if (!formData.studentId || !formData.studentFeeId) {
+    if (!selectedStudent?.id || !formData.studentFeeId) {
       toast({
         title: "Validation Error",
         description: "Please select a student and fee record",
@@ -287,7 +249,7 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
         .from('fee_payments')
         .insert([{
           student_fee_id: formData.studentFeeId,
-          student_id: parseInt(formData.studentId),
+          student_id: selectedStudent.id,
           amount: amount,
           payment_method: formData.paymentMode,
           transaction_id: formData.transactionId || null,
@@ -324,8 +286,8 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
         }
       }
 
-      // Get student data separately
-      const selectedStudent = students.find(s => s.id === parseInt(formData.studentId));
+      // Get selected student data
+      const selectedStudentData = selectedStudent;
       
       // Get college information for receipt
       const { data: collegeData } = await supabase
@@ -335,7 +297,7 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
         .single();
 
       // Generate receipt data
-      if (selectedStudent && paymentData) {
+      if (selectedStudentData && paymentData) {
         const receiptData: PaymentReceiptData = {
           id: paymentData.id,
           receipt_number: paymentData.receipt_number,
@@ -347,13 +309,13 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
           bank_name: paymentData.bank_name,
           remarks: paymentData.remarks,
           student: {
-            name: selectedStudent.name,
-            student_id: selectedStudent.student_id,
-            email: selectedStudent.email,
-            mobile_number: selectedStudent.mobile_number,
+            name: selectedStudentData.name,
+            student_id: selectedStudentData.student_id,
+            email: selectedStudentData.email,
+            mobile_number: selectedStudentData.mobile_number,
             course: {
-              name: selectedStudent.courses?.name || 'N/A',
-              code: selectedStudent.courses?.code || 'N/A'
+              name: selectedStudentData.course_name || 'N/A',
+              code: 'N/A'
             }
           },
           college: {
@@ -376,9 +338,8 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
       });
       
       // Reset form
+      setSelectedStudent(null);
       setFormData({
-        studentId: '',
-        studentName: '',
         studentFeeId: '',
         amount: '',
         paymentMode: 'cash',
@@ -407,14 +368,6 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Auto-fill student name when student is selected
-    if (field === 'studentId') {
-      const selectedStudent = students.find(s => s.id === parseInt(value));
-      if (selectedStudent) {
-        setFormData(prev => ({ ...prev, studentName: selectedStudent.name }));
-      }
-    }
   };
 
   return (
@@ -436,22 +389,15 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="studentId">Select Student *</Label>
-            <Select value={formData.studentId} onValueChange={(value) => handleChange('studentId', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select student" />
-              </SelectTrigger>
-              <SelectContent>
-                {students.map((student) => (
-                  <SelectItem key={student.id} value={student.id.toString()}>
-                    {student.student_id} - {student.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="student">Select Student *</Label>
+            <StudentSearchCombobox
+              value={selectedStudent?.id}
+              onSelect={setSelectedStudent}
+              placeholder="Search by ID, name, email or mobile number..."
+            />
           </div>
 
-          {formData.studentId && studentFees.length > 0 && (
+          {selectedStudent && studentFees.length > 0 && (
             <div className="space-y-2">
               <Label htmlFor="studentFeeId">Fee Record *</Label>
               <Select value={formData.studentFeeId} onValueChange={(value) => handleChange('studentFeeId', value)}>
@@ -477,7 +423,7 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
             </div>
           )}
 
-          {formData.studentId && studentFees.length === 0 && (
+          {selectedStudent && studentFees.length === 0 && (
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
               <p className="text-sm text-yellow-800">
                 No pending fee records found for this student.
