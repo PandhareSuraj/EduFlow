@@ -128,6 +128,7 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
 
   useEffect(() => {
     if (selectedStudent?.id) {
+      console.debug("fetchStudentFees called with:", selectedStudent.id);
       fetchStudentFees(selectedStudent.id);
     } else {
       setStudentFees([]);
@@ -135,10 +136,10 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
   }, [selectedStudent?.id]);
 
   const fetchStudentFees = async (studentId: number) => {
+    console.debug("fetchStudentFees studentId:", studentId);
     try {
       setStudentFees([]);
       
-      // First get fee records
       const { data, error } = await supabase
         .from('student_fees')
         .select(`
@@ -229,15 +230,16 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
 
     try {
       // Get user's college_id using RPC function
-      const { data: collegeId, error: collegeError } = await supabase
-        .rpc('get_user_college');
+      const { data: collegeIdRaw, error: collegeError } = await supabase.rpc("get_user_college");
+      const collegeId =
+        typeof collegeIdRaw === "string"
+          ? collegeIdRaw
+          : Array.isArray(collegeIdRaw)
+          ? collegeIdRaw[0]
+          : (collegeIdRaw as any)?.id ?? null;
 
       if (collegeError || !collegeId) {
-        toast({
-          title: "Error",
-          description: "Unable to determine your college association",
-          variant: "destructive",
-        });
+        toast({ title: "Error", description: "Unable to determine your college association", variant: "destructive" });
         return;
       }
 
@@ -279,10 +281,10 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
           .from('student_fees')
           .update({ due_date: format(formData.dueDate, 'yyyy-MM-dd') })
           .eq('id', formData.studentFeeId);
-
         if (dueDateError) {
           console.error('Error updating due date:', dueDateError);
-          // Don't fail the whole operation, just log the error
+        } else {
+          console.debug('Due date updated for student_fee_id:', formData.studentFeeId);
         }
       }
 
@@ -410,11 +412,11 @@ export function CollectFeeDialog({ trigger, studentId, onSuccess, open: external
                        <div>
                          <div>Balance: ₹{fee.balance_amount.toLocaleString('en-IN')} | Total: ₹{fee.total_amount.toLocaleString('en-IN')}</div>
                          <div className="text-xs text-muted-foreground">Due: {fee.due_date || 'No due date'}</div>
-                         {fee.discount_amount > 0 && (
-                           <div className="text-xs text-muted-foreground">
-                             (Original: ₹{fee.original_amount?.toLocaleString('en-IN')} - Discount: ₹{fee.discount_amount.toLocaleString('en-IN')})
-                           </div>
-                         )}
+                          {fee.discount_amount && fee.discount_amount > 0 && (
+                            <div className="text-xs text-muted-foreground">
+                              (Original: ₹{fee.original_amount?.toLocaleString('en-IN')} - Discount: ₹{fee.discount_amount.toLocaleString('en-IN')})
+                            </div>
+                          )}
                        </div>
                      </SelectItem>
                    ))}

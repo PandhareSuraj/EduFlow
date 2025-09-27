@@ -47,11 +47,26 @@ export function StudentSearchCombobox({
            null;
   }, [value, results, recentSelections]);
 
-  const handleSelect = (student: StudentSearchResult) => {
-    onSelect(student);
-    addToRecentSelections(student);
+  const handleSelect = (payload: string | StudentSearchResult) => {
+    console.debug("Combobox selected:", payload);
+    let chosen: StudentSearchResult | null = null;
+
+    if (typeof payload === "string") {
+      const idNum = Number.parseInt(payload, 10);
+      if (!Number.isNaN(idNum)) {
+        chosen =
+          results.find((s) => s.id === idNum) ||
+          recentSelections.find((s) => s.id === idNum) ||
+          null;
+      }
+    } else {
+      chosen = payload;
+    }
+
+    onSelect(chosen);
+    if (chosen) addToRecentSelections(chosen);
     setOpen(false);
-    setSearchTerm('');
+    setSearchTerm("");
   };
 
   const handleClear = () => {
@@ -63,8 +78,8 @@ export function StudentSearchCombobox({
   const StudentItem = ({ student, isRecent = false }: { student: StudentSearchResult; isRecent?: boolean }) => (
     <CommandItem
       key={`${isRecent ? 'recent' : 'search'}-${student.id}`}
-      value={`${student.student_id}-${student.name}-${student.email}`}
-      onSelect={() => handleSelect(student)}
+      value={String(student.id)}
+      onSelect={(val) => handleSelect(val)}
       className="flex flex-col items-start gap-1 p-3 cursor-pointer"
     >
       <div className="flex items-center justify-between w-full">

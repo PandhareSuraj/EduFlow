@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+const COURSES_REL_HINT = "students_course_id_fkey";
+
 export interface StudentSearchResult {
   id: number;
   student_id: string;
@@ -22,15 +24,27 @@ export const useStudentSearch = () => {
   const { toast } = useToast();
 
   const searchStudents = useCallback(async (term: string) => {
-    if (!term.trim()) {
+    const raw = term ?? "";
+    const safe = raw.replace(/[,;]/g, " ").replace(/[^\x20-\x7E]/g, "").trim();
+
+    // Minimum length to avoid noise
+    if (safe.length < 2) {
       setResults([]);
       return;
     }
 
     setIsLoading(true);
     try {
+      const like = `%${safe}%`;
+      const orFilter = [
+        `student_id.ilike.${like}`,
+        `name.ilike.${like}`,
+        `email.ilike.${like}`,
+        `mobile_number.ilike.${like}`,
+      ].join(",");
+
       const { data, error } = await supabase
-        .from('students')
+        .from("students")
         .select(`
           id,
           student_id,
@@ -40,52 +54,58 @@ export const useStudentSearch = () => {
           year,
           semester,
           status,
-          courses(name)
+          courses!${COURSES_REL_HINT}(name)
         `)
-        .or(`student_id.ilike.%${term}%,name.ilike.%${term}%,email.ilike.%${term}%,mobile_number.ilike.%${term}%`)
-        .eq('status', 'active')
-        .order('student_id')
+        .or(orFilter)
+        .eq("status", "active")
+        .order("student_id")
         .limit(50);
 
       if (error) throw error;
 
-      const formattedResults: StudentSearchResult[] = data?.map(student => ({
-        id: student.id,
-        student_id: student.student_id,
-        name: student.name,
-        email: student.email,
-        mobile_number: student.mobile_number,
-        course_name: (student.courses as any)?.name || 'N/A',
-        year: student.year,
-        semester: student.semester,
-        status: student.status
-      })) || [];
+      const formattedResults: StudentSearchResult[] =
+        data?.map((student: any) => ({
+          id: student.id,
+          student_id: student.student_id,
+          name: student.name,
+          email: student.email,
+          mobile_number: student.mobile_number,
+          course_name: student.courses?.name || "N/A",
+          year: student.year,
+          semester: student.semester,
+          status: student.status,
+        })) || [];
 
-      // Sort results by relevance
+      // Sort results by relevance against safe term
+      const termLower = safe.toLowerCase();
       const sortedResults = formattedResults.sort((a, b) => {
-        // Exact student ID match gets highest priority
-        if (a.student_id.toLowerCase() === term.toLowerCase()) return -1;
-        if (b.student_id.toLowerCase() === term.toLowerCase()) return 1;
-        
-        // Student ID starts with term
-        if (a.student_id.toLowerCase().startsWith(term.toLowerCase())) return -1;
-        if (b.student_id.toLowerCase().startsWith(term.toLowerCase())) return 1;
-        
-        // Name starts with term
-        if (a.name.toLowerCase().startsWith(term.toLowerCase())) return -1;
-        if (b.name.toLowerCase().startsWith(term.toLowerCase())) return 1;
-        
+        if (a.student_id.toLowerCase() === termLower) return -1;
+        if (b.student_id.toLowerCase() === termLower) return 1;
+        if (a.student_id.toLowerCase().startsWith(termLower)) return -1;
+        if (b.student_id.toLowerCase().startsWith(termLower)) return 1;
+        if (a.name.toLowerCase().startsWith(termLower)) return -1;
+        if (b.name.toLowerCase().startsWith(termLower)) return 1;
         return 0;
       });
 
       setResults(sortedResults);
-    } catch (error) {
-      console.error('Search error:', error);
-      toast({
-        title: "Search Error",
-        description: "Failed to search students. Please try again.",
-        variant: "destructive",
-      });
+    } catch (supError: any) {
+      console.error("Student search failed:", supError);
+      // Show toast only for real network/service errors
+      const msg = String(supError?.message || "");
+      const code = String(supError?.code || "");
+      const isParsingOrEmbedding =
+        code.startsWith("PGRST") ||
+        msg.includes("parse logic tree") ||
+        msg.includes("Could not embed");
+
+      if (!isParsingOrEmbedding) {
+        toast({
+          title: "Search Error",
+          description: "Failed to search students. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
