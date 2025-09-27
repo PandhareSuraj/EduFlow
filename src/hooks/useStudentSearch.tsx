@@ -42,12 +42,7 @@ export const useStudentSearch = () => {
           status,
           courses(name)
         `)
-        .or(`
-          student_id.ilike.%${term}%,
-          name.ilike.%${term}%,
-          email.ilike.%${term}%,
-          mobile_number.ilike.%${term}%
-        `)
+        .or(`student_id.ilike.%${term}%,name.ilike.%${term}%,email.ilike.%${term}%,mobile_number.ilike.%${term}%`)
         .eq('status', 'active')
         .order('student_id')
         .limit(50);
