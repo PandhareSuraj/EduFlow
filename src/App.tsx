@@ -35,6 +35,8 @@ import StudentProfile from "./pages/StudentProfile";
 import StudentCourse from "./pages/StudentCourse";
 import StudentResults from "./pages/StudentResults";
 import StudentTests from "./pages/StudentTests";
+import Hostel from "./pages/Hostel";
+import Transport from "./pages/Transport";
 
 const queryClient = new QueryClient();
 
@@ -224,6 +226,22 @@ const App = () => (
                 <ProtectedRoute requiredRole="student">
                   <Layout>
                     <StudentTests />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Hostel and Transport Routes */}
+              <Route path="/hostel" element={
+                <ProtectedRoute allowedRoles={['admin', 'clerk']}>
+                  <Layout>
+                    <Hostel />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/transport" element={
+                <ProtectedRoute allowedRoles={['admin', 'clerk']}>
+                  <Layout>
+                    <Transport />
                   </Layout>
                 </ProtectedRoute>
               } />

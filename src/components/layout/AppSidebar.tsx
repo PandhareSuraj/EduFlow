@@ -16,7 +16,9 @@ import {
   TrendingUp, 
   BookOpen,
   Database,
-  Activity
+  Activity,
+  Building,
+  Bus
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -77,6 +79,8 @@ export function AppSidebar() {
         { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
         { name: "Exams", href: "/exams", icon: FileText },
         { name: "Library", href: "/library", icon: BookOpen },
+        { name: "Hostel", href: "/hostel", icon: Building },
+        { name: "Transport", href: "/transport", icon: Bus },
         { name: "ID Cards", href: "/id-cards", icon: IdCard },
         { name: "Inventory", href: "/inventory", icon: Package },
         { name: "Reports", href: "/reports", icon: BarChart3 },
