@@ -484,6 +484,59 @@ export type Database = {
         }
         Relationships: []
       }
+      college_calendar: {
+        Row: {
+          calendar_date: string
+          calendar_type: string
+          college_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_recurring: boolean
+          recurrence_pattern: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          calendar_date: string
+          calendar_type?: string
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_recurring?: boolean
+          recurrence_pattern?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          calendar_date?: string
+          calendar_type?: string
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_recurring?: boolean
+          recurrence_pattern?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "college_calendar_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       colleges: {
         Row: {
           address: string | null
@@ -542,6 +595,74 @@ export type Database = {
             columns: ["id_card_template_id"]
             isOneToOne: false
             referencedRelation: "id_card_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          address: string | null
+          college_id: string | null
+          company_size: string | null
+          contact_person: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          email: string | null
+          id: string
+          industry: string | null
+          logo_url: string | null
+          name: string
+          phone: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          college_id?: string | null
+          company_size?: string | null
+          contact_person?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          college_id?: string | null
+          company_size?: string | null
+          contact_person?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "companies_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
             referencedColumns: ["id"]
           },
         ]
@@ -705,6 +826,199 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      event_attendees: {
+        Row: {
+          attendance_status: string
+          college_id: string | null
+          created_at: string
+          event_id: string
+          feedback_comments: string | null
+          feedback_rating: number | null
+          id: string
+          registration_date: string
+          student_id: number | null
+          user_id: string | null
+        }
+        Insert: {
+          attendance_status?: string
+          college_id?: string | null
+          created_at?: string
+          event_id: string
+          feedback_comments?: string | null
+          feedback_rating?: number | null
+          id?: string
+          registration_date?: string
+          student_id?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          attendance_status?: string
+          college_id?: string | null
+          created_at?: string
+          event_id?: string
+          feedback_comments?: string | null
+          feedback_rating?: number | null
+          id?: string
+          registration_date?: string
+          student_id?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_attendees_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_attendees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "event_attendees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_categories: {
+        Row: {
+          college_id: string | null
+          color: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          college_id?: string | null
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          college_id?: string | null
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_categories_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          category_id: string | null
+          college_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_time: string | null
+          event_date: string
+          event_type: string
+          id: string
+          is_public: boolean
+          location: string | null
+          max_attendees: number | null
+          organizer_id: string | null
+          start_time: string | null
+          status: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_date: string
+          event_type?: string
+          id?: string
+          is_public?: boolean
+          location?: string | null
+          max_attendees?: number | null
+          organizer_id?: string | null
+          start_time?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_date?: string
+          event_type?: string
+          id?: string
+          is_public?: boolean
+          location?: string | null
+          max_attendees?: number | null
+          organizer_id?: string | null
+          start_time?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "event_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exams: {
         Row: {
@@ -1110,6 +1424,121 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback_forms: {
+        Row: {
+          college_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          form_title: string
+          id: string
+          is_active: boolean
+          questions: Json
+          start_date: string | null
+          target_audience: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          form_title: string
+          id?: string
+          is_active?: boolean
+          questions?: Json
+          start_date?: string | null
+          target_audience?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          form_title?: string
+          id?: string
+          is_active?: boolean
+          questions?: Json
+          start_date?: string | null
+          target_audience?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_forms_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback_submissions: {
+        Row: {
+          college_id: string | null
+          form_id: string
+          id: string
+          responses: Json
+          student_id: number | null
+          submission_date: string
+          submitted_by: string | null
+        }
+        Insert: {
+          college_id?: string | null
+          form_id: string
+          id?: string
+          responses?: Json
+          student_id?: number | null
+          submission_date?: string
+          submitted_by?: string | null
+        }
+        Update: {
+          college_id?: string | null
+          form_id?: string
+          id?: string
+          responses?: Json
+          student_id?: number | null
+          submission_date?: string
+          submitted_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_submissions_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "feedback_forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_submissions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "feedback_submissions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_drive_settings: {
         Row: {
           access_token_encrypted: string | null
@@ -1178,6 +1607,263 @@ export type Database = {
           },
         ]
       }
+      grievance_attachments: {
+        Row: {
+          college_id: string | null
+          created_at: string
+          file_name: string
+          file_type: string | null
+          file_url: string
+          grievance_id: string
+          id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string
+          file_name: string
+          file_type?: string | null
+          file_url: string
+          grievance_id: string
+          id?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string
+          file_name?: string
+          file_type?: string | null
+          file_url?: string
+          grievance_id?: string
+          id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grievance_attachments_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grievance_attachments_grievance_id_fkey"
+            columns: ["grievance_id"]
+            isOneToOne: false
+            referencedRelation: "grievances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grievance_categories: {
+        Row: {
+          college_id: string | null
+          created_at: string
+          created_by: string | null
+          department: string | null
+          description: string | null
+          escalation_level: number
+          id: string
+          is_active: boolean
+          name: string
+          response_time_hours: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          description?: string | null
+          escalation_level?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          response_time_hours?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          description?: string | null
+          escalation_level?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          response_time_hours?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grievance_categories_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grievance_responses: {
+        Row: {
+          college_id: string | null
+          created_at: string
+          grievance_id: string
+          id: string
+          is_public: boolean
+          response_by: string | null
+          response_text: string
+          response_type: string
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string
+          grievance_id: string
+          id?: string
+          is_public?: boolean
+          response_by?: string | null
+          response_text: string
+          response_type?: string
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string
+          grievance_id?: string
+          id?: string
+          is_public?: boolean
+          response_by?: string | null
+          response_text?: string
+          response_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grievance_responses_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grievance_responses_grievance_id_fkey"
+            columns: ["grievance_id"]
+            isOneToOne: false
+            referencedRelation: "grievances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grievances: {
+        Row: {
+          acknowledged_date: string | null
+          assigned_to: string | null
+          category_id: string | null
+          college_id: string | null
+          created_at: string
+          description: string
+          escalated_to: string | null
+          faculty_id: string | null
+          grievance_type: string
+          id: string
+          priority: string
+          resolution_date: string | null
+          resolution_notes: string | null
+          satisfaction_rating: number | null
+          status: string
+          student_id: number | null
+          submission_date: string
+          submitted_by_id: string | null
+          submitted_by_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_date?: string | null
+          assigned_to?: string | null
+          category_id?: string | null
+          college_id?: string | null
+          created_at?: string
+          description: string
+          escalated_to?: string | null
+          faculty_id?: string | null
+          grievance_type?: string
+          id?: string
+          priority?: string
+          resolution_date?: string | null
+          resolution_notes?: string | null
+          satisfaction_rating?: number | null
+          status?: string
+          student_id?: number | null
+          submission_date?: string
+          submitted_by_id?: string | null
+          submitted_by_type: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_date?: string | null
+          assigned_to?: string | null
+          category_id?: string | null
+          college_id?: string | null
+          created_at?: string
+          description?: string
+          escalated_to?: string | null
+          faculty_id?: string | null
+          grievance_type?: string
+          id?: string
+          priority?: string
+          resolution_date?: string | null
+          resolution_notes?: string | null
+          satisfaction_rating?: number | null
+          status?: string
+          student_id?: number | null
+          submission_date?: string
+          submitted_by_id?: string | null
+          submitted_by_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grievances_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "grievance_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grievances_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grievances_faculty_id_fkey"
+            columns: ["faculty_id"]
+            isOneToOne: false
+            referencedRelation: "faculty"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grievances_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "grievances_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       id_card_templates: {
         Row: {
           code: string
@@ -1210,6 +1896,105 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      interviews: {
+        Row: {
+          college_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          feedback: string | null
+          id: string
+          interview_date: string
+          interview_time: string | null
+          interview_type: string
+          interviewer_name: string | null
+          job_posting_id: string
+          location: string | null
+          rating: number | null
+          result: string | null
+          status: string
+          student_id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          college_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          feedback?: string | null
+          id?: string
+          interview_date: string
+          interview_time?: string | null
+          interview_type?: string
+          interviewer_name?: string | null
+          job_posting_id: string
+          location?: string | null
+          rating?: number | null
+          result?: string | null
+          status?: string
+          student_id: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          college_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          feedback?: string | null
+          id?: string
+          interview_date?: string
+          interview_time?: string | null
+          interview_type?: string
+          interviewer_name?: string | null
+          job_posting_id?: string
+          location?: string | null
+          rating?: number | null
+          result?: string | null
+          status?: string
+          student_id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interviews_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interviews_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interviews_job_posting_id_fkey"
+            columns: ["job_posting_id"]
+            isOneToOne: false
+            referencedRelation: "job_postings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interviews_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "interviews_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory_items: {
         Row: {
@@ -1343,6 +2128,87 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_postings: {
+        Row: {
+          application_deadline: string | null
+          college_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          eligibility_criteria: string | null
+          employment_type: string
+          filled_positions: number
+          id: string
+          job_type: string
+          location: string | null
+          required_skills: string[] | null
+          salary_range: string | null
+          status: string
+          title: string
+          total_positions: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          application_deadline?: string | null
+          college_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          eligibility_criteria?: string | null
+          employment_type?: string
+          filled_positions?: number
+          id?: string
+          job_type?: string
+          location?: string | null
+          required_skills?: string[] | null
+          salary_range?: string | null
+          status?: string
+          title: string
+          total_positions?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          application_deadline?: string | null
+          college_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          eligibility_criteria?: string | null
+          employment_type?: string
+          filled_positions?: number
+          id?: string
+          job_type?: string
+          location?: string | null
+          required_skills?: string[] | null
+          salary_range?: string | null
+          status?: string
+          title?: string
+          total_positions?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_postings_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_postings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -1684,6 +2550,75 @@ export type Database = {
         }
         Relationships: []
       }
+      placement_drives: {
+        Row: {
+          college_id: string | null
+          company_id: string
+          coordinator_id: string | null
+          created_at: string
+          created_by: string | null
+          drive_date: string
+          eligible_courses: number[] | null
+          id: string
+          job_positions: string[] | null
+          min_cgpa: number | null
+          registration_deadline: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          venue: string | null
+        }
+        Insert: {
+          college_id?: string | null
+          company_id: string
+          coordinator_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          drive_date: string
+          eligible_courses?: number[] | null
+          id?: string
+          job_positions?: string[] | null
+          min_cgpa?: number | null
+          registration_deadline?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          venue?: string | null
+        }
+        Update: {
+          college_id?: string | null
+          company_id?: string
+          coordinator_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          drive_date?: string
+          eligible_courses?: number[] | null
+          id?: string
+          job_positions?: string[] | null
+          min_cgpa?: number | null
+          registration_deadline?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_drives_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_drives_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1716,6 +2651,59 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      reminders: {
+        Row: {
+          college_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          recipient_ids: string[] | null
+          recipient_type: string
+          reminder_date: string
+          reminder_time: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          recipient_ids?: string[] | null
+          recipient_type?: string
+          reminder_date: string
+          reminder_time?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          recipient_ids?: string[] | null
+          recipient_type?: string
+          reminder_date?: string
+          reminder_time?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       report_history: {
         Row: {
@@ -1991,6 +2979,83 @@ export type Database = {
           },
         ]
       }
+      student_applications: {
+        Row: {
+          application_date: string
+          college_id: string | null
+          cover_letter: string | null
+          created_at: string
+          final_result: string | null
+          id: string
+          interview_date: string | null
+          interview_feedback: string | null
+          job_posting_id: string
+          resume_url: string | null
+          status: string
+          student_id: number
+          updated_at: string
+        }
+        Insert: {
+          application_date?: string
+          college_id?: string | null
+          cover_letter?: string | null
+          created_at?: string
+          final_result?: string | null
+          id?: string
+          interview_date?: string | null
+          interview_feedback?: string | null
+          job_posting_id: string
+          resume_url?: string | null
+          status?: string
+          student_id: number
+          updated_at?: string
+        }
+        Update: {
+          application_date?: string
+          college_id?: string | null
+          cover_letter?: string | null
+          created_at?: string
+          final_result?: string | null
+          id?: string
+          interview_date?: string | null
+          interview_feedback?: string | null
+          job_posting_id?: string
+          resume_url?: string | null
+          status?: string
+          student_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_applications_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_applications_job_posting_id_fkey"
+            columns: ["job_posting_id"]
+            isOneToOne: false
+            referencedRelation: "job_postings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_applications_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_applications_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_documents: {
         Row: {
           college_id: string | null
@@ -2262,6 +3327,90 @@ export type Database = {
           },
           {
             foreignKeyName: "student_fees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_placements: {
+        Row: {
+          college_id: string | null
+          company_id: string
+          created_at: string
+          id: string
+          job_posting_id: string | null
+          joining_date: string | null
+          package_amount: number | null
+          placed_by: string | null
+          placement_type: string
+          position_title: string
+          status: string
+          student_id: number
+          updated_at: string
+        }
+        Insert: {
+          college_id?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          job_posting_id?: string | null
+          joining_date?: string | null
+          package_amount?: number | null
+          placed_by?: string | null
+          placement_type?: string
+          position_title: string
+          status?: string
+          student_id: number
+          updated_at?: string
+        }
+        Update: {
+          college_id?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          job_posting_id?: string | null
+          joining_date?: string | null
+          package_amount?: number | null
+          placed_by?: string | null
+          placement_type?: string
+          position_title?: string
+          status?: string
+          student_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_placements_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_placements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_placements_job_posting_id_fkey"
+            columns: ["job_posting_id"]
+            isOneToOne: false
+            referencedRelation: "job_postings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_placements_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_placements_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"

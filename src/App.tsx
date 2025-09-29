@@ -37,6 +37,9 @@ import StudentResults from "./pages/StudentResults";
 import StudentTests from "./pages/StudentTests";
 import Hostel from "./pages/Hostel";
 import Transport from "./pages/Transport";
+import Events from "./pages/Events";
+import Placements from "./pages/Placements";
+import Grievances from "./pages/Grievances";
 
 const queryClient = new QueryClient();
 
@@ -242,6 +245,33 @@ const App = () => (
                 <ProtectedRoute allowedRoles={['admin', 'clerk']}>
                   <Layout>
                     <Transport />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Event Management Routes */}
+              <Route path="/events" element={
+                <ProtectedRoute allowedRoles={['super_admin', 'admin', 'teacher', 'clerk', 'student']}>
+                  <Layout>
+                    <Events />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Placement Management Routes */}
+              <Route path="/placements" element={
+                <ProtectedRoute allowedRoles={['super_admin', 'admin', 'teacher', 'student']}>
+                  <Layout>
+                    <Placements />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Grievance Management Routes */}
+              <Route path="/grievances" element={
+                <ProtectedRoute allowedRoles={['super_admin', 'admin', 'teacher', 'clerk', 'student']}>
+                  <Layout>
+                    <Grievances />
                   </Layout>
                 </ProtectedRoute>
               } />

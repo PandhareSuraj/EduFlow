@@ -18,7 +18,9 @@ import {
   Database,
   Activity,
   Building,
-  Bus
+  Bus,
+  CalendarDays,
+  Briefcase
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,6 +59,9 @@ export function AppSidebar() {
         { name: "System Health", href: "/system-health", icon: Shield },
         { name: "Reports", href: "/reports", icon: FileText },
         { name: "Audit Trail", href: "/audit-trail", icon: Database },
+        { name: "Events", href: "/events", icon: CalendarDays },
+        { name: "Placements", href: "/placements", icon: Briefcase },
+        { name: "Grievances", href: "/grievances", icon: MessageSquare },
         { name: "Settings", href: "/settings", icon: Settings }
       ];
     } else if (userRole === 'student') {
@@ -66,7 +71,10 @@ export function AppSidebar() {
         { name: "My Course", href: "/student-course", icon: GraduationCap },
         { name: "My Results", href: "/student-results", icon: FileText },
         { name: "MCQ Tests", href: "/student-tests", icon: ClipboardCheck },
-        { name: "Library", href: "/library", icon: BookOpen }
+        { name: "Library", href: "/library", icon: BookOpen },
+        { name: "Events", href: "/events", icon: CalendarDays },
+        { name: "Job Opportunities", href: "/placements", icon: Briefcase },
+        { name: "Submit Feedback", href: "/grievances", icon: MessageSquare }
       ];
     } else if (userRole === 'admin') {
       return [
@@ -85,6 +93,9 @@ export function AppSidebar() {
         { name: "Inventory", href: "/inventory", icon: Package },
         { name: "Reports", href: "/reports", icon: BarChart3 },
         { name: "Audit Trail", href: "/audit-trail", icon: Database },
+        { name: "Events", href: "/events", icon: CalendarDays },
+        { name: "Placements", href: "/placements", icon: Briefcase },
+        { name: "Grievances", href: "/grievances", icon: MessageSquare },
         { name: "Settings", href: "/settings", icon: Settings }
       ];
     } else if (userRole === 'teacher') {
@@ -95,7 +106,10 @@ export function AppSidebar() {
         { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
         { name: "Exams", href: "/exams", icon: FileText },
         { name: "Library", href: "/library", icon: BookOpen },
-        { name: "Reports", href: "/reports", icon: BarChart3 }
+        { name: "Reports", href: "/reports", icon: BarChart3 },
+        { name: "Events", href: "/events", icon: CalendarDays },
+        { name: "Placements", href: "/placements", icon: Briefcase },
+        { name: "Grievances", href: "/grievances", icon: MessageSquare }
       ];
     } else if (userRole === 'clerk') {
       return [
@@ -106,7 +120,9 @@ export function AppSidebar() {
         { name: "Exams", href: "/exams", icon: FileText },
         { name: "ID Cards", href: "/id-cards", icon: IdCard },
         { name: "Inventory", href: "/inventory", icon: Package },
-        { name: "Reports", href: "/reports", icon: BarChart3 }
+        { name: "Reports", href: "/reports", icon: BarChart3 },
+        { name: "Events", href: "/events", icon: CalendarDays },
+        { name: "Grievances", href: "/grievances", icon: MessageSquare }
       ];
     } else if (userRole === 'librarian') {
       return [
