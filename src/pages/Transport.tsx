@@ -1,12 +1,36 @@
 import { useState } from "react";
 import { Plus, MapPin, Bus, Users, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AddTransportRouteDialog } from "@/components/forms/AddTransportRouteDialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
 const Transport = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const [showRouteDialog, setShowRouteDialog] = useState(false);
+
+  const { data: stats, refetch } = useQuery({
+    queryKey: ["transport-stats"],
+    queryFn: async () => {
+      const { count: activeRoutes } = await supabase
+        .from("transport_routes")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active");
+      
+      const { count: activeBuses } = await supabase
+        .from("buses")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active");
+
+      return {
+        activeRoutes: activeRoutes || 0,
+        activeBuses: activeBuses || 0,
+      };
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -17,11 +41,17 @@ const Transport = () => {
             Manage bus routes, GPS tracking, student attendance, and transport subscriptions
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setShowRouteDialog(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Route
         </Button>
       </div>
+
+      <AddTransportRouteDialog
+        open={showRouteDialog}
+        onOpenChange={setShowRouteDialog}
+        onSuccess={refetch}
+      />
 
       {/* Quick Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -31,7 +61,7 @@ const Transport = () => {
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{stats?.activeRoutes || 0}</div>
             <p className="text-xs text-muted-foreground">
               Covering 45 stops
             </p>
@@ -43,7 +73,7 @@ const Transport = () => {
             <Bus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">18</div>
+            <div className="text-2xl font-bold">{stats?.activeBuses || 0}</div>
             <p className="text-xs text-muted-foreground">
               2 in maintenance
             </p>

@@ -1,12 +1,41 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Building2, Users, AlertCircle, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AddHostelAllocationDialog } from "@/components/forms/AddHostelAllocationDialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
 const Hostel = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const [showAllocationDialog, setShowAllocationDialog] = useState(false);
+
+  const { data: stats, refetch } = useQuery({
+    queryKey: ["hostel-stats"],
+    queryFn: async () => {
+      const { count: totalRooms } = await supabase
+        .from("hostel_rooms")
+        .select("*", { count: "exact", head: true });
+      
+      const { count: occupiedRooms } = await supabase
+        .from("hostel_allocations")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active");
+      
+      const { count: pendingComplaints } = await supabase
+        .from("hostel_complaints")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+
+      return {
+        totalRooms: totalRooms || 0,
+        occupiedRooms: occupiedRooms || 0,
+        pendingComplaints: pendingComplaints || 0,
+      };
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -17,11 +46,17 @@ const Hostel = () => {
             Manage hostel rooms, allocations, mess facilities, and student complaints
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setShowAllocationDialog(true)}>
           <Plus className="mr-2 h-4 w-4" />
           New Allocation
         </Button>
       </div>
+
+      <AddHostelAllocationDialog
+        open={showAllocationDialog}
+        onOpenChange={setShowAllocationDialog}
+        onSuccess={refetch}
+      />
 
       {/* Quick Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -30,7 +65,7 @@ const Hostel = () => {
             <CardTitle className="text-sm font-medium">Total Rooms</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">120</div>
+            <div className="text-2xl font-bold">{stats?.totalRooms || 0}</div>
             <p className="text-xs text-muted-foreground">
               Across 3 buildings
             </p>

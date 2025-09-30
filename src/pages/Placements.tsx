@@ -1,579 +1,573 @@
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { Plus, Briefcase, Building2, Users, TrendingUp } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Briefcase, Users, TrendingUp, Plus, Search, Filter } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
-export default function Placements() {
-  const { userRole } = useAuth();
+const companySchema = z.object({
+  name: z.string().min(1, "Company name is required"),
+  industry: z.string().min(1, "Industry is required"),
+  email: z.string().email("Valid email is required"),
+  phone: z.string().min(1, "Phone is required"),
+  contact_person: z.string().min(1, "Contact person is required"),
+  description: z.string().optional(),
+  website: z.string().optional(),
+});
+
+const jobSchema = z.object({
+  company_id: z.string().min(1, "Please select a company"),
+  job_title: z.string().min(1, "Job title is required"),
+  job_type: z.string().min(1, "Job type is required"),
+  location: z.string().min(1, "Location is required"),
+  salary_range: z.string().min(1, "Salary range is required"),
+  description: z.string().min(1, "Description is required"),
+  requirements: z.string().min(1, "Requirements are required"),
+  application_deadline: z.string().min(1, "Deadline is required"),
+  positions_available: z.string().min(1, "Number of positions is required"),
+});
+
+const Placements = () => {
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
   const [showJobDialog, setShowJobDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [loading, setLoading] = useState(false);
 
-  const mockCompanies = [
-    {
-      id: "1",
-      name: "TechCorp Solutions",
-      industry: "Information Technology",
-      status: "active",
-      total_jobs: 3,
-      active_jobs: 2
+  const companyForm = useForm<z.infer<typeof companySchema>>({
+    resolver: zodResolver(companySchema),
+  });
+
+  const jobForm = useForm<z.infer<typeof jobSchema>>({
+    resolver: zodResolver(jobSchema),
+  });
+
+  const { data: companies, refetch: refetchCompanies } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
     },
-    {
-      id: "2",
-      name: "MediCare Plus",
-      industry: "Healthcare", 
-      status: "active",
-      total_jobs: 2,
-      active_jobs: 1
+  });
+
+  const { data: jobs, refetch: refetchJobs } = useQuery({
+    queryKey: ["job-postings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("job_postings")
+        .select("*, companies(name)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
     },
-    {
-      id: "3",
-      name: "Global Pharma Ltd",
-      industry: "Pharmaceuticals",
-      status: "active", 
-      total_jobs: 4,
-      active_jobs: 3
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ["placement-stats"],
+    queryFn: async () => {
+      const { count: activeJobs } = await supabase
+        .from("job_postings")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active");
+
+      const { count: totalCompanies } = await supabase
+        .from("companies")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active");
+
+      const { count: placements } = await supabase
+        .from("student_placements")
+        .select("*", { count: "exact", head: true });
+
+      return {
+        activeJobs: activeJobs || 0,
+        totalCompanies: totalCompanies || 0,
+        placements: placements || 0,
+      };
+    },
+  });
+
+  async function onSubmitCompany(values: z.infer<typeof companySchema>) {
+    try {
+      setLoading(true);
+      const { error } = await supabase.from("companies").insert({
+        name: values.name,
+        industry: values.industry,
+        email: values.email,
+        phone: values.phone,
+        contact_person: values.contact_person,
+        description: values.description,
+        website: values.website,
+        status: "active",
+      });
+
+      if (error) throw error;
+
+      toast.success("Company added successfully");
+      companyForm.reset();
+      setShowCompanyDialog(false);
+      refetchCompanies();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to add company");
+    } finally {
+      setLoading(false);
     }
-  ];
+  }
 
-  const mockJobs = [
-    {
-      id: "1",
-      title: "Medical Laboratory Technician",
-      company: "MediCare Plus",
-      job_type: "placement",
-      employment_type: "full_time",
-      location: "Mumbai",
-      salary_range: "₹3.5-4.5 LPA",
-      application_deadline: "2024-02-15",
-      status: "active",
-      applications: 25
-    },
-    {
-      id: "2", 
-      title: "Radiology Technician Intern",
-      company: "Global Pharma Ltd",
-      job_type: "internship",
-      employment_type: "full_time",
-      location: "Pune",
-      salary_range: "₹15,000/month",
-      application_deadline: "2024-01-30",
-      status: "active",
-      applications: 18
-    },
-    {
-      id: "3",
-      title: "Quality Control Analyst",
-      company: "Global Pharma Ltd", 
-      job_type: "placement",
-      employment_type: "full_time",
-      location: "Hyderabad",
-      salary_range: "₹4-6 LPA",
-      application_deadline: "2024-02-20",
-      status: "active",
-      applications: 32
+  async function onSubmitJob(values: z.infer<typeof jobSchema>) {
+    try {
+      setLoading(true);
+      const { error } = await supabase.from("job_postings").insert({
+        company_id: values.company_id,
+        job_title: values.job_title,
+        job_type: values.job_type,
+        location: values.location,
+        salary_range: values.salary_range,
+        description: values.description,
+        requirements: values.requirements,
+        application_deadline: values.application_deadline,
+        positions_available: parseInt(values.positions_available),
+        status: "active",
+      });
+
+      if (error) throw error;
+
+      toast.success("Job posting created successfully");
+      jobForm.reset();
+      setShowJobDialog(false);
+      refetchJobs();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create job posting");
+    } finally {
+      setLoading(false);
     }
-  ];
-
-  const mockPlacements = [
-    {
-      id: "1",
-      student_name: "Priya Sharma",
-      company: "TechCorp Solutions",
-      position: "Lab Technician",
-      package: "₹4.2 LPA",
-      joining_date: "2024-03-01",
-      status: "accepted"
-    },
-    {
-      id: "2",
-      student_name: "Amit Kumar", 
-      company: "MediCare Plus",
-      position: "Medical Technologist",
-      package: "₹3.8 LPA",
-      joining_date: "2024-02-15",
-      status: "offered"
-    }
-  ];
-
-  const getJobTypeColor = (type: string) => {
-    return type === 'placement' 
-      ? "bg-blue-100 text-blue-800" 
-      : "bg-green-100 text-green-800";
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors = {
-      active: "bg-green-100 text-green-800",
-      closed: "bg-red-100 text-red-800", 
-      draft: "bg-yellow-100 text-yellow-800",
-      cancelled: "bg-gray-100 text-gray-800"
-    };
-    return colors[status as keyof typeof colors] || colors.draft;
-  };
-
-  const canManagePlacements = userRole === 'admin' || userRole === 'super_admin';
+  }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Placement & Internship Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Placement & Internship Management</h1>
           <p className="text-muted-foreground">
             Manage companies, job postings, and student placements
           </p>
         </div>
-        {canManagePlacements && (
-          <div className="flex gap-2">
-            <Dialog open={showCompanyDialog} onOpenChange={setShowCompanyDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Add Company
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Add New Company</DialogTitle>
-                  <DialogDescription>
-                    Add a new company for placement opportunities
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="company_name" className="text-right">
-                      Company Name
-                    </Label>
-                    <Input id="company_name" className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="industry" className="text-right">
-                      Industry
-                    </Label>
-                    <Input id="industry" className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="contact_person" className="text-right">
-                      Contact Person
-                    </Label>
-                    <Input id="contact_person" className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" />
-                    </div>
-                    <div>
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input id="phone" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="description" className="text-right">
-                      Description
-                    </Label>
-                    <Textarea id="description" className="col-span-3" />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowCompanyDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={() => setShowCompanyDialog(false)}>
-                    Add Company
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowCompanyDialog(true)}>
+            <Building2 className="mr-2 h-4 w-4" />
+            Add Company
+          </Button>
+          <Button onClick={() => setShowJobDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Job Posting
+          </Button>
+        </div>
+      </div>
 
-            <Dialog open={showJobDialog} onOpenChange={setShowJobDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Job Posting
+      {/* Add Company Dialog */}
+      <Dialog open={showCompanyDialog} onOpenChange={setShowCompanyDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add New Company</DialogTitle>
+            <DialogDescription>Add a new company to your placement partners</DialogDescription>
+          </DialogHeader>
+          <Form {...companyForm}>
+            <form onSubmit={companyForm.handleSubmit(onSubmitCompany)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={companyForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter company name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={companyForm.control}
+                  name="industry"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Industry</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., IT, Healthcare" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={companyForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="company@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={companyForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+91 1234567890" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={companyForm.control}
+                  name="contact_person"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contact Person</FormLabel>
+                      <FormControl>
+                        <Input placeholder="HR Manager name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={companyForm.control}
+                  name="website"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Website (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://company.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={companyForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Brief company description" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowCompanyDialog(false)}>
+                  Cancel
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Create Job Posting</DialogTitle>
-                  <DialogDescription>
-                    Add a new job or internship opportunity
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="job_title" className="text-right">
-                      Job Title
-                    </Label>
-                    <Input id="job_title" className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="company_select" className="text-right">
-                      Company
-                    </Label>
-                    <Select>
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Select company" />
-                      </SelectTrigger>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Adding..." : "Add Company"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Job Posting Dialog */}
+      <Dialog open={showJobDialog} onOpenChange={setShowJobDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Job Posting</DialogTitle>
+            <DialogDescription>Post a new job opportunity for students</DialogDescription>
+          </DialogHeader>
+          <Form {...jobForm}>
+            <form onSubmit={jobForm.handleSubmit(onSubmitJob)} className="space-y-4">
+              <FormField
+                control={jobForm.control}
+                name="company_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a company" />
+                        </SelectTrigger>
+                      </FormControl>
                       <SelectContent>
-                        {mockCompanies.map((company) => (
-                          <SelectItem key={company.id} value={company.id}>
+                        {companies?.map((company) => (
+                          <SelectItem key={company.id} value={company.id.toString()}>
                             {company.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="job_type">Job Type</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={jobForm.control}
+                  name="job_title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Job Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Software Engineer" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={jobForm.control}
+                  name="job_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Job Type</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select job type" />
+                          </SelectTrigger>
+                        </FormControl>
                         <SelectContent>
-                          <SelectItem value="placement">Placement</SelectItem>
+                          <SelectItem value="full-time">Full-time</SelectItem>
+                          <SelectItem value="part-time">Part-time</SelectItem>
                           <SelectItem value="internship">Internship</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="employment_type">Employment Type</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="full_time">Full Time</SelectItem>
-                          <SelectItem value="part_time">Part Time</SelectItem>
-                          <SelectItem value="contract">Contract</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="location">Location</Label>
-                      <Input id="location" />
-                    </div>
-                    <div>
-                      <Label htmlFor="salary_range">Salary Range</Label>
-                      <Input id="salary_range" placeholder="e.g., ₹3-5 LPA" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="job_description" className="text-right">
-                      Description
-                    </Label>
-                    <Textarea id="job_description" className="col-span-3" />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowJobDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={() => setShowJobDialog(false)}>
-                    Create Job
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={jobForm.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Bangalore" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={jobForm.control}
+                  name="salary_range"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Salary Range</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., 5-7 LPA" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={jobForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Job description..." className="resize-none" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={jobForm.control}
+                name="requirements"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Requirements</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Job requirements..." className="resize-none" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={jobForm.control}
+                  name="application_deadline"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Application Deadline</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={jobForm.control}
+                  name="positions_available"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Positions Available</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 2" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowJobDialog(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Creating..." : "Create Job Posting"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Stats and Tabs */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.activeJobs || 0}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Partner Companies</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalCompanies || 0}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Placements</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.placements || 0}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Placement Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">85%</div>
+          </CardContent>
+        </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="jobs">Job Postings</TabsTrigger>
           <TabsTrigger value="companies">Companies</TabsTrigger>
-          <TabsTrigger value="applications">Applications</TabsTrigger>
-          <TabsTrigger value="placements">Placements</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Active Jobs
-                </CardTitle>
-                <Briefcase className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">6</div>
-                <p className="text-xs text-muted-foreground">
-                  +2 from last month
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Partner Companies
-                </CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">12</div>
-                <p className="text-xs text-muted-foreground">
-                  +1 new partnership
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Applications
-                </CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">75</div>
-                <p className="text-xs text-muted-foreground">
-                  This month
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Placement Rate
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">85%</div>
-                <p className="text-xs text-muted-foreground">
-                  +5% from last year
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Placements</CardTitle>
-                <CardDescription>Latest successful placements</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {mockPlacements.map((placement) => (
-                    <div key={placement.id} className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{placement.student_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {placement.position} at {placement.company}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">{placement.package}</p>
-                        <Badge className={getStatusColor(placement.status)}>
-                          {placement.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Companies</CardTitle>
-                <CardDescription>Most active recruiting partners</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {mockCompanies.map((company) => (
-                    <div key={company.id} className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{company.name}</p>
-                        <p className="text-sm text-muted-foreground">{company.industry}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">{company.active_jobs} active jobs</p>
-                        <Badge className={getStatusColor(company.status)}>
-                          {company.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        <TabsContent value="dashboard" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Overview</CardTitle>
+              <CardDescription>Recent placement activities</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Dashboard content coming soon...</p>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="jobs" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Job Postings</h2>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Filter
-              </Button>
-              <Button variant="outline" size="sm">
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid gap-4">
-            {mockJobs.map((job) => (
-              <Card key={job.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <CardTitle className="text-lg">{job.title}</CardTitle>
-                      <CardDescription>{job.company} • {job.location}</CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <Badge className={getJobTypeColor(job.job_type)}>
-                        {job.job_type}
-                      </Badge>
-                      <Badge className={getStatusColor(job.status)}>
-                        {job.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
-                    <div>
-                      <span className="text-muted-foreground">Salary:</span>
-                      <p className="font-medium">{job.salary_range}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Type:</span>
-                      <p className="font-medium">{job.employment_type}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Deadline:</span>
-                      <p className="font-medium">{format(new Date(job.application_deadline), "MMM dd, yyyy")}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Applications:</span>
-                      <p className="font-medium">{job.applications}</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    {userRole === 'student' && (
-                      <Button size="sm">
-                        Apply Now
-                      </Button>
-                    )}
-                    <Button size="sm" variant="outline">
-                      View Details
-                    </Button>
-                    {canManagePlacements && (
-                      <>
-                        <Button size="sm" variant="outline">
-                          Edit
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          Manage Applications
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="companies" className="space-y-4">
-          <div className="grid gap-4">
-            {mockCompanies.map((company) => (
-              <Card key={company.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>{company.name}</CardTitle>
-                      <CardDescription>{company.industry}</CardDescription>
-                    </div>
-                    <Badge className={getStatusColor(company.status)}>
-                      {company.status}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-muted-foreground">
-                      {company.total_jobs} total jobs • {company.active_jobs} active
-                    </div>
-                    {canManagePlacements && (
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          View Profile
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          Edit
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="applications" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Job Applications</CardTitle>
-              <CardDescription>
-                Track and manage student applications
-              </CardDescription>
+              <CardTitle>Active Job Postings</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center p-8 text-muted-foreground">
-                Applications management will be implemented here
+              <div className="space-y-4">
+                {jobs?.map((job) => (
+                  <div key={job.id} className="flex justify-between items-start p-4 border rounded-lg">
+                    <div>
+                      <h3 className="font-semibold">{job.job_title}</h3>
+                      <p className="text-sm text-muted-foreground">{job.companies?.name}</p>
+                      <div className="flex gap-2 mt-2">
+                        <Badge variant="secondary">{job.location}</Badge>
+                        <Badge variant="outline">{job.salary_range}</Badge>
+                      </div>
+                    </div>
+                    <Badge>{job.status}</Badge>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="placements" className="space-y-4">
+        <TabsContent value="companies" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Student Placements</CardTitle>
-              <CardDescription>
-                View and manage successful placements
-              </CardDescription>
+              <CardTitle>Partner Companies</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockPlacements.map((placement) => (
-                  <div key={placement.id} className="flex items-center justify-between p-4 border rounded-lg">
+                {companies?.map((company) => (
+                  <div key={company.id} className="flex justify-between items-center p-4 border rounded-lg">
                     <div>
-                      <p className="font-medium">{placement.student_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {placement.position} at {placement.company}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Joining: {format(new Date(placement.joining_date), "MMM dd, yyyy")}
-                      </p>
+                      <h3 className="font-semibold">{company.name}</h3>
+                      <p className="text-sm text-muted-foreground">{company.industry}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">{placement.package}</p>
-                      <Badge className={getStatusColor(placement.status)}>
-                        {placement.status}
-                      </Badge>
-                    </div>
+                    <Badge>{company.status}</Badge>
                   </div>
                 ))}
               </div>
@@ -583,4 +577,6 @@ export default function Placements() {
       </Tabs>
     </div>
   );
-}
+};
+
+export default Placements;
