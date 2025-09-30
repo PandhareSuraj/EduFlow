@@ -138,7 +138,7 @@ const Placements = () => {
   async function onSubmitJob(values: z.infer<typeof jobSchema>) {
     try {
       setLoading(true);
-      const { error } = await supabase.from("job_postings").insert({
+      const { error } = await supabase.from("job_postings" as any).insert({
         company_id: values.company_id,
         job_title: values.job_title,
         job_type: values.job_type,
@@ -149,7 +149,7 @@ const Placements = () => {
         application_deadline: values.application_deadline,
         positions_available: parseInt(values.positions_available),
         status: "active",
-      });
+      } as any);
 
       if (error) throw error;
 
@@ -539,14 +539,14 @@ const Placements = () => {
                 {jobs?.map((job) => (
                   <div key={job.id} className="flex justify-between items-start p-4 border rounded-lg">
                     <div>
-                      <h3 className="font-semibold">{job.job_title}</h3>
-                      <p className="text-sm text-muted-foreground">{job.companies?.name}</p>
+                      <h3 className="font-semibold">{(job as any).job_title}</h3>
+                      <p className="text-sm text-muted-foreground">{(job as any).companies?.name}</p>
                       <div className="flex gap-2 mt-2">
-                        <Badge variant="secondary">{job.location}</Badge>
-                        <Badge variant="outline">{job.salary_range}</Badge>
+                        <Badge variant="secondary">{(job as any).location}</Badge>
+                        <Badge variant="outline">{(job as any).salary_range}</Badge>
                       </div>
                     </div>
-                    <Badge>{job.status}</Badge>
+                    <Badge>{(job as any).status}</Badge>
                   </div>
                 ))}
               </div>
