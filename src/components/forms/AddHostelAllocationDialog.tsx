@@ -80,19 +80,19 @@ export function AddHostelAllocationDialog({
     queryKey: ["hostel-rooms-available"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("hostel_rooms" as any)
-        .select("id, room_number, building_id, capacity, occupied_beds")
+        .from("hostel_rooms")
+        .select("id, room_number, building, capacity, occupied_beds")
         .eq("status", "available")
         .order("room_number");
       if (error) throw error;
-      return data?.filter((room: any) => room.occupied_beds < room.capacity);
+      return data?.filter((room) => room.occupied_beds < room.capacity);
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setLoading(true);
-      const { error } = await supabase.from("hostel_allocations" as any).insert({
+      const { error } = await supabase.from("hostel_allocations").insert({
         student_id: parseInt(values.student_id),
         room_id: values.room_id,
         allocation_date: values.allocation_date,
@@ -102,7 +102,7 @@ export function AddHostelAllocationDialog({
         room_fee: parseFloat(values.room_fee),
         special_requirements: values.special_requirements || null,
         status: "active",
-      } as any);
+      });
 
       if (error) throw error;
 

@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,13 +16,95 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { format } from "date-fns";
+
+const grievanceFormSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  grievance_type: z.string().min(1, "Please select a type"),
+  category_name: z.string().min(1, "Please select a category"),
+  priority: z.string().min(1, "Please select priority"),
+});
 
 export default function Grievances() {
   const { userRole } = useAuth();
   const [showGrievanceDialog, setShowGrievanceDialog] = useState(false);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const grievanceForm = useForm<z.infer<typeof grievanceFormSchema>>({
+    resolver: zodResolver(grievanceFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      grievance_type: "",
+      category_name: "",
+      priority: "",
+    },
+  });
+
+  // Fetch grievances from database
+  const { data: grievances = [] } = useQuery({
+    queryKey: ["grievances"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("grievances" as any)
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Create grievance mutation
+  const createGrievanceMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof grievanceFormSchema>) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("college_id")
+        .eq("user_id", userData.user?.id)
+        .single();
+
+      const { data, error } = await supabase
+        .from("grievances" as any)
+        .insert([{
+          ...values,
+          college_id: userRole?.college_id,
+          status: "submitted",
+          submitted_by: userData.user?.id,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["grievances"] });
+      toast({
+        title: "Success",
+        description: "Grievance submitted successfully",
+      });
+      setShowGrievanceDialog(false);
+      grievanceForm.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit grievance",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmitGrievance = (values: z.infer<typeof grievanceFormSchema>) => {
+    createGrievanceMutation.mutate(values);
+  };
 
   const mockGrievances = [
     {
@@ -131,84 +219,119 @@ export default function Grievances() {
                   Submit your complaint, suggestion, or feedback
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="grievance_title" className="text-right">
-                    Title
-                  </Label>
-                  <Input id="grievance_title" className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="grievance_type" className="text-right">
-                    Type
-                  </Label>
-                  <Select>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="complaint">Complaint</SelectItem>
-                      <SelectItem value="suggestion">Suggestion</SelectItem>
-                      <SelectItem value="feedback">Feedback</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="category" className="text-right">
-                    Category
-                  </Label>
-                  <Select>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="academic">Academic</SelectItem>
-                      <SelectItem value="library">Library Services</SelectItem>
-                      <SelectItem value="hostel">Hostel Services</SelectItem>
-                      <SelectItem value="transport">Transport</SelectItem>
-                      <SelectItem value="infrastructure">Infrastructure</SelectItem>
-                      <SelectItem value="administration">Administration</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="priority" className="text-right">
-                    Priority
-                  </Label>
-                  <Select>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="critical">Critical</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="grievance_description" className="text-right">
-                    Description
-                  </Label>
-                  <Textarea id="grievance_description" className="col-span-3" rows={4} />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="attachment" className="text-right">
-                    Attachment
-                  </Label>
-                  <Input id="attachment" type="file" className="col-span-3" />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowGrievanceDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => setShowGrievanceDialog(false)}>
-                  Submit Grievance
-                </Button>
-              </div>
+              <Form {...grievanceForm}>
+                <form onSubmit={grievanceForm.handleSubmit(onSubmitGrievance)} className="space-y-4">
+                  <FormField
+                    control={grievanceForm.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Brief summary of your concern" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={grievanceForm.control}
+                    name="grievance_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="complaint">Complaint</SelectItem>
+                            <SelectItem value="suggestion">Suggestion</SelectItem>
+                            <SelectItem value="feedback">Feedback</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={grievanceForm.control}
+                    name="category_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="academic">Academic</SelectItem>
+                            <SelectItem value="library">Library Services</SelectItem>
+                            <SelectItem value="hostel">Hostel Services</SelectItem>
+                            <SelectItem value="transport">Transport</SelectItem>
+                            <SelectItem value="infrastructure">Infrastructure</SelectItem>
+                            <SelectItem value="administration">Administration</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={grievanceForm.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Priority</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select priority" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="critical">Critical</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={grievanceForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={4} placeholder="Describe your concern in detail" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      onClick={() => setShowGrievanceDialog(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={createGrievanceMutation.isPending}>
+                      {createGrievanceMutation.isPending ? "Submitting..." : "Submit Grievance"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
             </DialogContent>
           </Dialog>
 
@@ -337,7 +460,7 @@ export default function Grievances() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockGrievances.slice(0, 3).map((grievance) => (
+                  {grievances.slice(0, 3).map((grievance: any) => (
                     <div key={grievance.id} className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">{grievance.title}</p>
@@ -402,7 +525,7 @@ export default function Grievances() {
           </div>
 
           <div className="grid gap-4">
-            {mockGrievances.map((grievance) => (
+            {grievances.map((grievance: any) => (
               <Card key={grievance.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start">

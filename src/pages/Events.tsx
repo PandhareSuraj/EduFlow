@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,13 +16,100 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { format } from "date-fns";
+
+const eventFormSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  event_type: z.string().min(1, "Please select an event type"),
+  event_date: z.string().min(1, "Event date is required"),
+  location: z.string().min(1, "Location is required"),
+  start_time: z.string().min(1, "Start time is required"),
+  end_time: z.string().min(1, "End time is required"),
+  max_attendees: z.coerce.number().min(1, "Must be at least 1").optional(),
+});
 
 export default function Events() {
   const { userRole } = useAuth();
-  const [events, setEvents] = useState([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("upcoming");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const form = useForm<z.infer<typeof eventFormSchema>>({
+    resolver: zodResolver(eventFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      event_type: "",
+      event_date: "",
+      location: "",
+      start_time: "",
+      end_time: "",
+      max_attendees: undefined,
+    },
+  });
+
+  // Fetch events from database
+  const { data: events = [] } = useQuery({
+    queryKey: ["events"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events" as any)
+        .select("*")
+        .order("event_date", { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Create event mutation
+  const createEventMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof eventFormSchema>) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("college_id")
+        .eq("user_id", userData.user?.id)
+        .single();
+
+      const { data, error } = await supabase
+        .from("events" as any)
+        .insert([{
+          ...values,
+          college_id: userRole?.college_id,
+          status: "scheduled",
+          created_by: userData.user?.id,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      toast({
+        title: "Success",
+        description: "Event created successfully",
+      });
+      setShowCreateDialog(false);
+      form.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create event",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof eventFormSchema>) => {
+    createEventMutation.mutate(values);
+  };
 
   const mockEvents = [
     {
@@ -108,72 +201,142 @@ export default function Events() {
                   Add a new event to the college calendar
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="title" className="text-right">
-                    Event Title
-                  </Label>
-                  <Input id="title" className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="description" className="text-right">
-                    Description
-                  </Label>
-                  <Textarea id="description" className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="event_type" className="text-right">
-                    Event Type
-                  </Label>
-                  <Select>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select event type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="academic">Academic</SelectItem>
-                      <SelectItem value="cultural">Cultural</SelectItem>
-                      <SelectItem value="sports">Sports</SelectItem>
-                      <SelectItem value="holiday">Holiday</SelectItem>
-                      <SelectItem value="placement">Placement</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="event_date">Event Date</Label>
-                    <Input id="event_date" type="date" />
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Event Title</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Annual Cultural Fest" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={3} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="event_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Event Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select event type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="academic">Academic</SelectItem>
+                            <SelectItem value="cultural">Cultural</SelectItem>
+                            <SelectItem value="sports">Sports</SelectItem>
+                            <SelectItem value="holiday">Holiday</SelectItem>
+                            <SelectItem value="placement">Placement</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="event_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Event Date</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Location</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Main Auditorium" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                  <div>
-                    <Label htmlFor="location">Location</Label>
-                    <Input id="location" placeholder="Event venue" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="start_time"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Start Time</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="end_time"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>End Time</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="start_time">Start Time</Label>
-                    <Input id="start_time" type="time" />
+                  <FormField
+                    control={form.control}
+                    name="max_attendees"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Max Attendees (optional)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} placeholder="500" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setShowCreateDialog(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={createEventMutation.isPending}>
+                      {createEventMutation.isPending ? "Creating..." : "Create Event"}
+                    </Button>
                   </div>
-                  <div>
-                    <Label htmlFor="end_time">End Time</Label>
-                    <Input id="end_time" type="time" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="max_attendees" className="text-right">
-                    Max Attendees
-                  </Label>
-                  <Input id="max_attendees" type="number" className="col-span-3" />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => setShowCreateDialog(false)}>
-                  Create Event
-                </Button>
-              </div>
+                </form>
+              </Form>
             </DialogContent>
           </Dialog>
         )}
@@ -197,7 +360,7 @@ export default function Events() {
           </div>
 
           <div className="grid gap-4">
-            {mockEvents.map((event) => (
+            {events.map((event: any) => (
               <Card key={event.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start">

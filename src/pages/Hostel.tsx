@@ -16,16 +16,16 @@ const Hostel = () => {
     queryKey: ["hostel-stats"],
     queryFn: async () => {
       const { count: totalRooms } = await supabase
-        .from("hostel_rooms" as any)
+        .from("hostel_rooms")
         .select("*", { count: "exact", head: true });
       
       const { count: occupiedRooms } = await supabase
-        .from("hostel_allocations" as any)
+        .from("hostel_allocations")
         .select("*", { count: "exact", head: true })
         .eq("status", "active");
       
       const { count: pendingComplaints } = await supabase
-        .from("hostel_complaints" as any)
+        .from("hostel_complaints")
         .select("*", { count: "exact", head: true })
         .eq("status", "pending");
 

@@ -433,6 +433,72 @@ export type Database = {
         }
         Relationships: []
       }
+      buses: {
+        Row: {
+          bus_number: string
+          capacity: number
+          college_id: string | null
+          created_at: string
+          created_by: string | null
+          driver_name: string | null
+          driver_phone: string | null
+          id: string
+          registration_number: string | null
+          route_id: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          vehicle_type: string | null
+        }
+        Insert: {
+          bus_number: string
+          capacity: number
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          driver_name?: string | null
+          driver_phone?: string | null
+          id?: string
+          registration_number?: string | null
+          route_id?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          vehicle_type?: string | null
+        }
+        Update: {
+          bus_number?: string
+          capacity?: number
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          driver_name?: string | null
+          driver_phone?: string | null
+          id?: string
+          registration_number?: string | null
+          route_id?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          vehicle_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buses_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buses_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "transport_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_schedules: {
         Row: {
           class_name: string
@@ -1860,6 +1926,228 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hostel_allocations: {
+        Row: {
+          allocation_date: string
+          college_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          room_fee: number
+          room_id: string | null
+          semester: number | null
+          special_requirements: string | null
+          status: string
+          student_id: number | null
+          updated_at: string
+          updated_by: string | null
+          vacate_date: string | null
+        }
+        Insert: {
+          allocation_date?: string
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          room_fee?: number
+          room_id?: string | null
+          semester?: number | null
+          special_requirements?: string | null
+          status?: string
+          student_id?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          vacate_date?: string | null
+        }
+        Update: {
+          allocation_date?: string
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          room_fee?: number
+          room_id?: string | null
+          semester?: number | null
+          special_requirements?: string | null
+          status?: string
+          student_id?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          vacate_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hostel_allocations_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hostel_allocations_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "hostel_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hostel_allocations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "hostel_allocations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hostel_complaints: {
+        Row: {
+          college_id: string | null
+          complaint_type: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          priority: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          room_id: string | null
+          status: string
+          student_id: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          college_id?: string | null
+          complaint_type: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          room_id?: string | null
+          status?: string
+          student_id?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          college_id?: string | null
+          complaint_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          room_id?: string | null
+          status?: string
+          student_id?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hostel_complaints_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hostel_complaints_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "hostel_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hostel_complaints_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "hostel_complaints_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hostel_rooms: {
+        Row: {
+          building: string | null
+          capacity: number
+          college_id: string | null
+          created_at: string
+          created_by: string | null
+          facilities: string[] | null
+          floor: number | null
+          id: string
+          occupied_beds: number
+          rent_amount: number
+          room_number: string
+          room_type: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          building?: string | null
+          capacity?: number
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          facilities?: string[] | null
+          floor?: number | null
+          id?: string
+          occupied_beds?: number
+          rent_amount?: number
+          room_number: string
+          room_type?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          building?: string | null
+          capacity?: number
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          facilities?: string[] | null
+          floor?: number | null
+          id?: string
+          occupied_beds?: number
+          rent_amount?: number
+          room_number?: string
+          room_type?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hostel_rooms_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
             referencedColumns: ["id"]
           },
         ]
@@ -3666,6 +3954,68 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      transport_routes: {
+        Row: {
+          base_fare: number
+          college_id: string | null
+          created_at: string
+          created_by: string | null
+          distance: number | null
+          duration: number | null
+          ending_point: string
+          id: string
+          route_code: string | null
+          route_name: string
+          starting_point: string
+          status: string
+          stops: Json | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          base_fare?: number
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          distance?: number | null
+          duration?: number | null
+          ending_point: string
+          id?: string
+          route_code?: string | null
+          route_name: string
+          starting_point: string
+          status?: string
+          stops?: Json | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          base_fare?: number
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          distance?: number | null
+          duration?: number | null
+          ending_point?: string
+          id?: string
+          route_code?: string | null
+          route_name?: string
+          starting_point?: string
+          status?: string
+          stops?: Json | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transport_routes_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

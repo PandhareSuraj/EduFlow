@@ -68,7 +68,7 @@ export function AddTransportRouteDialog({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setLoading(true);
-      const { error } = await supabase.from("transport_routes" as any).insert({
+      const { error } = await supabase.from("transport_routes").insert({
         route_name: values.route_name,
         route_code: values.route_code,
         starting_point: values.starting_point,
@@ -78,7 +78,7 @@ export function AddTransportRouteDialog({
         estimated_duration: parseInt(values.estimated_duration),
         base_fare: parseFloat(values.base_fare),
         status: "active",
-      } as any);
+      });
 
       if (error) throw error;
 

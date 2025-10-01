@@ -16,12 +16,12 @@ const Transport = () => {
     queryKey: ["transport-stats"],
     queryFn: async () => {
       const { count: activeRoutes } = await supabase
-        .from("transport_routes" as any)
+        .from("transport_routes")
         .select("*", { count: "exact", head: true })
         .eq("status", "active");
       
       const { count: activeBuses } = await supabase
-        .from("buses" as any)
+        .from("buses")
         .select("*", { count: "exact", head: true })
         .eq("status", "active");
 
