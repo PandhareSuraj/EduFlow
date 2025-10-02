@@ -164,7 +164,11 @@ export default function Index() {
                     <Card key={i} className="bg-card/50 backdrop-blur-sm hover:scale-105 transition-transform cursor-pointer">
                       <CardContent className="p-6 text-center">
                         <div className={`p-3 bg-${item.color}/10 rounded-full w-fit mx-auto mb-3`}>
-                          <item.icon className={`h-6 w-6 text-${item.color}`} />
+                          {item.label === "Finances" ? (
+                            <span className={`text-2xl font-bold text-${item.color}`}>₹</span>
+                          ) : (
+                            <item.icon className={`h-6 w-6 text-${item.color}`} />
+                          )}
                         </div>
                         <p className="font-medium">{item.label}</p>
                       </CardContent>
@@ -253,7 +257,11 @@ export default function Index() {
             >
               <CardHeader>
                 <div className="p-3 bg-gradient-to-br from-primary to-secondary rounded-xl w-fit mb-4 group-hover:scale-110 transition-transform">
-                  <feature.icon className="h-8 w-8 text-white" />
+                  {feature.title === "Financial Management" ? (
+                    <span className="text-3xl font-bold text-white">₹</span>
+                  ) : (
+                    <feature.icon className="h-8 w-8 text-white" />
+                  )}
                 </div>
                 <CardTitle className="text-xl">{feature.title}</CardTitle>
                 <CardDescription className="text-base">
@@ -426,7 +434,7 @@ export default function Index() {
           </div>
 
           <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>© 2024 EduERP Platform. Empowering Educational Institutions Worldwide.</p>
+            <p>© 2025 EduERP Platform. Empowering Educational Institutions Worldwide. Built at myweb (<a href="https://www.mywebz.in" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline transition-colors">www.mywebz.in</a>)</p>
             <div className="flex gap-4">
               <span className="hover:text-primary cursor-pointer transition-colors">Twitter</span>
               <span className="hover:text-primary cursor-pointer transition-colors">LinkedIn</span>
