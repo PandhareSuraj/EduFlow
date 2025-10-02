@@ -9,68 +9,68 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Core Brand Colors */
-    --background: 240 10% 98%;
-    --foreground: 215 25% 27%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
     
     /* Card & Surface Colors */
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 27%;
+    --card-foreground: 222.2 84% 4.9%;
     
     /* Popover Colors */
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 27%;
+    --popover-foreground: 222.2 84% 4.9%;
     
-    /* Primary Brand - Professional Blue */
-    --primary: 213 94% 68%;
+    /* Primary Brand - Modern Blue */
+    --primary: 210 100% 65%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 213 94% 78%;
+    --primary-glow: 210 100% 75%;
     
-    /* Secondary - Light Blue */
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 215 25% 27%;
+    /* Secondary - Purple Accent */
+    --secondary: 266 100% 70%;
+    --secondary-foreground: 0 0% 100%;
     
     /* Muted Colors */
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
     
-    /* Accent - Medical Green */
-    --accent: 142 76% 36%;
+    /* Accent - Vibrant Purple */
+    --accent: 266 100% 70%;
     --accent-foreground: 0 0% 100%;
     
-    /* Success - Medical Green */
-    --success: 142 76% 36%;
+    /* Success - Vibrant Green */
+    --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
     
-    /* Warning - Amber */
-    --warning: 45 93% 58%;
+    /* Warning - Modern Orange */
+    --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
     
-    /* Destructive - Medical Red */
-    --destructive: 0 84% 60%;
+    /* Destructive - Red */
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
     
     /* Border & Input */
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 213 94% 68%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 210 100% 65%;
     
-    /* Medical Blue Variations */
-    --medical-blue: 213 94% 68%;
-    --medical-blue-dark: 213 94% 58%;
-    --medical-blue-light: 213 94% 88%;
+    /* Modern Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(210, 100%, 65%) 0%, hsl(266, 100%, 70%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(210, 100%, 65%) 0%, hsl(266, 100%, 70%) 50%, hsl(330, 100%, 70%) 100%);
+    --gradient-card: linear-gradient(135deg, hsla(0, 0%, 100%, 0.95), hsla(210, 100%, 98%, 0.95));
+    --gradient-glass: linear-gradient(135deg, hsla(0, 0%, 100%, 0.1), hsla(0, 0%, 100%, 0.05));
+    --gradient-header: linear-gradient(135deg, hsl(210, 100%, 65%), hsl(266, 100%, 70%));
     
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(213 94% 68%), hsl(213 94% 78%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 40% 98%));
-    --gradient-header: linear-gradient(135deg, hsl(213 94% 68%), hsl(213 94% 58%));
-    
-    /* Shadows */
-    --shadow-card: 0 4px 20px hsl(213 94% 68% / 0.1);
-    --shadow-header: 0 8px 32px hsl(213 94% 68% / 0.15);
-    --shadow-glow: 0 0 30px hsl(213 94% 68% / 0.3);
+    /* Modern Shadows */
+    --shadow-card: 0 4px 6px -1px hsla(210, 100%, 65%, 0.1), 0 2px 4px -1px hsla(210, 100%, 65%, 0.06);
+    --shadow-elegant: 0 20px 60px -15px hsla(210, 100%, 65%, 0.3);
+    --shadow-glow: 0 0 60px hsla(210, 100%, 70%, 0.5);
+    --shadow-glass: 0 8px 32px 0 hsla(210, 100%, 65%, 0.1);
+    --shadow-header: 0 8px 32px hsla(210, 100%, 65%, 0.15);
     
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     --transition-fast: all 0.15s ease-out;
     
     --radius: 0.75rem;
@@ -102,32 +102,49 @@ All colors MUST be HSL.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 210 100% 65%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 266 100% 70%;
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 266 100% 70%;
+    --accent-foreground: 0 0% 100%;
 
+    --success: 160 84% 39%;
+    --warning: 38 92% 50%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 210 100% 65%;
+    
+    /* Modern Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(210, 100%, 65%) 0%, hsl(266, 100%, 70%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(210, 100%, 65%) 0%, hsl(266, 100%, 70%) 50%, hsl(330, 100%, 70%) 100%);
+    --gradient-card: linear-gradient(135deg, hsla(222.2, 84%, 7%, 0.95), hsla(217.2, 32.6%, 20%, 0.95));
+    --gradient-glass: linear-gradient(135deg, hsla(255, 255%, 255%, 0.05), hsla(255, 255%, 255%, 0.02));
+    --gradient-header: linear-gradient(135deg, hsl(210, 100%, 65%), hsl(266, 100%, 70%));
+    
+    /* Modern Shadows */
+    --shadow-card: 0 4px 6px -1px hsla(210, 100%, 65%, 0.2), 0 2px 4px -1px hsla(210, 100%, 65%, 0.1);
+    --shadow-elegant: 0 20px 60px -15px hsla(210, 100%, 65%, 0.5);
+    --shadow-glow: 0 0 60px hsla(210, 100%, 70%, 0.7);
+    --shadow-glass: 0 8px 32px 0 hsla(210, 100%, 65%, 0.2);
+    --shadow-header: 0 8px 32px hsla(210, 100%, 65%, 0.25);
+    
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 210 100% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 210 100% 65%;
   }
 }
 

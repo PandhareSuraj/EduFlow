@@ -1,159 +1,439 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, Users, BookOpen, TrendingUp, LogIn } from "lucide-react";
+import { 
+  GraduationCap, Users, BookOpen, TrendingUp, LogIn, 
+  CheckCircle2, BarChart3, Shield, Zap, Clock, Globe,
+  Calendar, DollarSign, FileText, Award, Building2, Bus,
+  Heart, UserCheck, ArrowRight, Sparkles, Play
+} from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 
 export default function Index() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [statsCount, setStatsCount] = useState({ colleges: 0, students: 0, faculty: 0, uptime: 0 });
 
   useEffect(() => {
-    // Redirect authenticated users to dashboard
     if (!loading && user) {
       navigate('/dashboard');
     }
   }, [user, loading, navigate]);
 
+  useEffect(() => {
+    // Animate counters
+    const duration = 2000;
+    const steps = 60;
+    const interval = duration / steps;
+    
+    const targets = { colleges: 500, students: 50000, faculty: 5000, uptime: 99.9 };
+    let step = 0;
+
+    const timer = setInterval(() => {
+      step++;
+      setStatsCount({
+        colleges: Math.floor((targets.colleges * step) / steps),
+        students: Math.floor((targets.students * step) / steps),
+        faculty: Math.floor((targets.faculty * step) / steps),
+        uptime: parseFloat(((targets.uptime * step) / steps).toFixed(1))
+      });
+
+      if (step >= steps) clearInterval(timer);
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, []);
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  // Only show landing page for non-authenticated users
-  if (user) {
-    return null;
-  }
+  if (user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+    <div className="min-h-screen bg-background overflow-hidden">
+      {/* Animated Background */}
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
+      </div>
+
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <GraduationCap className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold">EduERP Platform</span>
+            <div className="p-2 bg-gradient-to-br from-primary to-secondary rounded-lg">
+              <GraduationCap className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              EduERP Platform
+            </span>
           </div>
-          <Button onClick={() => navigate('/auth')}>
-            <LogIn className="mr-2 h-4 w-4" />
-            Sign In
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate('/auth')} className="hidden sm:flex">
+              Features
+            </Button>
+            <Button onClick={() => navigate('/auth')} className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity">
+              <LogIn className="mr-2 h-4 w-4" />
+              Sign In
+            </Button>
+          </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Complete College Management Platform
-          </h1>
-          <p className="text-xl text-muted-foreground mb-8">
-            Powerful ERP System for Educational Institutions of All Types
-          </p>
-          <Button size="lg" onClick={() => navigate('/auth')} className="shadow-elegant">
-            Access Your Institution
-          </Button>
+      <section className="container mx-auto px-4 py-20 md:py-32">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-8 animate-fade-in">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">Complete College Management Solution</span>
+            </div>
+            
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
+              Transform Your{" "}
+              <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-pulse">
+                Institution
+              </span>
+              {" "}Digitally
+            </h1>
+            
+            <p className="text-xl text-muted-foreground leading-relaxed">
+              Powerful ERP system designed for educational institutions of all types. 
+              Manage students, faculty, academics, finances, and operations seamlessly.
+            </p>
+
+            <div className="flex flex-wrap gap-4">
+              <Button 
+                size="lg" 
+                onClick={() => navigate('/auth')}
+                className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-all shadow-elegant hover:shadow-glow group"
+              >
+                Get Started Free
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => navigate('/auth')}
+                className="border-2 hover:bg-primary/5 group"
+              >
+                <Play className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                Watch Demo
+              </Button>
+            </div>
+
+            {/* Stats Counter */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-8">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary">{statsCount.colleges}+</div>
+                <div className="text-sm text-muted-foreground">Institutions</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-secondary">{statsCount.students.toLocaleString()}+</div>
+                <div className="text-sm text-muted-foreground">Students</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-accent">{statsCount.faculty.toLocaleString()}+</div>
+                <div className="text-sm text-muted-foreground">Faculty</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-success">{statsCount.uptime}%</div>
+                <div className="text-sm text-muted-foreground">Uptime</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Hero Visual */}
+          <div className="relative animate-fade-in delay-300">
+            <div className="relative rounded-2xl overflow-hidden shadow-glass border border-primary/10 bg-gradient-glass backdrop-blur-xl p-1">
+              <div className="rounded-xl overflow-hidden bg-gradient-to-br from-primary/5 to-secondary/5 p-8">
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { icon: Users, label: "Students", color: "primary" },
+                    { icon: BookOpen, label: "Academics", color: "secondary" },
+                    { icon: DollarSign, label: "Finances", color: "success" },
+                    { icon: Calendar, label: "Events", color: "warning" }
+                  ].map((item, i) => (
+                    <Card key={i} className="bg-card/50 backdrop-blur-sm hover:scale-105 transition-transform cursor-pointer">
+                      <CardContent className="p-6 text-center">
+                        <div className={`p-3 bg-${item.color}/10 rounded-full w-fit mx-auto mb-3`}>
+                          <item.icon className={`h-6 w-6 text-${item.color}`} />
+                        </div>
+                        <p className="font-medium">{item.label}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl animate-pulse"></div>
+            <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-secondary/20 rounded-full blur-2xl animate-pulse delay-1000"></div>
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="container mx-auto px-4 py-20">
-        <h2 className="text-3xl font-bold text-center mb-4">Platform Features</h2>
-        <p className="text-center text-muted-foreground mb-12">Supporting educational institutions across all disciplines</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <Card className="shadow-card">
-            <CardHeader>
-              <Users className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>Multi-College Management</CardTitle>
-              <CardDescription>
-                Manage multiple educational institutions from a single platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Centralized Administration</li>
-                <li>• Institution-wise Data Segregation</li>
-                <li>• Cross-Institution Reporting</li>
-                <li>• Role-based Access Control</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card">
-            <CardHeader>
-              <BookOpen className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>Academic Excellence</CardTitle>
-              <CardDescription>
-                Complete academic lifecycle management for any institution type
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Student Management System</li>
-                <li>• Course & Curriculum Planning</li>
-                <li>• Examination & Assessment</li>
-                <li>• Faculty Performance Tracking</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card">
-            <CardHeader>
-              <TrendingUp className="h-10 w-10 text-primary mb-2" />
-              <CardTitle>Smart Administration</CardTitle>
-              <CardDescription>
-                Advanced tools for efficient institutional operations
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Financial Management</li>
-                <li>• Library & Inventory</li>
-                <li>• Analytics & Insights</li>
-                <li>• Compliance & Reporting</li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Additional Features Section */}
+      {/* Core Features */}
       <section className="container mx-auto px-4 py-20 bg-muted/30">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Supporting All Institution Types</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Our platform adapts to your institution's unique needs, whether you're running a medical college, 
-            engineering institute, arts college, or any other educational establishment.
+        <div className="text-center mb-16 space-y-4">
+          <h2 className="text-3xl md:text-5xl font-bold">
+            Everything Your Institution Needs
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Comprehensive modules designed for modern educational management
           </p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          <div className="text-center p-4">
-            <div className="text-2xl mb-2">🏥</div>
-            <h3 className="font-semibold">Medical Colleges</h3>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[
+            {
+              icon: Users,
+              title: "Student Management",
+              description: "Complete student lifecycle from admission to alumni. Track records, attendance, and performance.",
+              features: ["Admission Management", "Profile Management", "Attendance Tracking", "Progress Reports"]
+            },
+            {
+              icon: BookOpen,
+              title: "Academic Excellence",
+              description: "Manage courses, curriculum, examinations, and results with ease and precision.",
+              features: ["Course Management", "Exam Scheduling", "Result Processing", "Faculty Assignment"]
+            },
+            {
+              icon: DollarSign,
+              title: "Financial Management",
+              description: "Handle fees, payments, expenses, and generate comprehensive financial reports.",
+              features: ["Fee Collection", "Payment Processing", "Expense Tracking", "Financial Reports"]
+            },
+            {
+              icon: Building2,
+              title: "Hostel Management",
+              description: "Manage hostel rooms, allocations, complaints, and maintain student accommodation.",
+              features: ["Room Allocation", "Occupancy Tracking", "Complaint Management", "Inventory Control"]
+            },
+            {
+              icon: Bus,
+              title: "Transport System",
+              description: "Organize routes, track buses, manage drivers, and ensure safe student transportation.",
+              features: ["Route Management", "Vehicle Tracking", "Driver Management", "Student Assignments"]
+            },
+            {
+              icon: BookOpen,
+              title: "Library System",
+              description: "Comprehensive library management with book inventory, issue/return, and digital cataloging.",
+              features: ["Book Management", "Issue/Return", "Member Management", "Digital Catalog"]
+            },
+            {
+              icon: Calendar,
+              title: "Event Management",
+              description: "Plan, organize, and track institutional events, seminars, and activities seamlessly.",
+              features: ["Event Scheduling", "Registration", "Attendance", "Photo Gallery"]
+            },
+            {
+              icon: Award,
+              title: "Placement & Career",
+              description: "Connect students with opportunities, track placements, and maintain industry relationships.",
+              features: ["Company Database", "Placement Drives", "Student Profiles", "Success Tracking"]
+            },
+            {
+              icon: Heart,
+              title: "Grievance Handling",
+              description: "Efficient system to receive, track, and resolve student and staff grievances.",
+              features: ["Anonymous Reporting", "Status Tracking", "Priority Management", "Resolution Reports"]
+            }
+          ].map((feature, i) => (
+            <Card 
+              key={i} 
+              className="group bg-card/50 backdrop-blur-sm hover:shadow-glow transition-all duration-300 hover:-translate-y-2 border-primary/10"
+            >
+              <CardHeader>
+                <div className="p-3 bg-gradient-to-br from-primary to-secondary rounded-xl w-fit mb-4 group-hover:scale-110 transition-transform">
+                  <feature.icon className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-xl">{feature.title}</CardTitle>
+                <CardDescription className="text-base">
+                  {feature.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {feature.features.map((item, j) => (
+                    <li key={j} className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Institution Types */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="text-center mb-16 space-y-4">
+          <h2 className="text-3xl md:text-5xl font-bold">
+            Built for All Institution Types
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Flexible and adaptable to your institution's unique requirements
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { emoji: "🏥", title: "Medical Colleges", desc: "Patient management, clinical rotations, equipment tracking" },
+            { emoji: "⚙️", title: "Engineering", desc: "Lab management, projects, industry partnerships" },
+            { emoji: "🎨", title: "Arts & Sciences", desc: "Cultural events, research, diverse programs" },
+            { emoji: "💼", title: "Commerce", desc: "Business simulations, internships, career guidance" },
+            { emoji: "🎓", title: "Universities", desc: "Multi-department coordination, large-scale operations" },
+            { emoji: "🏫", title: "K-12 Schools", desc: "Age-appropriate features, parent communication" },
+            { emoji: "💻", title: "Technical Institutes", desc: "Skill development, certification programs" },
+            { emoji: "🌍", title: "International", desc: "Multi-language, diverse curricula support" }
+          ].map((type, i) => (
+            <Card 
+              key={i}
+              className="text-center hover:shadow-elegant transition-all duration-300 hover:-translate-y-1 cursor-pointer group bg-gradient-glass backdrop-blur-sm border-primary/10"
+            >
+              <CardContent className="p-8">
+                <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">{type.emoji}</div>
+                <h3 className="font-bold text-lg mb-2">{type.title}</h3>
+                <p className="text-sm text-muted-foreground">{type.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="container mx-auto px-4 py-20 bg-muted/30">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-3xl md:text-5xl font-bold">
+              Why Institutions Choose EduERP
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Experience the difference with our advanced features
+            </p>
           </div>
-          <div className="text-center p-4">
-            <div className="text-2xl mb-2">⚙️</div>
-            <h3 className="font-semibold">Engineering</h3>
-          </div>
-          <div className="text-center p-4">
-            <div className="text-2xl mb-2">🎨</div>
-            <h3 className="font-semibold">Arts & Sciences</h3>
-          </div>
-          <div className="text-center p-4">
-            <div className="text-2xl mb-2">💼</div>
-            <h3 className="font-semibold">Commerce</h3>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {[
+              { icon: Zap, title: "Lightning Fast", desc: "Optimized performance for thousands of concurrent users" },
+              { icon: Shield, title: "Secure & Compliant", desc: "Enterprise-grade security with data encryption" },
+              { icon: Clock, title: "24/7 Support", desc: "Round-the-clock assistance from our expert team" },
+              { icon: Globe, title: "Cloud-Based", desc: "Access from anywhere, anytime, on any device" },
+              { icon: BarChart3, title: "Advanced Analytics", desc: "Data-driven insights for better decision making" },
+              { icon: UserCheck, title: "Easy to Use", desc: "Intuitive interface requiring minimal training" }
+            ].map((item, i) => (
+              <div key={i} className="flex gap-4 items-start group">
+                <div className="p-3 bg-gradient-to-br from-primary to-secondary rounded-xl flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <item.icon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg mb-2">{item.title}</h3>
+                  <p className="text-muted-foreground">{item.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="container mx-auto px-4 py-20">
+        <Card className="bg-gradient-to-br from-primary via-secondary to-accent text-white border-0 shadow-glow">
+          <CardContent className="p-12 md:p-16 text-center space-y-6">
+            <h2 className="text-3xl md:text-5xl font-bold">
+              Ready to Transform Your Institution?
+            </h2>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto">
+              Join hundreds of institutions already using EduERP to streamline their operations
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center pt-6">
+              <Button 
+                size="lg" 
+                onClick={() => navigate('/auth')}
+                className="bg-white text-primary hover:bg-white/90 shadow-elegant group"
+              >
+                Start Free Trial
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => navigate('/auth')}
+                className="border-2 border-white text-white hover:bg-white/10"
+              >
+                Schedule a Demo
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-8 text-center text-muted-foreground">
-          <p>© 2024 EduERP Platform. Empowering Educational Institutions.</p>
+      <footer className="border-t bg-muted/30 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-gradient-to-br from-primary to-secondary rounded-lg">
+                  <GraduationCap className="h-5 w-5 text-white" />
+                </div>
+                <span className="font-bold">EduERP</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Complete college management solution for modern educational institutions.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Product</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="hover:text-primary cursor-pointer transition-colors">Features</li>
+                <li className="hover:text-primary cursor-pointer transition-colors">Pricing</li>
+                <li className="hover:text-primary cursor-pointer transition-colors">Security</li>
+                <li className="hover:text-primary cursor-pointer transition-colors">Roadmap</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Company</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="hover:text-primary cursor-pointer transition-colors">About Us</li>
+                <li className="hover:text-primary cursor-pointer transition-colors">Careers</li>
+                <li className="hover:text-primary cursor-pointer transition-colors">Blog</li>
+                <li className="hover:text-primary cursor-pointer transition-colors">Contact</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Legal</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="hover:text-primary cursor-pointer transition-colors">Privacy Policy</li>
+                <li className="hover:text-primary cursor-pointer transition-colors">Terms of Service</li>
+                <li className="hover:text-primary cursor-pointer transition-colors">Cookie Policy</li>
+                <li className="hover:text-primary cursor-pointer transition-colors">GDPR</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+            <p>© 2024 EduERP Platform. Empowering Educational Institutions Worldwide.</p>
+            <div className="flex gap-4">
+              <span className="hover:text-primary cursor-pointer transition-colors">Twitter</span>
+              <span className="hover:text-primary cursor-pointer transition-colors">LinkedIn</span>
+              <span className="hover:text-primary cursor-pointer transition-colors">Facebook</span>
+              <span className="hover:text-primary cursor-pointer transition-colors">Instagram</span>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
