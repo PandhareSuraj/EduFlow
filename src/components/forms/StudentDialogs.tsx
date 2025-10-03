@@ -379,10 +379,9 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
         await Promise.all(documentPromises);
       }
 
-      // Create fee record if fee structure exists and no discount is applied
-      // (The trigger will handle automatic creation, only intervene if discount is needed)
-      if (feeStructure && studentData && (feeData.discount_amount > 0 || feeData.discount_percentage > 0)) {
-        // Wait a moment for trigger to complete, then check and update with discount
+      // Always ensure fee record creation if fee structure exists
+      if (feeStructure && studentData) {
+        // Wait a moment for trigger to complete
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         const { data: existingFees, error: checkError } = await supabase
@@ -392,7 +391,7 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
 
         if (checkError) {
           console.error('Error checking existing fees:', checkError);
-        } else if (existingFees && existingFees.length > 0) {
+        } else if (existingFees && existingFees.length > 0 && (feeData.discount_amount > 0 || feeData.discount_percentage > 0)) {
           // Update existing fee with discount
           const feeId = existingFees[0].id;
           const originalAmount = feeStructure.total_fee;
@@ -421,8 +420,8 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
           if (updateError) {
             console.error('Error updating fee with discount:', updateError);
           }
-        } else {
-          // No existing fee found, create one with discount using RPC
+        } else if (!existingFees || existingFees.length === 0) {
+          // No existing fee found by trigger, create one using RPC
           const discountAmount = feeData.discount_type === 'amount' ? feeData.discount_amount : 0;
           const discountPercentage = feeData.discount_type === 'percentage' ? feeData.discount_percentage : 0;
           
@@ -435,7 +434,7 @@ export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {})
             });
 
           if (feeError) {
-            console.error('Error creating fee record with discount:', feeError);
+            console.error('Error creating fee record:', feeError);
           }
         }
       }

@@ -354,7 +354,10 @@ export default function Students() {
               </TableHeader>
               <TableBody>
                 {filteredStudents.map((student) => {
-                  const hasPendingFees = student.student_fees?.some(fee => fee.balance_amount > 0);
+                  // Calculate fee status: check if fees exist first
+                  const feeStatus = student.student_fees && student.student_fees.length > 0
+                    ? (student.student_fees.some(fee => fee.balance_amount > 0) ? 'due' : 'paid')
+                    : 'no_fees';
                   
                   return (
                     <TableRow key={student.id}>
@@ -374,13 +377,17 @@ export default function Students() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {hasPendingFees ? (
+                        {feeStatus === 'due' ? (
                           <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
                             Due
                           </Badge>
-                        ) : (
+                        ) : feeStatus === 'paid' ? (
                           <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                            Clear
+                            Paid
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
+                            Pending
                           </Badge>
                         )}
                       </TableCell>
