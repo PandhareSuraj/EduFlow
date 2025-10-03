@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,8 @@ import { AddBookDialog } from '@/components/library/AddBookDialog';
 import { IssueBookDialog } from '@/components/library/IssueBookDialog';
 import { ReturnBookDialog } from '@/components/library/ReturnBookDialog';
 import { AddCategoryDialog } from '@/components/library/AddCategoryDialog';
+import { EditBookDialog } from '@/components/library/EditBookDialog';
+import { EditBookIssueDialog } from '@/components/library/EditBookIssueDialog';
 import { LibraryStatsCard } from '@/components/library/LibraryStatsCard';
 import { LibraryMemberManagement } from '@/components/library/LibraryMemberManagement';
 import { useLibraryData } from '@/hooks/useLibraryData';
@@ -18,6 +21,7 @@ import { format } from 'date-fns';
 
 export default function Library() {
   const { userRole } = useAuth();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [addBookOpen, setAddBookOpen] = useState(false);
@@ -33,6 +37,11 @@ export default function Library() {
     libraryStats,
     loading
   } = useLibraryData();
+
+  const refreshData = () => {
+    queryClient.invalidateQueries({ queryKey: ['books'] });
+    queryClient.invalidateQueries({ queryKey: ['bookIssues'] });
+  };
 
   const isLibrarian = userRole === 'librarian' || userRole === 'admin' || userRole === 'super_admin';
   const isStudent = userRole === 'student';
@@ -169,6 +178,7 @@ export default function Library() {
                     <TableHead>Available</TableHead>
                     <TableHead>Total Copies</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -190,6 +200,15 @@ export default function Library() {
                         <Badge variant={book.status === 'active' ? "default" : "secondary"}>
                           {book.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {isLibrarian && (
+                          <EditBookDialog
+                            book={book}
+                            categories={bookCategories || []}
+                            onUpdate={refreshData}
+                          />
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -243,9 +262,16 @@ export default function Library() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button size="sm" variant="outline">
-                              Renew
-                            </Button>
+                            <div className="flex gap-2">
+                              <EditBookIssueDialog
+                                issue={issue}
+                                bookTitle={book?.title}
+                                onUpdate={refreshData}
+                              />
+                              <Button size="sm" variant="outline">
+                                Renew
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );

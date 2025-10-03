@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, Package, AlertTriangle, TrendingUp, TrendingDown, Edit, RefreshCw } from "lucide-react";
+import { EditInventoryItemDialog } from "@/components/forms/EditInventoryItemDialog";
+import { EditInventoryTransactionDialog } from "@/components/forms/EditInventoryTransactionDialog";
 import { useInventoryData } from "@/hooks/useInventoryData";
 import { AddInventoryItemDialog } from "@/components/forms/AddInventoryItemDialog";
 import { AddTransactionDialog } from "@/components/forms/AddTransactionDialog";
@@ -230,10 +232,11 @@ export default function Inventory() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-3 w-3 mr-1" />
-                              Edit
-                            </Button>
+                            <EditInventoryItemDialog
+                              item={item}
+                              suppliers={suppliers}
+                              onUpdate={refreshData}
+                            />
                             <AddTransactionDialog 
                               onAdd={addTransaction} 
                               items={items}
@@ -306,7 +309,11 @@ export default function Inventory() {
                       <TableCell>{format(new Date(transaction.transaction_date), 'MMM dd, yyyy')}</TableCell>
                       <TableCell>{transaction.purpose || 'N/A'}</TableCell>
                       <TableCell>
-                        <Button variant="outline" size="sm">View</Button>
+                        <EditInventoryTransactionDialog
+                          transaction={transaction}
+                          itemName={transaction.item.name}
+                          onUpdate={refreshData}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
