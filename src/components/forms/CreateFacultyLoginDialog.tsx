@@ -76,7 +76,24 @@ export function CreateFacultyLoginDialog({ faculty, trigger, onSuccess }: Create
       }
 
       if (!data?.success) {
-        throw new Error(data?.error || 'Failed to create user account');
+        const errorMsg = data?.error || 'Failed to create user account';
+        
+        // Parse specific error codes
+        if (errorMsg.includes('LOGIN_ALREADY_EXISTS')) {
+          const [, message] = errorMsg.split('|');
+          throw new Error(message || 'This faculty member already has a login account. Use "Manage Login" to update it.');
+        }
+        
+        if (errorMsg.includes('EMAIL_IN_USE')) {
+          const [, message] = errorMsg.split('|');
+          throw new Error(message || 'This email is already associated with another faculty member.');
+        }
+        
+        if (errorMsg.includes('already been registered')) {
+          throw new Error('This email already has an account. Please use "Manage Login" or contact the administrator.');
+        }
+        
+        throw new Error(errorMsg);
       }
 
       toast({
