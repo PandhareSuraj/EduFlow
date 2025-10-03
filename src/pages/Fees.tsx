@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Plus, Search, Download, Eye, DollarSign, Users, Percent, Receipt, Calendar, Clock, Settings, Calculator, FileText, Filter, Loader2, TrendingUp, CreditCard } from "lucide-react";
+import { Plus, Search, Download, Eye, DollarSign, Users, Percent, Receipt, Calendar, Clock, Settings, Calculator, FileText, Filter, Loader2, TrendingUp, CreditCard, Pencil } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCollege } from "@/contexts/CollegeContext";
@@ -15,6 +15,7 @@ import { PaymentHistoryDialog } from "@/components/fees/PaymentHistoryDialog";
 import { StudentFeeLedger } from "@/components/fees/StudentFeeLedger";
 import { TodaysDueReport } from "@/components/fees/TodaysDueReport";
 import { FeeStructureDialog } from "@/components/forms/FeeStructureDialog";
+import { EditStudentFeeDialog } from "@/components/fees/EditStudentFeeDialog";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 
 interface StudentFeeData {
@@ -482,13 +483,25 @@ export default function Fees() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
+                        <PermissionWrapper permission="FEES_COLLECT">
+                          <EditStudentFeeDialog
+                            feeRecord={record}
+                            onSuccess={fetchFeeRecords}
+                            trigger={
+                              <Button variant="ghost" size="sm" title="Edit fee record">
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
+                        </PermissionWrapper>
                         <Button 
                           variant="ghost" 
                           size="sm"
                           onClick={() => setSelectedStudentForHistory({
-                            id: record.students?.id || 0,
-                            name: record.students?.name || ''
+                            id: record.student_id,
+                            name: record.students?.name || 'N/A'
                           })}
+                          title="View payment history"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -498,7 +511,7 @@ export default function Fees() {
                               studentId={record.student_id}
                               onSuccess={fetchFeeRecords}
                               trigger={
-                                <Button variant="ghost" size="sm">
+                                <Button variant="ghost" size="sm" title="Collect payment">
                                   <CreditCard className="h-4 w-4" />
                                 </Button>
                               }

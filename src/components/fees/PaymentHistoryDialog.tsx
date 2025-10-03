@@ -7,10 +7,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CreditCard, FileText, Download } from "lucide-react";
+import { Calendar, CreditCard, FileText, Download, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { EditFeePaymentDialog } from "./EditFeePaymentDialog";
+import { DeleteFeePaymentDialog } from "./DeleteFeePaymentDialog";
+import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 
 interface PaymentHistoryDialogProps {
   open: boolean;
@@ -232,6 +235,32 @@ export function PaymentHistoryDialog({
                         ₹{payment.running_balance.toLocaleString('en-IN')}
                       </div>
                     </div>
+                  </div>
+                  
+                  <div className="flex-shrink-0 flex items-center gap-1">
+                    <PermissionWrapper permission="FEES_COLLECT">
+                      <EditFeePaymentDialog
+                        payment={{
+                          id: payment.payment_id,
+                          amount: payment.payment_amount,
+                          payment_method: payment.payment_method,
+                          payment_date: payment.payment_date,
+                          transaction_id: payment.transaction_id,
+                          cheque_number: payment.cheque_number,
+                          bank_name: payment.bank_name,
+                          remarks: payment.remarks,
+                          receipt_number: payment.receipt_number,
+                        }}
+                        maxAmount={payment.payment_amount + payment.running_balance}
+                        onSuccess={fetchPaymentHistory}
+                      />
+                      <DeleteFeePaymentDialog
+                        paymentId={payment.payment_id}
+                        receiptNumber={payment.receipt_number}
+                        amount={payment.payment_amount}
+                        onSuccess={fetchPaymentHistory}
+                      />
+                    </PermissionWrapper>
                   </div>
                 </div>
               ))}
