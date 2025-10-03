@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useCollege } from "@/contexts/CollegeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ interface AuditTrailViewerProps {
 
 export function AuditTrailViewer({ onClose }: AuditTrailViewerProps) {
   const { userRole } = useAuth();
+  const { college } = useCollege();
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -64,6 +66,11 @@ export function AuditTrailViewer({ onClose }: AuditTrailViewerProps) {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
+
+      // Explicitly filter by college for non-super_admin users
+      if (userRole === 'admin' && college?.id) {
+        query = query.eq('college_id', college.id);
+      }
 
       if (tableFilter && tableFilter !== 'all') {
         query = query.eq('table_name', tableFilter);
@@ -251,7 +258,7 @@ export function AuditTrailViewer({ onClose }: AuditTrailViewerProps) {
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span>Showing {filteredLogs.length} audit entries</span>
           <Badge variant="outline" className="text-xs">
-            {userRole === 'super_admin' ? 'System-wide Access' : 'College-specific Access'}
+            {userRole === 'super_admin' ? 'System-wide Access' : `${college?.name || 'College'} Access`}
           </Badge>
         </div>
 
