@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Calendar, Edit, Eye, Clock, Users, FileText, Loader2 } from "lucide-react";
 import { MCQQuestionBuilder } from "@/components/exams/MCQQuestionBuilder";
+import { EditExamDialog } from "@/components/forms/EditExamDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -327,9 +328,10 @@ export function ViewExamsDialog({ course }: ViewExamsDialogProps) {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <EditExamDialog 
+                            exam={exam}
+                            onExamUpdated={fetchExams}
+                          />
                           {exam.exam_type === 'mcq' && (
                             <MCQQuestionBuilder 
                               exam={{

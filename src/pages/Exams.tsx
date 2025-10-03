@@ -13,6 +13,7 @@ import { MCQQuestionBuilder } from "@/components/exams/MCQQuestionBuilder";
 import { AdminExamPreview } from "@/components/exams/AdminExamPreview";
 import { DeleteExamDialog } from "@/components/exams/DeleteExamDialog";
 import { RunExamNowDialog } from "@/components/exams/RunExamNowDialog";
+import { EditExamDialog } from "@/components/forms/EditExamDialog";
 import { ViewResultsDialog } from "@/components/forms/ResultDialogs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -631,6 +632,14 @@ export default function Exams() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2 flex-wrap">
+                            {/* Edit Exam */}
+                            <PermissionWrapper permission="EXAMS_CREATE" fallback={null}>
+                              <EditExamDialog 
+                                exam={exam}
+                                onExamUpdated={fetchData}
+                              />
+                            </PermissionWrapper>
+
                             {/* Admin Actions - Delete, Preview, Run Now */}
                             <PermissionWrapper permission="EXAMS_DELETE" fallback={null}>
                               <DeleteExamDialog 

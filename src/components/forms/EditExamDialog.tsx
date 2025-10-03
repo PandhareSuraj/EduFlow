@@ -1,54 +1,87 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Clock, FileText, Loader2 } from "lucide-react";
+import { Edit, Loader2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { convertISTDateTimeToUTC } from "@/utils/dateUtils";
+import { extractISTTime, convertISTDateTimeToUTC } from "@/utils/dateUtils";
 
-interface Course {
-  id: number;
+interface Exam {
+  id: string;
   name: string;
-  code: string;
-  college_id?: string;
+  course_id: number;
+  exam_date: string;
+  start_time?: string;
+  end_time?: string;
+  duration_minutes?: number;
+  total_questions?: number;
+  total_marks: number;
+  passing_marks?: number;
+  max_attempts?: number;
+  instructions?: string;
+  description?: string;
+  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+  exam_type?: string;
 }
 
-interface MCQExamCreationDialogProps {
-  courses: Course[];
-  onExamCreated?: () => void;
+interface EditExamDialogProps {
+  exam: Exam;
+  onExamUpdated?: () => void;
+  disabled?: boolean;
 }
 
-export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreationDialogProps) {
+export function EditExamDialog({ exam, onExamUpdated, disabled = false }: EditExamDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    course_id: "",
-    name: "",
-    exam_type: "mcq",
-    exam_date: "",
-    start_time: "",
-    end_time: "",
-    duration_minutes: 60,
-    total_questions: 30,
-    total_marks: 30,
-    passing_marks: 15,
-    max_attempts: 1,
-    instructions: "Read all questions carefully before answering. Each question carries equal marks.",
-    description: ""
+    name: exam.name,
+    exam_date: exam.exam_date,
+    start_time: exam.start_time ? extractISTTime(exam.start_time) : "",
+    end_time: exam.end_time ? extractISTTime(exam.end_time) : "",
+    duration_minutes: exam.duration_minutes || 60,
+    total_questions: exam.total_questions || 30,
+    total_marks: exam.total_marks,
+    passing_marks: exam.passing_marks || 50,
+    max_attempts: exam.max_attempts || 1,
+    instructions: exam.instructions || "",
+    description: exam.description || "",
+    status: exam.status
   });
   const { toast } = useToast();
+
+  // Prevent editing if exam is completed
+  const isCompleted = exam.status === 'completed';
+
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        name: exam.name,
+        exam_date: exam.exam_date,
+        start_time: exam.start_time ? extractISTTime(exam.start_time) : "",
+        end_time: exam.end_time ? extractISTTime(exam.end_time) : "",
+        duration_minutes: exam.duration_minutes || 60,
+        total_questions: exam.total_questions || 30,
+        total_marks: exam.total_marks,
+        passing_marks: exam.passing_marks || 50,
+        max_attempts: exam.max_attempts || 1,
+        instructions: exam.instructions || "",
+        description: exam.description || "",
+        status: exam.status
+      });
+    }
+  }, [open, exam]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.course_id) {
+    if (isCompleted) {
       toast({
-        title: "Validation Error",
-        description: "Please select a course",
+        title: "Cannot Edit",
+        description: "Completed exams cannot be edited",
         variant: "destructive"
       });
       return;
@@ -57,75 +90,45 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
     setLoading(true);
 
     try {
-      const selectedCourse = courses.find(c => c.id.toString() === formData.course_id);
-      if (!selectedCourse) {
-        throw new Error("Selected course not found");
+      const updateData: any = {
+        name: formData.name.trim(),
+        exam_date: formData.exam_date,
+        duration_minutes: formData.duration_minutes,
+        total_questions: formData.total_questions,
+        total_marks: formData.total_marks,
+        passing_marks: formData.passing_marks,
+        max_attempts: formData.max_attempts,
+        instructions: formData.instructions.trim(),
+        description: formData.description.trim() || null,
+        status: formData.status
+      };
+
+      // Handle time fields properly with IST to UTC conversion
+      if (formData.start_time) {
+        updateData.start_time = convertISTDateTimeToUTC(formData.exam_date, formData.start_time);
+      }
+      if (formData.end_time) {
+        updateData.end_time = convertISTDateTimeToUTC(formData.exam_date, formData.end_time);
       }
 
-      // Get college_id
-      let collegeId = selectedCourse.college_id;
-      if (!collegeId) {
-        const { data: courseData, error: courseError } = await supabase
-          .from('courses')
-          .select('college_id')
-          .eq('id', selectedCourse.id)
-          .single();
-        
-        if (courseError) throw courseError;
-        collegeId = courseData.college_id;
-      }
-
-      // Create exam with MCQ fields
-      const { data: examData, error: examError } = await supabase
+      const { error } = await supabase
         .from('exams')
-        .insert([{
-          course_id: selectedCourse.id,
-          college_id: collegeId,
-          name: formData.name.trim(),
-          exam_type: formData.exam_type,
-          exam_date: formData.exam_date,
-          start_time: formData.start_time ? convertISTDateTimeToUTC(formData.exam_date, formData.start_time) : null,
-          end_time: formData.end_time ? convertISTDateTimeToUTC(formData.exam_date, formData.end_time) : null,
-          duration_minutes: formData.duration_minutes,
-          total_questions: formData.total_questions,
-          total_marks: formData.total_marks,
-          passing_marks: formData.passing_marks,
-          max_attempts: formData.max_attempts,
-          instructions: formData.instructions.trim(),
-          description: formData.description.trim() || null,
-          status: 'scheduled'
-        }])
-        .select()
-        .single();
+        .update(updateData)
+        .eq('id', exam.id);
 
-      if (examError) throw examError;
+      if (error) throw error;
 
       toast({
-        title: "MCQ Exam Created",
-        description: `${formData.name} has been created for ${selectedCourse.name}. You can now add questions.`,
+        title: "Exam Updated",
+        description: `${formData.name} has been updated successfully.`,
       });
       
-      setFormData({ 
-        course_id: "",
-        name: "", 
-        exam_type: "mcq",
-        exam_date: "", 
-        start_time: "",
-        end_time: "",
-        duration_minutes: 60,
-        total_questions: 30,
-        total_marks: 30,
-        passing_marks: 15,
-        max_attempts: 1,
-        instructions: "Read all questions carefully before answering. Each question carries equal marks.",
-        description: ""
-      });
       setOpen(false);
-      onExamCreated?.();
+      onExamUpdated?.();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to create exam",
+        description: error.message || "Failed to update exam",
         variant: "destructive"
       });
     } finally {
@@ -136,62 +139,47 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Create MCQ Exam
+        <Button variant="ghost" size="sm" disabled={disabled}>
+          <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create MCQ Exam</DialogTitle>
+          <DialogTitle>Edit Exam</DialogTitle>
           <DialogDescription>
-            Set up a new multiple choice exam with customizable settings.
+            Update exam details. Course and exam type cannot be changed.
+            {isCompleted && " Completed exams cannot be edited."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="course_id">Course</Label>
-                <Select 
-                  value={formData.course_id} 
-                  onValueChange={(value) => setFormData({...formData, course_id: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a course" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {courses?.map((course) => (
-                      <SelectItem key={course.id} value={course.id.toString()}>
-                        {course.name} ({course.code})
-                      </SelectItem>
-                    )) || []}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
                 <Label htmlFor="name">Exam Name</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  placeholder="e.g., Mid-term MCQ Test"
+                  placeholder="e.g., Mid-term Examination"
                   required
+                  disabled={isCompleted}
                 />
               </div>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="exam_type">Exam Type</Label>
-                <Select value={formData.exam_type} onValueChange={(value) => setFormData({...formData, exam_type: value})}>
+                <Label htmlFor="status">Status</Label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(value: any) => setFormData({...formData, status: value})}
+                  disabled={isCompleted}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="mcq">MCQ (Multiple Choice)</SelectItem>
-                    <SelectItem value="written">Written Exam</SelectItem>
-                    <SelectItem value="practical">Practical Exam</SelectItem>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="ongoing">Ongoing</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -206,24 +194,27 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
                   value={formData.exam_date}
                   onChange={(e) => setFormData({...formData, exam_date: e.target.value})}
                   required
+                  disabled={isCompleted}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="start_time">Start Time</Label>
+                <Label htmlFor="start_time">Start Time (IST)</Label>
                 <Input
                   id="start_time"
                   type="time"
                   value={formData.start_time}
                   onChange={(e) => setFormData({...formData, start_time: e.target.value})}
+                  disabled={isCompleted}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="end_time">End Time</Label>
+                <Label htmlFor="end_time">End Time (IST)</Label>
                 <Input
                   id="end_time"
                   type="time"
                   value={formData.end_time}
                   onChange={(e) => setFormData({...formData, end_time: e.target.value})}
+                  disabled={isCompleted}
                 />
               </div>
             </div>
@@ -239,6 +230,7 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
                   value={formData.duration_minutes}
                   onChange={(e) => setFormData({...formData, duration_minutes: parseInt(e.target.value)})}
                   required
+                  disabled={isCompleted}
                 />
               </div>
               <div className="grid gap-2">
@@ -251,6 +243,7 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
                   value={formData.total_questions}
                   onChange={(e) => setFormData({...formData, total_questions: parseInt(e.target.value)})}
                   required
+                  disabled={isCompleted}
                 />
               </div>
               <div className="grid gap-2">
@@ -263,6 +256,7 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
                   value={formData.total_marks}
                   onChange={(e) => setFormData({...formData, total_marks: parseInt(e.target.value)})}
                   required
+                  disabled={isCompleted}
                 />
               </div>
             </div>
@@ -278,11 +272,16 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
                   value={formData.passing_marks}
                   onChange={(e) => setFormData({...formData, passing_marks: parseFloat(e.target.value)})}
                   required
+                  disabled={isCompleted}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="max_attempts">Max Attempts</Label>
-                <Select value={formData.max_attempts.toString()} onValueChange={(value) => setFormData({...formData, max_attempts: parseInt(value)})}>
+                <Select 
+                  value={formData.max_attempts.toString()} 
+                  onValueChange={(value) => setFormData({...formData, max_attempts: parseInt(value)})}
+                  disabled={isCompleted}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -304,6 +303,7 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
                 onChange={(e) => setFormData({...formData, instructions: e.target.value})}
                 placeholder="Instructions for students taking the exam..."
                 rows={3}
+                disabled={isCompleted}
               />
             </div>
 
@@ -315,6 +315,7 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
                 placeholder="Optional exam description..."
                 rows={2}
+                disabled={isCompleted}
               />
             </div>
           </div>
@@ -322,16 +323,16 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || isCompleted}>
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating...
+                  Updating...
                 </>
               ) : (
                 <>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Create Exam
+                  <Save className="h-4 w-4 mr-2" />
+                  Update Exam
                 </>
               )}
             </Button>

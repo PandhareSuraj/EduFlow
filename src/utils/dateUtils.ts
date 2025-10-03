@@ -104,6 +104,29 @@ export const formatDuration = (minutes: number): string => {
 };
 
 /**
+ * Extract time in IST format (HH:mm) from UTC timestamp
+ */
+export const extractISTTime = (utcTimestamp: string | Date): string => {
+  const istDate = convertToIST(utcTimestamp);
+  return format(istDate, 'HH:mm', { timeZone: IST_TIMEZONE });
+};
+
+/**
+ * Create IST datetime from date string and time string
+ */
+export const createISTDateTime = (dateStr: string, timeStr: string): Date => {
+  return new Date(`${dateStr}T${timeStr}:00`);
+};
+
+/**
+ * Convert IST date and time strings to UTC for storage
+ */
+export const convertISTDateTimeToUTC = (dateStr: string, timeStr: string): string => {
+  const istDateTime = createISTDateTime(dateStr, timeStr);
+  return convertISTToUTC(istDateTime).toISOString();
+};
+
+/**
  * Get exam status based on IST timing
  */
 export const getExamStatus = (
