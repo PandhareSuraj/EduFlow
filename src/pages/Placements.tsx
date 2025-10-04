@@ -138,9 +138,17 @@ const Placements = () => {
   async function onSubmitJob(values: z.infer<typeof jobSchema>) {
     try {
       setLoading(true);
-      const { error } = await supabase.from("job_postings" as any).insert({
+      
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("college_id")
+        .eq("user_id", userData.user?.id)
+        .single();
+
+      const { error } = await supabase.from("job_postings").insert({
         company_id: values.company_id,
-        job_title: values.job_title,
+        title: values.job_title,
         job_type: values.job_type,
         location: values.location,
         salary_range: values.salary_range,
@@ -149,7 +157,8 @@ const Placements = () => {
         application_deadline: values.application_deadline,
         positions_available: parseInt(values.positions_available),
         status: "active",
-      } as any);
+        college_id: userRole?.college_id,
+      });
 
       if (error) throw error;
 

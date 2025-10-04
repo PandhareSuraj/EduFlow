@@ -68,16 +68,25 @@ export function AddTransportRouteDialog({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setLoading(true);
+      
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("college_id")
+        .eq("user_id", userData.user?.id)
+        .single();
+
       const { error } = await supabase.from("transport_routes").insert({
         route_name: values.route_name,
         route_code: values.route_code,
         starting_point: values.starting_point,
         ending_point: values.ending_point,
         stops: stops,
-        total_distance: parseFloat(values.total_distance),
-        estimated_duration: parseInt(values.estimated_duration),
-        base_fare: parseFloat(values.base_fare),
+        distance: parseFloat(values.total_distance),
+        duration: parseInt(values.estimated_duration),
+        fare: parseFloat(values.base_fare),
         status: "active",
+        college_id: userRole?.college_id,
       });
 
       if (error) throw error;

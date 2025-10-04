@@ -23,7 +23,7 @@ const grievanceFormSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   grievance_type: z.string().min(1, "Please select a type"),
-  category_name: z.string().min(1, "Please select a category"),
+  category_id: z.string().min(1, "Please select a category"),
   priority: z.string().min(1, "Please select priority"),
 });
 
@@ -41,8 +41,23 @@ export default function Grievances() {
       title: "",
       description: "",
       grievance_type: "",
-      category_name: "",
+      category_id: "",
       priority: "",
+    },
+  });
+
+  // Fetch grievance categories
+  const { data: categories = [] } = useQuery({
+    queryKey: ["grievance-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("grievance_categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("name");
+      
+      if (error) throw error;
+      return data || [];
     },
   });
 
@@ -50,13 +65,15 @@ export default function Grievances() {
   const { data: grievances = [] } = useQuery({
     queryKey: ["grievances"],
     queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from("grievances" as any)
         .select("*")
+        .eq("submitted_by", userData.user?.id)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      return (data || []) as any[];
     },
   });
 
@@ -258,7 +275,7 @@ export default function Grievances() {
                   />
                   <FormField
                     control={grievanceForm.control}
-                    name="category_name"
+                    name="category_id"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Category</FormLabel>
@@ -269,13 +286,11 @@ export default function Grievances() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="academic">Academic</SelectItem>
-                            <SelectItem value="library">Library Services</SelectItem>
-                            <SelectItem value="hostel">Hostel Services</SelectItem>
-                            <SelectItem value="transport">Transport</SelectItem>
-                            <SelectItem value="infrastructure">Infrastructure</SelectItem>
-                            <SelectItem value="administration">Administration</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />

@@ -36,10 +36,8 @@ const formSchema = z.object({
   student_id: z.string().min(1, "Please select a student"),
   room_id: z.string().min(1, "Please select a room"),
   allocation_date: z.string().min(1, "Allocation date is required"),
-  check_in_date: z.string().min(1, "Check-in date is required"),
-  check_out_date: z.string().optional(),
-  semester: z.string().min(1, "Please select semester"),
-  room_fee: z.string().min(1, "Room fee is required"),
+  vacate_date: z.string().optional(),
+  monthly_fee: z.string().min(1, "Monthly fee is required"),
   special_requirements: z.string().optional(),
 });
 
@@ -76,35 +74,63 @@ export function AddHostelAllocationDialog({
     },
   });
 
-  const { data: rooms } = useQuery({
+  // Fetch rooms (not just available ones, but rooms with capacity)
+  const { data: rooms = [] } = useQuery({
     queryKey: ["hostel-rooms-available"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hostel_rooms")
-        .select("id, room_number, building, capacity, occupied_beds")
-        .eq("status", "available")
+        .select("*")
         .order("room_number");
+      
       if (error) throw error;
-      return data?.filter((room) => room.occupied_beds < room.capacity);
+      // Filter rooms that still have capacity
+      return (data || []).filter((room: any) => (room.occupied_beds || 0) < room.capacity);
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setLoading(true);
-      const { error } = await supabase.from("hostel_allocations").insert({
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("college_id")
+        .eq("user_id", userData.user?.id)
+        .single();
+
+      const { error: allocationError } = await supabase.from("hostel_allocations").insert({
         student_id: parseInt(values.student_id),
         room_id: values.room_id,
         allocation_date: values.allocation_date,
-        check_in_date: values.check_in_date,
-        check_out_date: values.check_out_date || null,
-        semester: parseInt(values.semester),
-        room_fee: parseFloat(values.room_fee),
+        vacate_date: values.vacate_date || null,
+        monthly_fee: parseFloat(values.monthly_fee),
         special_requirements: values.special_requirements || null,
         status: "active",
+        college_id: userRole?.college_id,
       });
 
-      if (error) throw error;
+      if (allocationError) throw allocationError;
+
+      // Update room occupied_beds count
+      const { data: room } = await supabase
+        .from("hostel_rooms")
+        .select("occupied_beds, capacity")
+        .eq("id", values.room_id)
+        .single();
+
+      if (room) {
+        const newOccupiedBeds = (room.occupied_beds || 0) + 1;
+        const newStatus = newOccupiedBeds >= room.capacity ? "occupied" : "available";
+        
+        await supabase
+          .from("hostel_rooms")
+          .update({ 
+            occupied_beds: newOccupiedBeds,
+            status: newStatus
+          })
+          .eq("id", values.room_id);
+      }
 
       toast.success("Hostel allocation created successfully");
       form.reset();
@@ -115,7 +141,7 @@ export function AddHostelAllocationDialog({
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -123,7 +149,7 @@ export function AddHostelAllocationDialog({
         <DialogHeader>
           <DialogTitle>New Hostel Allocation</DialogTitle>
           <DialogDescription>
-            Allocate a room to a student for the selected semester
+            Allocate a room to a student
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -167,11 +193,15 @@ export function AddHostelAllocationDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {rooms?.map((room: any) => (
-                          <SelectItem key={room.id} value={room.id}>
-                            Room {room.room_number} ({room.capacity - room.occupied_beds} beds available)
-                          </SelectItem>
-                        ))}
+                        {rooms.length === 0 ? (
+                          <div className="p-2 text-sm text-muted-foreground">No rooms available</div>
+                        ) : (
+                          rooms.map((room: any) => (
+                            <SelectItem key={room.id} value={room.id}>
+                              Room {room.room_number} - {room.building} ({room.capacity - (room.occupied_beds || 0)} beds available)
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -195,10 +225,10 @@ export function AddHostelAllocationDialog({
 
               <FormField
                 control={form.control}
-                name="check_in_date"
+                name="vacate_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Check-in Date</FormLabel>
+                    <FormLabel>Vacate Date (Optional)</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -209,51 +239,12 @@ export function AddHostelAllocationDialog({
 
               <FormField
                 control={form.control}
-                name="check_out_date"
+                name="monthly_fee"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Check-out Date (Optional)</FormLabel>
+                    <FormLabel>Monthly Fee (₹)</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="semester"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Semester</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select semester" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-                          <SelectItem key={sem} value={sem.toString()}>
-                            Semester {sem}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="room_fee"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Room Fee (₹)</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="Enter room fee" {...field} />
+                      <Input type="number" placeholder="Enter monthly fee" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -266,7 +257,7 @@ export function AddHostelAllocationDialog({
               name="special_requirements"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Special Requirements</FormLabel>
+                  <FormLabel>Special Requirements (Optional)</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Any special requirements or notes..."

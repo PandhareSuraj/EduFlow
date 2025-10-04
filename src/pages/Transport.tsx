@@ -7,6 +7,69 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+function RoutesManagement() {
+  const { data: routes = [] } = useQuery({
+    queryKey: ["transport-routes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transport_routes")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Routes & Bus Stops</CardTitle>
+        <CardDescription>Manage bus routes and stop locations</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {routes.length === 0 ? (
+          <p className="text-muted-foreground text-center py-8">No routes added yet. Click "Add Route" to create your first route.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Route Name</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>Start - End</TableHead>
+                <TableHead>Distance</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Fare</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {routes.map((route: any) => (
+                <TableRow key={route.id}>
+                  <TableCell className="font-medium">{route.route_name}</TableCell>
+                  <TableCell>{route.route_code}</TableCell>
+                  <TableCell className="text-sm">
+                    {route.starting_point} → {route.ending_point}
+                  </TableCell>
+                  <TableCell>{route.distance} km</TableCell>
+                  <TableCell>{route.duration} min</TableCell>
+                  <TableCell>₹{route.fare}</TableCell>
+                  <TableCell>
+                    <Badge variant={route.status === "active" ? "secondary" : "outline"}>
+                      {route.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 const Transport = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -194,15 +257,7 @@ const Transport = () => {
         </TabsContent>
 
         <TabsContent value="routes" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Routes & Bus Stops</CardTitle>
-              <CardDescription>Manage bus routes and stop locations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Routes management interface will be implemented here.</p>
-            </CardContent>
-          </Card>
+          <RoutesManagement />
         </TabsContent>
 
         <TabsContent value="buses" className="space-y-4">

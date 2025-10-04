@@ -2,15 +2,84 @@ import { useState } from "react";
 import { Plus, Building2, Users, AlertCircle, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddHostelAllocationDialog } from "@/components/forms/AddHostelAllocationDialog";
+import { AddHostelRoomDialog } from "@/components/forms/AddHostelRoomDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+function RoomsManagement({ onAddRoom }: { onAddRoom: () => void }) {
+  const { data: rooms = [] } = useQuery({
+    queryKey: ["hostel-rooms"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("hostel_rooms")
+        .select("*")
+        .order("room_number");
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Room Management</CardTitle>
+          <CardDescription>View and manage hostel rooms</CardDescription>
+        </div>
+        <Button onClick={onAddRoom}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Room
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {rooms.length === 0 ? (
+          <p className="text-muted-foreground text-center py-8">No rooms added yet. Click "Add Room" to create your first room.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Room Number</TableHead>
+                <TableHead>Building</TableHead>
+                <TableHead>Floor</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Capacity</TableHead>
+                <TableHead>Occupied</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rooms.map((room: any) => (
+                <TableRow key={room.id}>
+                  <TableCell className="font-medium">{room.room_number}</TableCell>
+                  <TableCell>{room.building}</TableCell>
+                  <TableCell>{room.floor_number}</TableCell>
+                  <TableCell className="capitalize">{room.room_type}</TableCell>
+                  <TableCell>{room.capacity}</TableCell>
+                  <TableCell>{room.occupied_beds || 0}</TableCell>
+                  <TableCell>
+                    <Badge variant={room.status === "available" ? "secondary" : room.status === "occupied" ? "default" : "outline"}>
+                      {room.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 const Hostel = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [showAllocationDialog, setShowAllocationDialog] = useState(false);
+  const [showRoomDialog, setShowRoomDialog] = useState(false);
 
   const { data: stats, refetch } = useQuery({
     queryKey: ["hostel-stats"],
@@ -55,6 +124,12 @@ const Hostel = () => {
       <AddHostelAllocationDialog
         open={showAllocationDialog}
         onOpenChange={setShowAllocationDialog}
+        onSuccess={refetch}
+      />
+
+      <AddHostelRoomDialog
+        open={showRoomDialog}
+        onOpenChange={setShowRoomDialog}
         onSuccess={refetch}
       />
 
@@ -176,15 +251,7 @@ const Hostel = () => {
         </TabsContent>
 
         <TabsContent value="rooms" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Room Management</CardTitle>
-              <CardDescription>View and manage hostel rooms</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Room management interface will be implemented here.</p>
-            </CardContent>
-          </Card>
+          <RoomsManagement onAddRoom={() => setShowRoomDialog(true)} />
         </TabsContent>
 
         <TabsContent value="allocations" className="space-y-4">
