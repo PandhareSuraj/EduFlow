@@ -34,32 +34,49 @@ export function SessionDetailsDialog({ sessionId, sessionName, trigger }: Sessio
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // First, fetch attendance records
+      const { data: attendanceData, error: attendanceError } = await supabase
         .from('attendance_records')
-        .select(`
-          id,
-          student_id,
-          status,
-          marked_at,
-          remarks,
-          students (
-            name,
-            student_id
-          )
-        `)
+        .select('id, student_id, status, marked_at, remarks')
         .eq('session_id', sessionId);
 
-      if (error) throw error;
+      if (attendanceError) throw attendanceError;
 
-      const formattedRecords = (data || []).map((record: any) => ({
-        id: record.id,
-        student_id: record.student_id,
-        student_name: record.students?.name || 'Unknown',
-        student_number: record.students?.student_id || 'Unknown',
-        status: record.status,
-        marked_at: record.marked_at,
-        remarks: record.remarks
-      }));
+      if (!attendanceData || attendanceData.length === 0) {
+        setAttendanceRecords([]);
+        return;
+      }
+
+      // Get unique student IDs
+      const studentIds = [...new Set(attendanceData.map(record => record.student_id))];
+
+      // Fetch student details separately
+      const { data: studentsData, error: studentsError } = await supabase
+        .from('students')
+        .select('id, name, student_id')
+        .in('id', studentIds);
+
+      if (studentsError) throw studentsError;
+
+      // Create a map of student data for quick lookup
+      const studentMap = new Map(
+        (studentsData || []).map(student => [student.id, student])
+      );
+
+      // Merge attendance records with student data
+      const formattedRecords = attendanceData.map((record) => {
+        const student = studentMap.get(record.student_id);
+        return {
+          id: record.id,
+          student_id: record.student_id,
+          student_name: student?.name || 'Unknown',
+          student_number: student?.student_id || 'Unknown',
+          status: record.status,
+          marked_at: record.marked_at,
+          remarks: record.remarks
+        };
+      });
 
       // Sort by student name on client side
       formattedRecords.sort((a, b) => a.student_name.localeCompare(b.student_name));
