@@ -65,11 +65,11 @@ export function AddHostelRoomDialog({
       const { error } = await supabase.from("hostel_rooms").insert({
         room_number: values.room_number,
         building: values.building,
-        floor_number: parseInt(values.floor_number),
+        floor: parseInt(values.floor_number),
         room_type: values.room_type,
         capacity: parseInt(values.capacity),
         occupied_beds: 0,
-        monthly_rent: parseFloat(values.monthly_rent),
+        rent_amount: parseFloat(values.monthly_rent),
         status: "available",
         college_id: userRole?.college_id,
       });

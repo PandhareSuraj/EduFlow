@@ -104,7 +104,7 @@ export function AddHostelAllocationDialog({
         room_id: values.room_id,
         allocation_date: values.allocation_date,
         vacate_date: values.vacate_date || null,
-        monthly_fee: parseFloat(values.monthly_fee),
+        room_fee: parseFloat(values.monthly_fee),
         special_requirements: values.special_requirements || null,
         status: "active",
         college_id: userRole?.college_id,

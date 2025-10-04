@@ -84,7 +84,7 @@ export function AddTransportRouteDialog({
         stops: stops,
         distance: parseFloat(values.total_distance),
         duration: parseInt(values.estimated_duration),
-        fare: parseFloat(values.base_fare),
+        base_fare: parseFloat(values.base_fare),
         status: "active",
         college_id: userRole?.college_id,
       });
