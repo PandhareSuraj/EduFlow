@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -47,8 +47,7 @@ export function SessionDetailsDialog({ sessionId, sessionName, trigger }: Sessio
             student_id
           )
         `)
-        .eq('session_id', sessionId)
-        .order('students(name)');
+        .eq('session_id', sessionId);
 
       if (error) throw error;
 
@@ -62,8 +61,12 @@ export function SessionDetailsDialog({ sessionId, sessionName, trigger }: Sessio
         remarks: record.remarks
       }));
 
+      // Sort by student name on client side
+      formattedRecords.sort((a, b) => a.student_name.localeCompare(b.student_name));
+
       setAttendanceRecords(formattedRecords);
     } catch (error: any) {
+      console.error("Session details fetch error:", error);
       toast({
         title: "Error",
         description: "Failed to fetch session details",
@@ -91,6 +94,9 @@ export function SessionDetailsDialog({ sessionId, sessionName, trigger }: Sessio
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Session Details - {sessionName}</DialogTitle>
+          <DialogDescription>
+            View attendance records for this session
+          </DialogDescription>
         </DialogHeader>
         
         {loading ? (
