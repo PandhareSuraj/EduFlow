@@ -56,11 +56,26 @@ export function AddHostelRoomDialog({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       const { data: userData } = await supabase.auth.getUser();
-      const { data: userRole } = await supabase
+      
+      if (!userData.user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { data: userRole, error: roleError } = await supabase
         .from("user_roles")
         .select("college_id")
-        .eq("user_id", userData.user?.id)
+        .eq("user_id", userData.user.id)
         .single();
+
+      if (roleError) {
+        console.error("Error fetching user role:", roleError);
+        throw new Error("Failed to fetch user college information");
+      }
+
+      if (!userRole?.college_id) {
+        console.error("No college_id found for user:", userData.user.id);
+        throw new Error("You are not associated with any college. Please contact your administrator.");
+      }
 
       const { error } = await supabase.from("hostel_rooms").insert({
         room_number: values.room_number,
@@ -71,16 +86,20 @@ export function AddHostelRoomDialog({
         occupied_beds: 0,
         rent_amount: parseFloat(values.monthly_rent),
         status: "available",
-        college_id: userRole?.college_id,
+        college_id: userRole.college_id,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error inserting hostel room:", error);
+        throw error;
+      }
 
       toast.success("Room added successfully");
       form.reset();
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
+      console.error("Add hostel room error:", error);
       toast.error(error.message || "Failed to add room");
     }
   };
