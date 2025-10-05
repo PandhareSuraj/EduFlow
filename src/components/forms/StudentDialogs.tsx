@@ -63,10 +63,14 @@ interface FeeStructure {
 
 interface AddStudentDialogProps {
   onStudentAdded?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function AddStudentDialog({ onStudentAdded }: AddStudentDialogProps = {}) {
-  const [open, setOpen] = useState(false);
+export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenChange }: AddStudentDialogProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",

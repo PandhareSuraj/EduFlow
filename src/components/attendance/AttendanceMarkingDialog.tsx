@@ -44,13 +44,17 @@ interface AttendanceRecord {
 
 interface AttendanceMarkingDialogProps {
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function AttendanceMarkingDialog({ trigger }: AttendanceMarkingDialogProps = {}) {
+export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenChange }: AttendanceMarkingDialogProps = {}) {
   const { toast } = useToast();
   const { currentFaculty, loading: facultyLoading } = useCurrentFaculty();
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
   const { classNames } = useClassNames();
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   

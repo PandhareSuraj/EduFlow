@@ -20,6 +20,7 @@ import { useDashboardNotifications } from '@/hooks/useDashboardNotifications';
 import { useAMCConfig } from '@/hooks/useAMCConfig';
 import { AddStudentDialog } from "@/components/forms/StudentDialogs";
 import { CollectFeeDialog } from "@/components/forms/CollectFeeDialog";
+import { AttendanceMarkingDialog } from "@/components/attendance/AttendanceMarkingDialog";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -70,6 +71,11 @@ export default function Dashboard() {
   const { notifications, loading: notificationsLoading } = useDashboardNotifications();
   const { toast } = useToast();
   const { config: amcConfig, calculateAMC } = useAMCConfig();
+  
+  // Dialog states for Quick Actions
+  const [addStudentOpen, setAddStudentOpen] = useState(false);
+  const [collectFeeOpen, setCollectFeeOpen] = useState(false);
+  const [markAttendanceOpen, setMarkAttendanceOpen] = useState(false);
 
   useEffect(() => {
     // Only fetch dashboard data for non-student users
@@ -350,7 +356,7 @@ export default function Dashboard() {
                 <>
                   <button 
                     className="flex items-center p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors text-left w-full"
-                    onClick={() => (document.querySelector('[data-add-student-trigger]') as HTMLElement)?.click()}
+                    onClick={() => setAddStudentOpen(true)}
                   >
                     <Users className="mr-3 h-4 w-4 text-primary" />
                     <div>
@@ -358,12 +364,10 @@ export default function Dashboard() {
                       <p className="text-sm text-muted-foreground">Register a new student</p>
                     </div>
                   </button>
-                  <div className="hidden">
-                    <AddStudentDialog />
-                  </div>
+                  
                   <button 
                     className="flex items-center p-3 bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors text-left w-full"
-                    onClick={() => (document.querySelector('[data-collect-fee-trigger]') as HTMLElement)?.click()}
+                    onClick={() => setCollectFeeOpen(true)}
                   >
                     <DollarSign className="mr-3 h-4 w-4 text-accent" />
                     <div>
@@ -371,10 +375,11 @@ export default function Dashboard() {
                       <p className="text-sm text-muted-foreground">Process fee payment</p>
                     </div>
                   </button>
-                  <div className="hidden">
-                    <CollectFeeDialog />
-                  </div>
-                  <button className="flex items-center p-3 bg-warning/10 hover:bg-warning/20 rounded-lg transition-colors text-left">
+                  
+                  <button 
+                    className="flex items-center p-3 bg-warning/10 hover:bg-warning/20 rounded-lg transition-colors text-left w-full"
+                    onClick={() => setMarkAttendanceOpen(true)}
+                  >
                     <ClipboardCheck className="mr-3 h-4 w-4 text-warning" />
                     <div>
                       <p className="font-medium">Mark Attendance</p>
@@ -527,6 +532,24 @@ export default function Dashboard() {
           </Card>
         </div>
       )}
+      
+      {/* Dialog Components */}
+      <AddStudentDialog 
+        open={addStudentOpen} 
+        onOpenChange={setAddStudentOpen}
+        onStudentAdded={() => {
+          setAddStudentOpen(false);
+          fetchDashboardData();
+        }} 
+      />
+      <CollectFeeDialog 
+        open={collectFeeOpen} 
+        onOpenChange={setCollectFeeOpen}
+      />
+      <AttendanceMarkingDialog 
+        open={markAttendanceOpen} 
+        onOpenChange={setMarkAttendanceOpen}
+      />
     </div>
   );
 }
