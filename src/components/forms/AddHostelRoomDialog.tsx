@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCollege } from "@/contexts/CollegeContext";
 import {
   Dialog,
   DialogContent,
@@ -49,31 +50,15 @@ export function AddHostelRoomDialog({
   onOpenChange,
   onSuccess,
 }: AddHostelRoomDialogProps) {
+  const { college, loading: collegeLoading } = useCollege();
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      
-      if (!userData.user) {
-        throw new Error("User not authenticated");
-      }
-
-      const { data: userRole, error: roleError } = await supabase
-        .from("user_roles")
-        .select("college_id")
-        .eq("user_id", userData.user.id)
-        .single();
-
-      if (roleError) {
-        console.error("Error fetching user role:", roleError);
-        throw new Error("Failed to fetch user college information");
-      }
-
-      if (!userRole?.college_id) {
-        console.error("No college_id found for user:", userData.user.id);
+      if (!college?.id) {
         throw new Error("You are not associated with any college. Please contact your administrator.");
       }
 
@@ -86,7 +71,7 @@ export function AddHostelRoomDialog({
         occupied_beds: 0,
         rent_amount: parseFloat(values.monthly_rent),
         status: "available",
-        college_id: userRole.college_id,
+        college_id: college.id,
       });
 
       if (error) {

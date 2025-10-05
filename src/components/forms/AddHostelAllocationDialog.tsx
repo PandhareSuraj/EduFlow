@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCollege } from "@/contexts/CollegeContext";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +54,7 @@ export function AddHostelAllocationDialog({
   onSuccess,
 }: AddHostelAllocationDialogProps) {
   const [loading, setLoading] = useState(false);
+  const { college, loading: collegeLoading } = useCollege();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -92,12 +94,10 @@ export function AddHostelAllocationDialog({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setLoading(true);
-      const { data: userData } = await supabase.auth.getUser();
-      const { data: userRole } = await supabase
-        .from("user_roles")
-        .select("college_id")
-        .eq("user_id", userData.user?.id)
-        .single();
+      
+      if (!college?.id) {
+        throw new Error("You are not associated with any college. Please contact your administrator.");
+      }
 
       const { error: allocationError } = await supabase.from("hostel_allocations").insert({
         student_id: parseInt(values.student_id),
@@ -107,7 +107,7 @@ export function AddHostelAllocationDialog({
         room_fee: parseFloat(values.monthly_fee),
         special_requirements: values.special_requirements || null,
         status: "active",
-        college_id: userRole?.college_id,
+        college_id: college.id,
       });
 
       if (allocationError) throw allocationError;

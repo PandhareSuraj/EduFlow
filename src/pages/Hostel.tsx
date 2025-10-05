@@ -9,19 +9,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useCollege } from "@/contexts/CollegeContext";
 
-function RoomsManagement({ onAddRoom }: { onAddRoom: () => void }) {
+function RoomsManagement({ onAddRoom, collegeId }: { onAddRoom: () => void; collegeId?: string }) {
   const { data: rooms = [] } = useQuery({
-    queryKey: ["hostel-rooms"],
+    queryKey: ["hostel-rooms", collegeId],
     queryFn: async () => {
+      if (!collegeId) return [];
+      
       const { data, error } = await supabase
         .from("hostel_rooms")
         .select("*")
+        .eq("college_id", collegeId)
         .order("room_number");
       
       if (error) throw error;
       return data || [];
     },
+    enabled: !!collegeId,
   });
 
   return (
@@ -57,7 +62,7 @@ function RoomsManagement({ onAddRoom }: { onAddRoom: () => void }) {
                 <TableRow key={room.id}>
                   <TableCell className="font-medium">{room.room_number}</TableCell>
                   <TableCell>{room.building}</TableCell>
-                  <TableCell>{room.floor_number}</TableCell>
+                  <TableCell>{room.floor}</TableCell>
                   <TableCell className="capitalize">{room.room_type}</TableCell>
                   <TableCell>{room.capacity}</TableCell>
                   <TableCell>{room.occupied_beds || 0}</TableCell>
@@ -80,23 +85,29 @@ const Hostel = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [showAllocationDialog, setShowAllocationDialog] = useState(false);
   const [showRoomDialog, setShowRoomDialog] = useState(false);
+  const { college } = useCollege();
 
   const { data: stats, refetch } = useQuery({
-    queryKey: ["hostel-stats"],
+    queryKey: ["hostel-stats", college?.id],
     queryFn: async () => {
+      if (!college?.id) return { totalRooms: 0, occupiedRooms: 0, pendingComplaints: 0 };
+      
       const { count: totalRooms } = await supabase
         .from("hostel_rooms")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("college_id", college.id);
       
       const { count: occupiedRooms } = await supabase
         .from("hostel_allocations")
         .select("*", { count: "exact", head: true })
-        .eq("status", "active");
+        .eq("status", "active")
+        .eq("college_id", college.id);
       
       const { count: pendingComplaints } = await supabase
         .from("hostel_complaints")
         .select("*", { count: "exact", head: true })
-        .eq("status", "pending");
+        .eq("status", "pending")
+        .eq("college_id", college.id);
 
       return {
         totalRooms: totalRooms || 0,
@@ -104,6 +115,7 @@ const Hostel = () => {
         pendingComplaints: pendingComplaints || 0,
       };
     },
+    enabled: !!college?.id,
   });
 
   return (
@@ -251,7 +263,7 @@ const Hostel = () => {
         </TabsContent>
 
         <TabsContent value="rooms" className="space-y-4">
-          <RoomsManagement onAddRoom={() => setShowRoomDialog(true)} />
+          <RoomsManagement onAddRoom={() => setShowRoomDialog(true)} collegeId={college?.id} />
         </TabsContent>
 
         <TabsContent value="allocations" className="space-y-4">
