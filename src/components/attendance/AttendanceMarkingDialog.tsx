@@ -5,12 +5,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Combobox } from "@/components/ui/combobox";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentFaculty } from "@/hooks/useCurrentFaculty";
 import { useClassNames } from "@/hooks/useClassNames";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, CheckCircle, XCircle, Clock, Users, Info } from "lucide-react";
-import { getCurrentISTTime, formatISTDate } from "@/utils/dateUtils";
+import { Plus, CheckCircle, XCircle, Clock, Users, Info, CalendarIcon, AlertTriangle, Eye } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface Student {
   id: number;
@@ -63,6 +67,15 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [selectedFaculty, setSelectedFaculty] = useState<string>("");
   const [className, setClassName] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  
+  // Duplicate detection
+  const [duplicateWarning, setDuplicateWarning] = useState<{
+    show: boolean;
+    message: string;
+    existingSession?: any;
+  }>({ show: false, message: "" });
+  const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
   
   // Data
   const [courses, setCourses] = useState<Course[]>([]);
@@ -93,6 +106,16 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
       fetchStudents();
     }
   }, [selectedCourse]);
+
+  // Check for duplicate attendance when key fields change
+  useEffect(() => {
+    if (selectedCourse && selectedSubject && className && selectedDate) {
+      checkDuplicateAttendance();
+    } else {
+      setDuplicateWarning({ show: false, message: "" });
+      setShowDuplicateAlert(false);
+    }
+  }, [selectedCourse, selectedSubject, className, selectedDate]);
 
   const fetchCourses = async () => {
     try {
@@ -223,11 +246,64 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
     );
   };
 
+  const checkDuplicateAttendance = async () => {
+    try {
+      const { data: collegeId } = await supabase.rpc('get_user_college');
+      
+      const { data: existingSessions, error } = await supabase
+        .from('attendance_sessions')
+        .select(`
+          id,
+          session_date,
+          start_time,
+          attendance_percentage,
+          faculty:faculty_id (name),
+          subject:subject_id (name),
+          course:course_id (name)
+        `)
+        .eq('course_id', parseInt(selectedCourse))
+        .eq('subject_id', selectedSubject)
+        .eq('class_name', className)
+        .eq('session_date', format(selectedDate, 'yyyy-MM-dd'))
+        .eq('college_id', collegeId);
+
+      if (error) throw error;
+
+      if (existingSessions && existingSessions.length > 0) {
+        const session = existingSessions[0];
+        const courseName = courses.find(c => c.id.toString() === selectedCourse)?.name || 'Course';
+        const subjectName = subjects.find(s => s.id === selectedSubject)?.name || 'Subject';
+        
+        setDuplicateWarning({
+          show: true,
+          message: `Attendance already marked for ${courseName} - ${subjectName} - ${className} on ${format(selectedDate, 'dd MMM yyyy')}`,
+          existingSession: session
+        });
+        setShowDuplicateAlert(true);
+      } else {
+        setDuplicateWarning({ show: false, message: "" });
+        setShowDuplicateAlert(false);
+      }
+    } catch (error) {
+      console.error('Error checking duplicate attendance:', error);
+    }
+  };
+
   const saveAttendance = async () => {
     if (!selectedCourse || !selectedSubject || !selectedFaculty) {
       toast({
         title: "Missing Information", 
         description: "Please select course, subject, and faculty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Show warning if duplicate exists and user hasn't acknowledged
+    if (duplicateWarning.show && showDuplicateAlert) {
+      toast({
+        title: "Duplicate Entry Warning",
+        description: "Please review the duplicate warning and choose an action",
         variant: "destructive",
       });
       return;
@@ -240,7 +316,7 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
       // Get current user for marked_by field
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Create attendance session
+      // Create attendance session with selected date
       const { data: session, error: sessionError } = await supabase
         .from('attendance_sessions')
         .insert({
@@ -248,8 +324,8 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
           subject_id: selectedSubject,
           faculty_id: selectedFaculty,
           class_name: className || null,
-          session_date: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd'),
-          start_time: formatISTDate(getCurrentISTTime(), 'yyyy-MM-dd HH:mm:ss'),
+          session_date: format(selectedDate, 'yyyy-MM-dd'),
+          start_time: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
           status: 'completed',
           college_id: collegeId
         })
@@ -273,9 +349,13 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
 
       if (recordsError) throw recordsError;
 
+      const isBackdated = format(selectedDate, 'yyyy-MM-dd') !== format(new Date(), 'yyyy-MM-dd');
+      
       toast({
         title: "Success",
-        description: "Attendance saved successfully",
+        description: isBackdated 
+          ? `Backdated attendance saved successfully for ${format(selectedDate, 'dd MMM yyyy')}`
+          : "Attendance saved successfully",
       });
 
       // Reset form
@@ -283,8 +363,11 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
       setSelectedSubject("");
       setSelectedFaculty("");
       setClassName("");
+      setSelectedDate(new Date());
       setStudents([]);
       setAttendanceRecords([]);
+      setDuplicateWarning({ show: false, message: "" });
+      setShowDuplicateAlert(false);
       setOpen(false);
 
     } catch (error) {
@@ -302,6 +385,22 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
   const presentCount = attendanceRecords.filter(r => r.status === 'present').length;
   const absentCount = attendanceRecords.filter(r => r.status === 'absent').length;
   const lateCount = attendanceRecords.filter(r => r.status === 'late').length;
+  
+  const isBackdated = format(selectedDate, 'yyyy-MM-dd') !== format(new Date(), 'yyyy-MM-dd');
+  const isFutureDate = selectedDate > new Date();
+
+  const handleMarkAnyway = () => {
+    setShowDuplicateAlert(false);
+  };
+
+  const handleViewExisting = () => {
+    if (duplicateWarning.existingSession) {
+      toast({
+        title: "Existing Session Details",
+        description: `Marked on ${format(new Date(duplicateWarning.existingSession.session_date), 'dd MMM yyyy')} at ${duplicateWarning.existingSession.start_time || 'N/A'} - Attendance: ${duplicateWarning.existingSession.attendance_percentage || 0}%`,
+      });
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -315,10 +414,102 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
       </DialogTrigger>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Mark Class Attendance</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Mark Class Attendance
+            {isBackdated && (
+              <Badge variant="outline" className="text-orange-600 border-orange-600">
+                Backdated Entry
+              </Badge>
+            )}
+          </DialogTitle>
+          <div className="text-sm text-muted-foreground">
+            Attendance for: {format(selectedDate, 'EEEE, dd MMMM yyyy')}
+          </div>
         </DialogHeader>
         
         <div className="space-y-6">
+          {/* Date Picker */}
+          <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+            <div className="flex-1">
+              <label className="text-sm font-medium">Attendance Date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal mt-1",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              {isFutureDate && (
+                <p className="text-xs text-destructive mt-1">Future dates are not allowed</p>
+              )}
+            </div>
+          </div>
+
+          {/* Duplicate Warning Alert */}
+          {showDuplicateAlert && duplicateWarning.show && (
+            <Alert variant="destructive" className="border-orange-600 bg-orange-50 dark:bg-orange-950">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle className="flex items-center gap-2">
+                Duplicate Attendance Entry Detected
+              </AlertTitle>
+              <AlertDescription className="space-y-3 mt-2">
+                <p className="text-sm">{duplicateWarning.message}</p>
+                {duplicateWarning.existingSession && (
+                  <div className="text-xs bg-background/50 p-2 rounded space-y-1">
+                    <div>Time: {duplicateWarning.existingSession.start_time || 'N/A'}</div>
+                    <div>Faculty: {duplicateWarning.existingSession.faculty?.name || 'N/A'}</div>
+                    <div>Attendance: {duplicateWarning.existingSession.attendance_percentage || 0}%</div>
+                  </div>
+                )}
+                <div className="flex gap-2 mt-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleViewExisting}
+                    className="text-xs"
+                  >
+                    <Eye className="h-3 w-3 mr-1" />
+                    View Details
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={handleMarkAnyway}
+                    className="text-xs bg-orange-600 hover:bg-orange-700"
+                  >
+                    Mark Anyway
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setOpen(false)}
+                    className="text-xs"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Form Section */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Select value={selectedCourse} onValueChange={setSelectedCourse}>
