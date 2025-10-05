@@ -67,7 +67,11 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [selectedFaculty, setSelectedFaculty] = useState<string>("");
   const [className, setClassName] = useState<string>("");
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
   
   // Duplicate detection
   const [duplicateWarning, setDuplicateWarning] = useState<{
@@ -250,6 +254,11 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
     try {
       const { data: collegeId } = await supabase.rpc('get_user_college');
       
+      // Normalize date to start-of-day to avoid timezone issues
+      const normalizedDate = new Date(selectedDate);
+      normalizedDate.setHours(0, 0, 0, 0);
+      const dateString = format(normalizedDate, 'yyyy-MM-dd');
+      
       const { data: existingSessions, error } = await supabase
         .from('attendance_sessions')
         .select(`
@@ -264,7 +273,7 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
         .eq('course_id', parseInt(selectedCourse))
         .eq('subject_id', selectedSubject)
         .eq('class_name', className)
-        .eq('session_date', format(selectedDate, 'yyyy-MM-dd'))
+        .eq('session_date', dateString)
         .eq('college_id', collegeId);
 
       if (error) throw error;
@@ -316,6 +325,11 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
       // Get current user for marked_by field
       const { data: { user } } = await supabase.auth.getUser();
       
+      // Normalize date to start-of-day for consistent storage
+      const sessionDate = new Date(selectedDate);
+      sessionDate.setHours(0, 0, 0, 0);
+      const sessionDateString = format(sessionDate, 'yyyy-MM-dd');
+      
       // Create attendance session with selected date
       const { data: session, error: sessionError } = await supabase
         .from('attendance_sessions')
@@ -324,7 +338,7 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
           subject_id: selectedSubject,
           faculty_id: selectedFaculty,
           class_name: className || null,
-          session_date: format(selectedDate, 'yyyy-MM-dd'),
+          session_date: sessionDateString,
           start_time: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
           status: 'completed',
           college_id: collegeId
@@ -363,7 +377,9 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
       setSelectedSubject("");
       setSelectedFaculty("");
       setClassName("");
-      setSelectedDate(new Date());
+      const resetDate = new Date();
+      resetDate.setHours(0, 0, 0, 0);
+      setSelectedDate(resetDate);
       setStudents([]);
       setAttendanceRecords([]);
       setDuplicateWarning({ show: false, message: "" });
@@ -450,7 +466,13 @@ export function AttendanceMarkingDialog({ trigger, open: controlledOpen, onOpenC
                   <Calendar
                     mode="single"
                     selected={selectedDate}
-                    onSelect={(date) => date && setSelectedDate(date)}
+                    onSelect={(date) => {
+                      if (date) {
+                        const normalized = new Date(date);
+                        normalized.setHours(0, 0, 0, 0);
+                        setSelectedDate(normalized);
+                      }
+                    }}
                     disabled={(date) => date > new Date()}
                     initialFocus
                     className="pointer-events-auto"
