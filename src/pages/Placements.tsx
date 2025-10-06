@@ -45,10 +45,22 @@ const jobSchema = z.object({
   positions_available: z.string().min(1, "Number of positions is required"),
 });
 
+import { PlacementDashboard } from "@/components/placements/PlacementDashboard";
+import { ApplicationsList } from "@/components/placements/ApplicationsList";
+import { InterviewCalendar } from "@/components/placements/InterviewCalendar";
+import { InterviewSchedulingDialog } from "@/components/placements/InterviewSchedulingDialog";
+import { PlacementDriveDialog } from "@/components/placements/PlacementDriveDialog";
+import { PlacementDrivesList } from "@/components/placements/PlacementDrivesList";
+import { PlacementConfirmationDialog } from "@/components/placements/PlacementConfirmationDialog";
+import { PlacementsList } from "@/components/placements/PlacementsList";
+
 const Placements = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
   const [showJobDialog, setShowJobDialog] = useState(false);
+  const [showInterviewDialog, setShowInterviewDialog] = useState(false);
+  const [showDriveDialog, setShowDriveDialog] = useState(false);
+  const [showPlacementDialog, setShowPlacementDialog] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const companyForm = useForm<z.infer<typeof companySchema>>({
@@ -536,7 +548,36 @@ const Placements = () => {
           <TabsTrigger value="companies">Companies</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="space-y-4">
+        <TabsContent value="dashboard">
+          <PlacementDashboard />
+        </TabsContent>
+
+        <TabsContent value="applications">
+          <ApplicationsList />
+        </TabsContent>
+
+        <TabsContent value="interviews">
+          <div className="space-y-4">
+            <Button onClick={() => setShowInterviewDialog(true)}>Schedule Interview</Button>
+            <InterviewCalendar />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="drives">
+          <div className="space-y-4">
+            <Button onClick={() => setShowDriveDialog(true)}>Create Drive</Button>
+            <PlacementDrivesList />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="placements">
+          <div className="space-y-4">
+            <Button onClick={() => setShowPlacementDialog(true)}>Record Placement</Button>
+            <PlacementsList />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="dashboard-old" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Overview</CardTitle>
