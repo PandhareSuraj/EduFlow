@@ -84,7 +84,7 @@ export function PlacementConfirmationDialog({ open, onOpenChange, onSuccess }: P
         placement_type: values.placement_type,
         status: "offer_extended",
         college_id: userRole?.college_id,
-      });
+      } as any);
 
       if (error) throw error;
 

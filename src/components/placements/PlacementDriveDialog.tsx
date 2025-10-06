@@ -84,7 +84,7 @@ export function PlacementDriveDialog({ open, onOpenChange, onSuccess }: Placemen
         min_cgpa: parseFloat(values.minimum_cgpa),
         status: "scheduled",
         college_id: userRole?.college_id,
-      });
+      } as any);
 
       if (error) throw error;
 

@@ -2846,7 +2846,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           drive_date: string
-          eligible_courses: number[] | null
+          eligible_courses: string[] | null
           id: string
           job_positions: string[] | null
           min_cgpa: number | null
@@ -2863,7 +2863,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           drive_date: string
-          eligible_courses?: number[] | null
+          eligible_courses?: string[] | null
           id?: string
           job_positions?: string[] | null
           min_cgpa?: number | null
@@ -2880,7 +2880,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           drive_date?: string
-          eligible_courses?: number[] | null
+          eligible_courses?: string[] | null
           id?: string
           job_positions?: string[] | null
           min_cgpa?: number | null
@@ -3279,6 +3279,7 @@ export type Database = {
           interview_feedback: string | null
           job_posting_id: string
           resume_url: string | null
+          skills: string | null
           status: string
           student_id: number
           updated_at: string
@@ -3294,6 +3295,7 @@ export type Database = {
           interview_feedback?: string | null
           job_posting_id: string
           resume_url?: string | null
+          skills?: string | null
           status?: string
           student_id: number
           updated_at?: string
@@ -3309,6 +3311,7 @@ export type Database = {
           interview_feedback?: string | null
           job_posting_id?: string
           resume_url?: string | null
+          skills?: string | null
           status?: string
           student_id?: number
           updated_at?: string

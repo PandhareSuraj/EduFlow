@@ -542,9 +542,13 @@ const Placements = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="jobs">Job Postings</TabsTrigger>
+          <TabsTrigger value="applications">Applications</TabsTrigger>
+          <TabsTrigger value="interviews">Interviews</TabsTrigger>
+          <TabsTrigger value="drives">Drives</TabsTrigger>
+          <TabsTrigger value="placements">Placements</TabsTrigger>
+          <TabsTrigger value="jobs">Jobs</TabsTrigger>
           <TabsTrigger value="companies">Companies</TabsTrigger>
         </TabsList>
 
@@ -635,6 +639,33 @@ const Placements = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Interview Scheduling Dialog */}
+      <InterviewSchedulingDialog
+        open={showInterviewDialog}
+        onOpenChange={setShowInterviewDialog}
+        onSuccess={() => {
+          setShowInterviewDialog(false);
+        }}
+      />
+
+      {/* Placement Drive Dialog */}
+      <PlacementDriveDialog
+        open={showDriveDialog}
+        onOpenChange={setShowDriveDialog}
+        onSuccess={() => {
+          setShowDriveDialog(false);
+        }}
+      />
+
+      {/* Placement Confirmation Dialog */}
+      <PlacementConfirmationDialog
+        open={showPlacementDialog}
+        onOpenChange={setShowPlacementDialog}
+        onSuccess={() => {
+          setShowPlacementDialog(false);
+        }}
+      />
     </div>
   );
 };

@@ -84,7 +84,7 @@ export function InterviewSchedulingDialog({ open, onOpenChange, onSuccess }: Int
         notes: values.notes,
         status: "scheduled",
         college_id: userRole?.college_id,
-      });
+      } as any);
 
       if (error) throw error;
 
