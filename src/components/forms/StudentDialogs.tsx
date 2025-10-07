@@ -19,13 +19,11 @@ import { FormSchemas } from "@/lib/validationSchemas";
 export { ViewStudentDialog } from "./ViewStudentDialog";
 export { EditStudentDialog } from "./EditStudentDialog";
 export { DeleteStudentDialog } from "./DeleteStudentDialog";
-
 interface Course {
   id: number;
   name: string;
   code: string;
 }
-
 interface FeeStructure {
   id: string;
   total_fee: number;
@@ -37,18 +35,14 @@ interface FeeStructure {
   due_date: string;
   semester: number;
 }
-
 interface AddStudentDialogProps {
   onStudentAdded?: () => void;
 }
-
-
 interface Course {
   id: number;
   name: string;
   code: string;
 }
-
 interface FeeStructure {
   id: string;
   total_fee: number;
@@ -60,14 +54,16 @@ interface FeeStructure {
   due_date: string;
   semester: number;
 }
-
 interface AddStudentDialogProps {
   onStudentAdded?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
-
-export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenChange }: AddStudentDialogProps = {}) {
+export function AddStudentDialog({
+  onStudentAdded,
+  open: controlledOpen,
+  onOpenChange
+}: AddStudentDialogProps = {}) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
@@ -88,27 +84,32 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
     discount_percentage: 0,
     discount_reason: ''
   });
-  const [documents, setDocuments] = useState<{[key: string]: File}>({});
+  const [documents, setDocuments] = useState<{
+    [key: string]: File;
+  }>({});
   const [courses, setCourses] = useState<Course[]>([]);
   const [feeStructure, setFeeStructure] = useState<FeeStructure | null>(null);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [loadingFeeStructure, setLoadingFeeStructure] = useState(false);
-  const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
-  const { toast } = useToast();
-  const { college } = useCollege();
+  const fileInputRefs = useRef<{
+    [key: string]: HTMLInputElement | null;
+  }>({});
+  const {
+    toast
+  } = useToast();
+  const {
+    college
+  } = useCollege();
 
   // Calculate final fee amount
   const calculateFinalFee = () => {
     if (!feeStructure) return 0;
-    
     let finalAmount = feeStructure.total_fee;
-    
     if (feeData.discount_type === 'percentage' && feeData.discount_percentage > 0) {
-      finalAmount = feeStructure.total_fee - (feeStructure.total_fee * feeData.discount_percentage / 100);
+      finalAmount = feeStructure.total_fee - feeStructure.total_fee * feeData.discount_percentage / 100;
     } else if (feeData.discount_type === 'amount' && feeData.discount_amount > 0) {
       finalAmount = feeStructure.total_fee - feeData.discount_amount;
     }
-    
     return Math.max(finalAmount, 0);
   };
 
@@ -116,18 +117,16 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
   useEffect(() => {
     const loadCourses = async () => {
       try {
-        const { data, error } = await supabase
-          .from('courses')
-          .select('id, name, code')
-          .eq('status', 'active')
-          .order('name');
-
+        const {
+          data,
+          error
+        } = await supabase.from('courses').select('id, name, code').eq('status', 'active').order('name');
         if (error) {
           console.error('Error loading courses:', error);
           toast({
             title: "Error",
             description: "Failed to load courses",
-            variant: "destructive",
+            variant: "destructive"
           });
         } else {
           setCourses(data || []);
@@ -138,7 +137,6 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
         setLoadingCourses(false);
       }
     };
-
     loadCourses();
   }, [toast]);
 
@@ -148,19 +146,15 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
       loadFeeStructure(parseInt(formData.course_id), formData.semester);
     }
   }, [formData.course_id, formData.semester]);
-
   const loadFeeStructure = async (courseId: number, semester: number) => {
     setLoadingFeeStructure(true);
     try {
-      const { data, error } = await supabase
-        .from('fee_structures')
-        .select('*')
-        .eq('course_id', courseId)
-        .eq('semester', semester)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
+      const {
+        data,
+        error
+      } = await supabase.from('fee_structures').select('*').eq('course_id', courseId).eq('semester', semester).order('created_at', {
+        ascending: false
+      }).limit(1).maybeSingle();
       if (error) {
         console.error('Error loading fee structure:', error);
       } else {
@@ -172,65 +166,58 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
       setLoadingFeeStructure(false);
     }
   };
-
   const handleFileUpload = (documentType: string, file: File) => {
     setDocuments(prev => ({
       ...prev,
       [documentType]: file
     }));
   };
-
   const uploadDocument = async (studentId: number, documentType: string, file: File, collegeId: string) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${studentId}_${documentType}_${Date.now()}.${fileExt}`;
     const filePath = `${studentId}/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('student-documents')
-      .upload(filePath, file);
-
+    const {
+      error: uploadError
+    } = await supabase.storage.from('student-documents').upload(filePath, file);
     if (uploadError) {
       throw uploadError;
     }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('student-documents')
-      .getPublicUrl(filePath);
-
-    const { error: dbError } = await supabase
-      .from('student_documents')
-      .insert({
-        student_id: studentId,
-        document_type: documentType,
-        file_name: fileName,
-        file_url: publicUrl,
-        file_size: file.size,
-        college_id: collegeId
-      });
-
+    const {
+      data: {
+        publicUrl
+      }
+    } = supabase.storage.from('student-documents').getPublicUrl(filePath);
+    const {
+      error: dbError
+    } = await supabase.from('student_documents').insert({
+      student_id: studentId,
+      document_type: documentType,
+      file_name: fileName,
+      file_url: publicUrl,
+      file_size: file.size,
+      college_id: collegeId
+    });
     if (dbError) {
       throw dbError;
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Form validation
     if (!formData.name.trim()) {
       toast({
         title: "Validation Error",
         description: "Student name is required",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     if (!formData.email.trim()) {
       toast({
-        title: "Validation Error", 
+        title: "Validation Error",
         description: "Email is required",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -241,16 +228,15 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
       toast({
         title: "Validation Error",
         description: "Please enter a valid email address",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     if (!formData.mobile_number.trim()) {
       toast({
         title: "Validation Error",
-        description: "Mobile number is required", 
-        variant: "destructive",
+        description: "Mobile number is required",
+        variant: "destructive"
       });
       return;
     }
@@ -261,125 +247,109 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
       toast({
         title: "Validation Error",
         description: "Please enter a valid mobile number (10-12 digits)",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     if (!formData.course_id) {
       toast({
         title: "Validation Error",
         description: "Please select a course",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     setLoading(true);
-
     try {
-    const uploadDocument = async (file: File, type: string) => {
-      // Check if user has personal Google Drive connected
-      const { data: personalDriveSettings } = await supabase
-        .from('personal_google_drive')
-        .select('connected')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .eq('connected', true)
-        .single();
-
-      if (personalDriveSettings?.connected) {
-        // Upload to personal Google Drive
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('documentType', type);
-
-        const { data, error } = await supabase.functions.invoke('personal-google-upload', {
-          body: formData
-        });
-
-        if (error) throw error;
-
-        return {
-          file_name: file.name,
-          file_path: data.webViewLink,
-          file_type: type,
-          file_size: file.size,
-          upload_date: new Date().toISOString(),
-          college_id: college?.id,
-          storage_type: 'personal_google_drive',
-          google_drive_file_id: data.fileId,
-        };
-      } else {
-        // Fallback to Supabase storage
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${studentData.student_id}/${type}/${fileName}`;
-
-        const { data, error } = await supabase.storage
-          .from('student-documents')
-          .upload(filePath, file);
-
-        if (error) throw error;
-        
-        return {
-          file_name: file.name,
-          file_path: filePath,
-          file_type: type,
-          file_size: file.size,
-          upload_date: new Date().toISOString(),
-          college_id: college?.id,
-          storage_type: 'supabase',
-        };
+      const uploadDocument = async (file: File, type: string) => {
+        // Check if user has personal Google Drive connected
+        const {
+          data: personalDriveSettings
+        } = await supabase.from('personal_google_drive').select('connected').eq('user_id', (await supabase.auth.getUser()).data.user?.id).eq('connected', true).single();
+        if (personalDriveSettings?.connected) {
+          // Upload to personal Google Drive
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('documentType', type);
+          const {
+            data,
+            error
+          } = await supabase.functions.invoke('personal-google-upload', {
+            body: formData
+          });
+          if (error) throw error;
+          return {
+            file_name: file.name,
+            file_path: data.webViewLink,
+            file_type: type,
+            file_size: file.size,
+            upload_date: new Date().toISOString(),
+            college_id: college?.id,
+            storage_type: 'personal_google_drive',
+            google_drive_file_id: data.fileId
+          };
+        } else {
+          // Fallback to Supabase storage
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Math.random()}.${fileExt}`;
+          const filePath = `${studentData.student_id}/${type}/${fileName}`;
+          const {
+            data,
+            error
+          } = await supabase.storage.from('student-documents').upload(filePath, file);
+          if (error) throw error;
+          return {
+            file_name: file.name,
+            file_path: filePath,
+            file_type: type,
+            file_size: file.size,
+            upload_date: new Date().toISOString(),
+            college_id: college?.id,
+            storage_type: 'supabase'
+          };
         }
       };
 
       // Check if email already exists
-      const { data: existingStudent } = await supabase
-        .from('students')
-        .select('id')
-        .eq('email', formData.email.trim().toLowerCase())
-        .maybeSingle();
-
+      const {
+        data: existingStudent
+      } = await supabase.from('students').select('id').eq('email', formData.email.trim().toLowerCase()).maybeSingle();
       if (existingStudent) {
         toast({
           title: "Error",
           description: "A student with this email already exists",
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
 
       // Insert student data
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .insert([{
-          name: formData.name.trim(),
-          email: formData.email.trim().toLowerCase(),
-          mobile_number: formData.mobile_number.replace(/\D/g, ''),
-          course_id: parseInt(formData.course_id),
-          year: formData.year || 1,
-          semester: formData.semester || 1,
-          college_id: college?.id,
-          status: 'active'
-        }])
-        .select()
-        .single();
-
+      const {
+        data: studentData,
+        error: studentError
+      } = await supabase.from('students').insert([{
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        mobile_number: formData.mobile_number.replace(/\D/g, ''),
+        course_id: parseInt(formData.course_id),
+        year: formData.year || 1,
+        semester: formData.semester || 1,
+        college_id: college?.id,
+        status: 'active'
+      }]).select().single();
       if (studentError) {
         console.error('Error inserting student:', studentError);
         toast({
           title: "Error",
           description: studentError.message || "Failed to add student. Please try again.",
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
 
       // Upload documents if any
       if (Object.keys(documents).length > 0 && studentData) {
-        const documentPromises = Object.entries(documents).map(([docType, file]) =>
-          uploadDocument(file, docType)
-        );
+        const documentPromises = Object.entries(documents).map(([docType, file]) => uploadDocument(file, docType));
         await Promise.all(documentPromises);
       }
 
@@ -387,12 +357,10 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
       if (feeStructure && studentData) {
         // Wait a moment for trigger to complete
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const { data: existingFees, error: checkError } = await supabase
-          .from('student_fees')
-          .select('id, total_amount')
-          .eq('student_id', studentData.id);
-
+        const {
+          data: existingFees,
+          error: checkError
+        } = await supabase.from('student_fees').select('id, total_amount').eq('student_id', studentData.id);
         if (checkError) {
           console.error('Error checking existing fees:', checkError);
         } else if (existingFees && existingFees.length > 0 && (feeData.discount_amount > 0 || feeData.discount_percentage > 0)) {
@@ -400,27 +368,22 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
           const feeId = existingFees[0].id;
           const originalAmount = feeStructure.total_fee;
           let finalAmount = originalAmount;
-          
           if (feeData.discount_type === 'percentage') {
-            finalAmount = originalAmount - (originalAmount * feeData.discount_percentage / 100);
+            finalAmount = originalAmount - originalAmount * feeData.discount_percentage / 100;
           } else {
             finalAmount = originalAmount - feeData.discount_amount;
           }
-          
           finalAmount = Math.max(finalAmount, 0);
-
-          const { error: updateError } = await supabase
-            .from('student_fees')
-            .update({
-              original_amount: originalAmount,
-              discount_amount: feeData.discount_type === 'amount' ? feeData.discount_amount : 0,
-              discount_percentage: feeData.discount_type === 'percentage' ? feeData.discount_percentage : 0,
-              discount_reason: feeData.discount_reason || null,
-              total_amount: finalAmount,
-              balance_amount: finalAmount
-            })
-            .eq('id', feeId);
-
+          const {
+            error: updateError
+          } = await supabase.from('student_fees').update({
+            original_amount: originalAmount,
+            discount_amount: feeData.discount_type === 'amount' ? feeData.discount_amount : 0,
+            discount_percentage: feeData.discount_type === 'percentage' ? feeData.discount_percentage : 0,
+            discount_reason: feeData.discount_reason || null,
+            total_amount: finalAmount,
+            balance_amount: finalAmount
+          }).eq('id', feeId);
           if (updateError) {
             console.error('Error updating fee with discount:', updateError);
           }
@@ -428,24 +391,22 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
           // No existing fee found by trigger, create one using RPC
           const discountAmount = feeData.discount_type === 'amount' ? feeData.discount_amount : 0;
           const discountPercentage = feeData.discount_type === 'percentage' ? feeData.discount_percentage : 0;
-          
-          const { error: feeError } = await supabase
-            .rpc('auto_create_student_fees_with_discount', {
-              p_student_id: studentData.id,
-              p_discount_amount: discountAmount,
-              p_discount_percentage: discountPercentage,
-              p_discount_reason: feeData.discount_reason || null
-            });
-
+          const {
+            error: feeError
+          } = await supabase.rpc('auto_create_student_fees_with_discount', {
+            p_student_id: studentData.id,
+            p_discount_amount: discountAmount,
+            p_discount_percentage: discountPercentage,
+            p_discount_reason: feeData.discount_reason || null
+          });
           if (feeError) {
             console.error('Error creating fee record:', feeError);
           }
         }
       }
-
       toast({
         title: "Success",
-        description: `Student ${formData.name} added successfully with ID: ${studentData.student_id}! ${feeStructure ? 'Fee record created.' : 'No fee structure found for selected course/semester.'}`,
+        description: `Student ${formData.name} added successfully with ID: ${studentData.student_id}! ${feeStructure ? 'Fee record created.' : 'No fee structure found for selected course/semester.'}`
       });
 
       // Reset form
@@ -476,20 +437,15 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
       toast({
         title: "Error",
         description: error.message || "An unexpected error occurred. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
+  return <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Student
-        </Button>
+        
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -510,49 +466,41 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    required
-                  />
+                  <Input id="name" value={formData.name} onChange={e => setFormData({
+                  ...formData,
+                  name: e.target.value
+                })} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    required
-                  />
+                  <Input id="email" type="email" value={formData.email} onChange={e => setFormData({
+                  ...formData,
+                  email: e.target.value
+                })} required />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="mobile">Mobile Number *</Label>
-                  <Input
-                    id="mobile"
-                    type="tel"
-                    value={formData.mobile_number}
-                    onChange={(e) => setFormData({...formData, mobile_number: e.target.value})}
-                    placeholder="Enter 10-12 digit mobile number"
-                    required
-                  />
+                  <Input id="mobile" type="tel" value={formData.mobile_number} onChange={e => setFormData({
+                  ...formData,
+                  mobile_number: e.target.value
+                })} placeholder="Enter 10-12 digit mobile number" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="course">Course *</Label>
-                  <Select value={formData.course_id} onValueChange={(value) => setFormData({...formData, course_id: value})} disabled={loadingCourses}>
+                  <Select value={formData.course_id} onValueChange={value => setFormData({
+                  ...formData,
+                  course_id: value
+                })} disabled={loadingCourses}>
                     <SelectTrigger>
                       <SelectValue placeholder={loadingCourses ? "Loading courses..." : "Select course"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {courses.map((course) => (
-                        <SelectItem key={course.id} value={course.id.toString()}>
+                      {courses.map(course => <SelectItem key={course.id} value={course.id.toString()}>
                           {course.name} ({course.code})
-                        </SelectItem>
-                      ))}
+                        </SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -561,59 +509,55 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
               <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="class">Class</Label>
-                  <Input
-                    id="class"
-                    value={formData.class}
-                    onChange={(e) => setFormData({...formData, class: e.target.value})}
-                    placeholder="e.g., A, B"
-                  />
+                  <Input id="class" value={formData.class} onChange={e => setFormData({
+                  ...formData,
+                  class: e.target.value
+                })} placeholder="e.g., A, B" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="semester">Semester *</Label>
-                  <Select value={formData.semester.toString()} onValueChange={(value) => setFormData({...formData, semester: parseInt(value)})}>
+                  <Select value={formData.semester.toString()} onValueChange={value => setFormData({
+                  ...formData,
+                  semester: parseInt(value)
+                })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {[1,2,3,4,5,6,7,8].map((sem) => (
-                        <SelectItem key={sem} value={sem.toString()}>
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => <SelectItem key={sem} value={sem.toString()}>
                           Semester {sem}
-                        </SelectItem>
-                      ))}
+                        </SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="year">Year *</Label>
-                  <Select value={formData.year.toString()} onValueChange={(value) => setFormData({...formData, year: parseInt(value)})}>
+                  <Select value={formData.year.toString()} onValueChange={value => setFormData({
+                  ...formData,
+                  year: parseInt(value)
+                })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {[1,2,3,4].map((yr) => (
-                        <SelectItem key={yr} value={yr.toString()}>
+                      {[1, 2, 3, 4].map(yr => <SelectItem key={yr} value={yr.toString()}>
                           Year {yr}
-                        </SelectItem>
-                      ))}
+                        </SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="admission_date">Admission Date *</Label>
-                  <Input
-                    id="admission_date"
-                    type="date"
-                    value={formData.admission_date}
-                    onChange={(e) => setFormData({...formData, admission_date: e.target.value})}
-                    required
-                  />
+                  <Input id="admission_date" type="date" value={formData.admission_date} onChange={e => setFormData({
+                  ...formData,
+                  admission_date: e.target.value
+                })} required />
                 </div>
               </div>
             </TabsContent>
 
             <TabsContent value="fees" className="space-y-4">
-              {feeStructure ? (
-                <Card>
+              {feeStructure ? <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <IndianRupee className="h-5 w-5" />
@@ -635,7 +579,10 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
                       <div className="grid grid-cols-2 gap-4 mt-2">
                         <div className="space-y-2">
                           <Label>Discount Type</Label>
-                          <Select value={feeData.discount_type} onValueChange={(value) => setFeeData({...feeData, discount_type: value})}>
+                          <Select value={feeData.discount_type} onValueChange={value => setFeeData({
+                        ...feeData,
+                        discount_type: value
+                      })}>
                             <SelectTrigger>
                               <SelectValue />
                             </SelectTrigger>
@@ -646,40 +593,27 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
                           </Select>
                         </div>
                         
-                        {feeData.discount_type === 'amount' ? (
-                          <div className="space-y-2">
+                        {feeData.discount_type === 'amount' ? <div className="space-y-2">
                             <Label>Discount Amount (₹)</Label>
-                            <Input
-                              type="number"
-                              min="0"
-                              max={feeStructure.total_fee}
-                              value={feeData.discount_amount}
-                              onChange={(e) => setFeeData({...feeData, discount_amount: parseFloat(e.target.value) || 0})}
-                              placeholder="Enter discount amount"
-                            />
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
+                            <Input type="number" min="0" max={feeStructure.total_fee} value={feeData.discount_amount} onChange={e => setFeeData({
+                        ...feeData,
+                        discount_amount: parseFloat(e.target.value) || 0
+                      })} placeholder="Enter discount amount" />
+                          </div> : <div className="space-y-2">
                             <Label>Discount Percentage (%)</Label>
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={feeData.discount_percentage}
-                              onChange={(e) => setFeeData({...feeData, discount_percentage: parseFloat(e.target.value) || 0})}
-                              placeholder="Enter discount percentage"
-                            />
-                          </div>
-                        )}
+                            <Input type="number" min="0" max="100" value={feeData.discount_percentage} onChange={e => setFeeData({
+                        ...feeData,
+                        discount_percentage: parseFloat(e.target.value) || 0
+                      })} placeholder="Enter discount percentage" />
+                          </div>}
                       </div>
                       
                       <div className="space-y-2 mt-4">
                         <Label>Discount Reason</Label>
-                        <Input
-                          value={feeData.discount_reason}
-                          onChange={(e) => setFeeData({...feeData, discount_reason: e.target.value})}
-                          placeholder="Reason for discount (optional)"
-                        />
+                        <Input value={feeData.discount_reason} onChange={e => setFeeData({
+                      ...feeData,
+                      discount_reason: e.target.value
+                    })} placeholder="Reason for discount (optional)" />
                       </div>
                     </div>
                     
@@ -691,79 +625,68 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
                         </span>
                         <span className="text-primary">₹{calculateFinalFee().toLocaleString('en-IN')}</span>
                       </div>
-                      {(feeData.discount_amount > 0 || feeData.discount_percentage > 0) && (
-                        <div className="text-sm text-muted-foreground mt-1">
+                      {(feeData.discount_amount > 0 || feeData.discount_percentage > 0) && <div className="text-sm text-muted-foreground mt-1">
                           You saved: ₹{(feeStructure.total_fee - calculateFinalFee()).toLocaleString('en-IN')}
-                        </div>
-                      )}
+                        </div>}
                     </div>
                   </CardContent>
-                </Card>
-              ) : (
-                <Card>
+                </Card> : <Card>
                   <CardContent className="pt-6">
-                    {loadingFeeStructure ? (
-                      <div className="text-center py-4">
+                    {loadingFeeStructure ? <div className="text-center py-4">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                         <p className="text-sm text-muted-foreground mt-2">Loading fee structure...</p>
-                      </div>
-                    ) : formData.course_id ? (
-                      <div className="text-center py-4 text-muted-foreground">
+                      </div> : formData.course_id ? <div className="text-center py-4 text-muted-foreground">
                         <IndianRupee className="h-12 w-12 mx-auto mb-2 opacity-50" />
                         <p>No fee structure found for the selected course and semester.</p>
                         <p className="text-sm">Student will be registered without automatic fee creation.</p>
-                      </div>
-                    ) : (
-                      <div className="text-center py-4 text-muted-foreground">
+                      </div> : <div className="text-center py-4 text-muted-foreground">
                         <IndianRupee className="h-12 w-12 mx-auto mb-2 opacity-50" />
                         <p>Please select a course to view fee information.</p>
-                      </div>
-                    )}
+                      </div>}
                   </CardContent>
-                </Card>
-              )}
+                </Card>}
             </TabsContent>
 
             <TabsContent value="documents" className="space-y-4">
               <div className="grid gap-4">
-                {[
-                  { type: 'photo', label: 'Student Photo', icon: User },
-                  { type: 'aadhar', label: 'Aadhar Card', icon: FileText },
-                  { type: 'marksheet', label: 'Marksheet', icon: FileText },
-                  { type: 'other', label: 'Other Documents', icon: FileText }
-                ].map(({ type, label, icon: Icon }) => (
-                  <div key={type} className="space-y-2">
+                {[{
+                type: 'photo',
+                label: 'Student Photo',
+                icon: User
+              }, {
+                type: 'aadhar',
+                label: 'Aadhar Card',
+                icon: FileText
+              }, {
+                type: 'marksheet',
+                label: 'Marksheet',
+                icon: FileText
+              }, {
+                type: 'other',
+                label: 'Other Documents',
+                icon: FileText
+              }].map(({
+                type,
+                label,
+                icon: Icon
+              }) => <div key={type} className="space-y-2">
                     <Label htmlFor={type}>{label}</Label>
                     <div className="flex items-center gap-2">
-                      <Input
-                        ref={(el) => fileInputRefs.current[type] = el}
-                        type="file"
-                        accept={type === 'photo' ? 'image/*' : '*/*'}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            handleFileUpload(type, file);
-                          }
-                        }}
-                        className="hidden"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => fileInputRefs.current[type]?.click()}
-                        className="flex-1"
-                      >
+                      <Input ref={el => fileInputRefs.current[type] = el} type="file" accept={type === 'photo' ? 'image/*' : '*/*'} onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleFileUpload(type, file);
+                    }
+                  }} className="hidden" />
+                      <Button type="button" variant="outline" onClick={() => fileInputRefs.current[type]?.click()} className="flex-1">
                         <Icon className="h-4 w-4 mr-2" />
                         {documents[type] ? documents[type].name : `Choose ${label}`}
                       </Button>
-                      {documents[type] && (
-                        <Badge variant="secondary">
+                      {documents[type] && <Badge variant="secondary">
                           {(documents[type].size / 1024).toFixed(1)} KB
-                        </Badge>
-                      )}
+                        </Badge>}
                     </div>
-                  </div>
-                ))}
+                  </div>)}
               </div>
             </TabsContent>
           </Tabs>
@@ -778,6 +701,5 @@ export function AddStudentDialog({ onStudentAdded, open: controlledOpen, onOpenC
           </DialogFooter>
         </form>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 }
