@@ -28,7 +28,7 @@ import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { UpcomingEventsCard } from "@/components/dashboard/UpcomingEventsCard";
+import { EnhancedQuickActions } from "@/components/dashboard/EnhancedQuickActions";
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
 import { FacultyDashboard } from "@/components/dashboard/FacultyDashboard";
 import { AccountantDashboard } from "@/components/dashboard/AccountantDashboard";
@@ -315,82 +315,13 @@ export default function Dashboard() {
 
       {/* Quick Actions & Recent Activity */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3">
-        {/* Quick Actions */}
-        <Card className="lg:col-span-1 shadow-card">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <TrendingUp className="mr-2 h-5 w-5" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid gap-3">
-              {isSuperAdmin ? (
-                <>
-                  <button className="flex items-center p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors text-left w-full"
-                    onClick={() => window.location.href = '/colleges'}>
-                    <Building2 className="mr-3 h-4 w-4 text-primary" />
-                    <div>
-                      <p className="font-medium">College Management</p>
-                      <p className="text-sm text-muted-foreground">Manage college portfolios</p>
-                    </div>
-                  </button>
-                  <button className="flex items-center p-3 bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors text-left w-full"
-                    onClick={() => window.location.href = '/college-performance'}>
-                    <TrendingUp className="mr-3 h-4 w-4 text-accent" />
-                    <div>
-                      <p className="font-medium">Performance Monitor</p>
-                      <p className="text-sm text-muted-foreground">Track college performance</p>
-                    </div>
-                  </button>
-                  <button className="flex items-center p-3 bg-warning/10 hover:bg-warning/20 rounded-lg transition-colors text-left w-full"
-                    onClick={() => window.location.href = '/multi-college-users'}>
-                    <UserCheck className="mr-3 h-4 w-4 text-warning" />
-                    <div>
-                      <p className="font-medium">Multi-College Users</p>
-                      <p className="text-sm text-muted-foreground">Manage users across colleges</p>
-                    </div>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button 
-                    className="flex items-center p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors text-left w-full"
-                    onClick={() => setAddStudentOpen(true)}
-                  >
-                    <Users className="mr-3 h-4 w-4 text-primary" />
-                    <div>
-                      <p className="font-medium">Add New Student</p>
-                      <p className="text-sm text-muted-foreground">Register a new student</p>
-                    </div>
-                  </button>
-                  
-                  <button 
-                    className="flex items-center p-3 bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors text-left w-full"
-                    onClick={() => setCollectFeeOpen(true)}
-                  >
-                    <DollarSign className="mr-3 h-4 w-4 text-accent" />
-                    <div>
-                      <p className="font-medium">Collect Fee</p>
-                      <p className="text-sm text-muted-foreground">Process fee payment</p>
-                    </div>
-                  </button>
-                  
-                  <button 
-                    className="flex items-center p-3 bg-warning/10 hover:bg-warning/20 rounded-lg transition-colors text-left w-full"
-                    onClick={() => setMarkAttendanceOpen(true)}
-                  >
-                    <ClipboardCheck className="mr-3 h-4 w-4 text-warning" />
-                    <div>
-                      <p className="font-medium">Mark Attendance</p>
-                      <p className="text-sm text-muted-foreground">Daily attendance entry</p>
-                    </div>
-                  </button>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Enhanced Quick Actions with Pending Actions and Upcoming Events */}
+        <EnhancedQuickActions 
+          userRole={userRole}
+          notifications={notifications}
+          notificationsLoading={notificationsLoading}
+          className="lg:col-span-1"
+        />
 
         {/* Role-based Dashboard Content */}
         <div className="lg:col-span-2">
@@ -402,8 +333,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* College AMC Management for Super Admin OR Events & Alerts for College Admin */}
-      {isSuperAdmin ? (
+      {/* College AMC Management for Super Admin */}
+      {isSuperAdmin && (
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -469,68 +400,6 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <UpcomingEventsCard />
-
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="text-warning">Pending Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {notificationsLoading ? (
-                  <div className="space-y-3">
-                    <div className="p-3 bg-muted/50 rounded-lg animate-pulse">
-                      <div className="h-4 bg-muted rounded mb-2"></div>
-                      <div className="h-3 bg-muted rounded w-3/4"></div>
-                    </div>
-                    <div className="p-3 bg-muted/50 rounded-lg animate-pulse">
-                      <div className="h-4 bg-muted rounded mb-2"></div>
-                      <div className="h-3 bg-muted rounded w-2/3"></div>
-                    </div>
-                  </div>
-                ) : notifications.length === 0 ? (
-                  <div className="text-center py-6">
-                    <p className="text-muted-foreground">No pending actions at the moment</p>
-                    <p className="text-sm text-muted-foreground mt-1">All systems are running smoothly</p>
-                  </div>
-                ) : (
-                  notifications.map((notification) => (
-                    <div 
-                      key={notification.id}
-                      className={`p-3 border rounded-lg cursor-pointer hover:shadow-sm transition-shadow ${
-                        notification.type === 'warning' ? 'bg-warning/10 border-warning/20' :
-                        notification.type === 'error' ? 'bg-destructive/10 border-destructive/20' :
-                        notification.type === 'info' ? 'bg-primary/10 border-primary/20' :
-                        'bg-success/10 border-success/20'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className={`font-medium ${
-                            notification.type === 'warning' ? 'text-warning' :
-                            notification.type === 'error' ? 'text-destructive' :
-                            notification.type === 'info' ? 'text-primary' :
-                            'text-success'
-                          }`}>
-                            {notification.title}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-medium">{notification.count}</span> {notification.message}
-                          </p>
-                        </div>
-                        <Badge variant="outline" className="text-xs">
-                          {notification.action_url ? 'View Details' : 'Info'}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       )}
       
       {/* Dialog Components */}
