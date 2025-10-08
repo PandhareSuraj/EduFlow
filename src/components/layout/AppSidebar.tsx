@@ -20,7 +20,8 @@ import {
   Building,
   Bus,
   CalendarDays,
-  Briefcase
+  Briefcase,
+  PhoneCall
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -83,9 +84,9 @@ export function AppSidebar() {
         { name: "Courses", href: "/courses", icon: GraduationCap },
         { name: "Faculty", href: "/faculty", icon: UserCheck },
         { name: "Fees", href: "/fees", icon: CreditCard },
+        { name: "Follow-ups", href: "/followups", icon: PhoneCall },
         { name: "Enquiries", href: "/enquiries", icon: MessageSquare },
         { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
-        { name: "Exams", href: "/exams", icon: FileText },
         { name: "Library", href: "/library", icon: BookOpen },
         { name: "Hostel", href: "/hostel", icon: Building },
         { name: "Transport", href: "/transport", icon: Bus },
@@ -135,6 +136,7 @@ export function AppSidebar() {
         { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
         { name: "Students", href: "/students", icon: Users },
         { name: "Fees", href: "/fees", icon: CreditCard },
+        { name: "Follow-ups", href: "/followups", icon: PhoneCall },
         { name: "Reports", href: "/reports", icon: BarChart3 }
       ];
     } else {
