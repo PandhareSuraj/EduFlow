@@ -12,6 +12,7 @@ import Students from "./pages/Students";
 import Courses from "./pages/Courses";
 import Faculty from "./pages/Faculty";
 import Fees from "./pages/Fees";
+import FollowUps from "./pages/FollowUps";
 import Enquiries from "./pages/Enquiries";
 import Attendance from "./pages/Attendance";
 import Exams from "./pages/Exams";
@@ -87,6 +88,13 @@ const App = () => (
                 <ProtectedRoute allowedRoles={['admin', 'accountant', 'clerk']}>
                   <Layout>
                     <Fees />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/followups" element={
+                <ProtectedRoute allowedRoles={['admin', 'accountant', 'clerk', 'teacher']}>
+                  <Layout>
+                    <FollowUps />
                   </Layout>
                 </ProtectedRoute>
               } />

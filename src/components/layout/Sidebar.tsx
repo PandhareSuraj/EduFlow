@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Users, GraduationCap, UserCheck, CreditCard, MessageSquare, ClipboardCheck, FileText, BarChart3, Settings, Menu, X, IdCard, Package, Building2, IndianRupee, Shield, Database, TrendingUp, Globe, BookOpen } from "lucide-react";
+import { Users, GraduationCap, UserCheck, CreditCard, MessageSquare, ClipboardCheck, FileText, BarChart3, Settings, Menu, X, IdCard, Package, Building2, IndianRupee, Shield, Database, TrendingUp, Globe, BookOpen, PhoneCall } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,6 +40,7 @@ export function Sidebar() {
         { name: "Courses", href: "/courses", icon: GraduationCap },
         { name: "Faculty", href: "/faculty", icon: UserCheck },
         { name: "Fees", href: "/fees", icon: CreditCard },
+        { name: "Follow-ups", href: "/followups", icon: PhoneCall },
         { name: "Enquiries", href: "/enquiries", icon: MessageSquare },
         { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
         { name: "Exams", href: "/exams", icon: FileText },
@@ -85,6 +86,7 @@ export function Sidebar() {
         { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
         { name: "Students", href: "/students", icon: Users },
         { name: "Fees", href: "/fees", icon: CreditCard },
+        { name: "Follow-ups", href: "/followups", icon: PhoneCall },
         { name: "Reports", href: "/reports", icon: BarChart3 }
       ];
     } else {

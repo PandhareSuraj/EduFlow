@@ -792,6 +792,97 @@ export type Database = {
           },
         ]
       }
+      custom_followups: {
+        Row: {
+          college_id: string | null
+          contact_count: number | null
+          contact_email: string | null
+          contact_name: string
+          contact_phone: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          follow_up_date: string
+          id: string
+          last_contact_date: string | null
+          next_follow_up_date: string | null
+          priority: string
+          remarks: string | null
+          status: string
+          student_id: number | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          college_id?: string | null
+          contact_count?: number | null
+          contact_email?: string | null
+          contact_name: string
+          contact_phone: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          follow_up_date: string
+          id?: string
+          last_contact_date?: string | null
+          next_follow_up_date?: string | null
+          priority?: string
+          remarks?: string | null
+          status?: string
+          student_id?: number | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          college_id?: string | null
+          contact_count?: number | null
+          contact_email?: string | null
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          follow_up_date?: string
+          id?: string
+          last_contact_date?: string | null
+          next_follow_up_date?: string | null
+          priority?: string
+          remarks?: string | null
+          status?: string
+          student_id?: number | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_followups_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_followups_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "custom_followups_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           code: string | null
@@ -843,15 +934,20 @@ export type Database = {
         Row: {
           assigned_to: string | null
           college_id: string | null
+          contact_count: number | null
+          contacted_via: string | null
           course: string
           created_at: string
           created_by: string | null
           email: string | null
           follow_up_date: string | null
           id: string
+          last_contact_date: string | null
           name: string
+          next_follow_up_date: string | null
           notes: string | null
           phone: string | null
+          priority: string | null
           source: string
           status: string
           updated_at: string
@@ -860,15 +956,20 @@ export type Database = {
         Insert: {
           assigned_to?: string | null
           college_id?: string | null
+          contact_count?: number | null
+          contacted_via?: string | null
           course: string
           created_at?: string
           created_by?: string | null
           email?: string | null
           follow_up_date?: string | null
           id?: string
+          last_contact_date?: string | null
           name: string
+          next_follow_up_date?: string | null
           notes?: string | null
           phone?: string | null
+          priority?: string | null
           source?: string
           status?: string
           updated_at?: string
@@ -877,15 +978,20 @@ export type Database = {
         Update: {
           assigned_to?: string | null
           college_id?: string | null
+          contact_count?: number | null
+          contacted_via?: string | null
           course?: string
           created_at?: string
           created_by?: string | null
           email?: string | null
           follow_up_date?: string | null
           id?: string
+          last_contact_date?: string | null
           name?: string
+          next_follow_up_date?: string | null
           notes?: string | null
           phone?: string | null
+          priority?: string | null
           source?: string
           status?: string
           updated_at?: string
@@ -1601,6 +1707,77 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follow_up_history: {
+        Row: {
+          action_taken: string | null
+          college_id: string | null
+          contact_email: string | null
+          contact_name: string
+          contact_phone: string
+          contacted_via: string | null
+          created_at: string | null
+          created_by: string | null
+          followup_type: string
+          id: string
+          new_date: string | null
+          new_status: string | null
+          previous_date: string | null
+          previous_status: string | null
+          reference_id: string
+          remarks: string | null
+          student_id: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          college_id?: string | null
+          contact_email?: string | null
+          contact_name: string
+          contact_phone: string
+          contacted_via?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          followup_type: string
+          id?: string
+          new_date?: string | null
+          new_status?: string | null
+          previous_date?: string | null
+          previous_status?: string | null
+          reference_id: string
+          remarks?: string | null
+          student_id?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          college_id?: string | null
+          contact_email?: string | null
+          contact_name?: string
+          contact_phone?: string
+          contacted_via?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          followup_type?: string
+          id?: string
+          new_date?: string | null
+          new_status?: string | null
+          previous_date?: string | null
+          previous_status?: string | null
+          reference_id?: string
+          remarks?: string | null
+          student_id?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_up_history_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
             referencedColumns: ["id"]
           },
         ]
