@@ -87,6 +87,7 @@ export function AppSidebar() {
         { name: "Follow-ups", href: "/followups", icon: PhoneCall },
         { name: "Enquiries", href: "/enquiries", icon: MessageSquare },
         { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
+        { name: "Exams", href: "/exams", icon: FileText },
         { name: "Library", href: "/library", icon: BookOpen },
         { name: "Hostel", href: "/hostel", icon: Building },
         { name: "Transport", href: "/transport", icon: Bus },
