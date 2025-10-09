@@ -16,15 +16,16 @@ export const useFollowUps = (statusFilter?: string) => {
     try {
       setLoading(true);
 
-      // Fetch enquiries
+      // Fetch enquiries (exclude completed/converted)
       const { data: enquiries } = await supabase
         .from('enquiries')
         .select('*')
         .eq('college_id', currentCollege.id)
         .not('next_follow_up_date', 'is', null)
+        .in('status', ['new', 'follow_up', 'contacted'])
         .order('next_follow_up_date', { ascending: true });
 
-      // Fetch fee payments
+      // Fetch fee payments (exclude completed follow-ups)
       const { data: fees } = await supabase
         .from('student_fees')
         .select(`
@@ -34,13 +35,15 @@ export const useFollowUps = (statusFilter?: string) => {
         .eq('college_id', currentCollege.id)
         .not('next_follow_up_date', 'is', null)
         .in('status', ['pending', 'partial'])
+        .neq('follow_up_status', 'completed')
         .order('next_follow_up_date', { ascending: true });
 
-      // Fetch custom follow-ups
+      // Fetch custom follow-ups (exclude completed and cancelled)
       const { data: customs } = await supabase
         .from('custom_followups')
         .select('*, students(name, mobile_number, email)')
         .eq('college_id', currentCollege.id)
+        .in('status', ['pending', 'contacted'])
         .order('follow_up_date', { ascending: true });
 
       const unified: UnifiedFollowUp[] = [];
@@ -212,6 +215,51 @@ export const useFollowUps = (statusFilter?: string) => {
 
   useEffect(() => {
     fetchFollowUps();
+
+    // Set up real-time subscriptions for auto-refresh
+    const channel = supabase
+      .channel('follow-ups-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'enquiries',
+          filter: `college_id=eq.${currentCollege?.id}`
+        },
+        () => {
+          fetchFollowUps();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'student_fees',
+          filter: `college_id=eq.${currentCollege?.id}`
+        },
+        () => {
+          fetchFollowUps();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'custom_followups',
+          filter: `college_id=eq.${currentCollege?.id}`
+        },
+        () => {
+          fetchFollowUps();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [currentCollege, statusFilter]);
 
   return {
