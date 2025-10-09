@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useFaculty } from "@/hooks/useFaculty";
 import { useCourses } from "@/hooks/useCourses";
+import { validatePhone } from "@/lib/validationSchemas";
 
 interface AddEnquiryDialogProps {
   trigger?: React.ReactNode;
@@ -25,6 +26,7 @@ interface AddEnquiryDialogProps {
 export function AddEnquiryDialog({ trigger, onSuccess }: AddEnquiryDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState<string>("");
   const { toast } = useToast();
   const { faculty, loading: facultyLoading } = useFaculty();
   const { courses, loading: coursesLoading } = useCourses();
@@ -96,6 +98,17 @@ export function AddEnquiryDialog({ trigger, onSuccess }: AddEnquiryDialogProps) 
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Validate phone in real-time
+    if (field === "phone") {
+      const cleanedPhone = value.replace(/\D/g, '');
+      try {
+        validatePhone.parse(cleanedPhone);
+        setPhoneError("");
+      } catch (error: any) {
+        setPhoneError(error.errors?.[0]?.message || "Invalid phone number");
+      }
+    }
   };
 
   return (
@@ -129,10 +142,21 @@ export function AddEnquiryDialog({ trigger, onSuccess }: AddEnquiryDialogProps) 
               <Input
                 id="phone"
                 value={formData.phone}
-                onChange={(e) => handleChange("phone", e.target.value)}
-                placeholder="Enter phone number"
+                onChange={(e) => {
+                  const cleaned = e.target.value.replace(/\D/g, '');
+                  handleChange("phone", cleaned);
+                }}
+                placeholder="e.g., 9876543210"
+                maxLength={10}
+                className={phoneError ? "border-destructive" : ""}
                 required
               />
+              {phoneError && (
+                <p className="text-sm text-destructive mt-1">{phoneError}</p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Enter 10-digit mobile number (starts with 6-9)
+              </p>
             </div>
             <div>
               <Label htmlFor="email">Email</Label>
@@ -214,7 +238,7 @@ export function AddEnquiryDialog({ trigger, onSuccess }: AddEnquiryDialogProps) 
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !!phoneError || formData.phone.length !== 10}>
               {loading ? "Adding..." : "Add Enquiry"}
             </Button>
           </div>
