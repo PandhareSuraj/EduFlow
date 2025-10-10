@@ -11,6 +11,8 @@ import { Edit, FileText, DollarSign, Trash2, Download, Upload } from "lucide-rea
 import { Badge } from "@/components/ui/badge";
 import { useCollege } from "@/contexts/CollegeContext";
 import { format } from "date-fns";
+import { ValidatedInput } from "@/components/ui/validated-input";
+import { ValidationHelpers } from "@/lib/validationSchemas";
 
 interface Student {
   id: number;
@@ -374,26 +376,32 @@ export function EditStudentDialog({ student, courses, onUpdate, trigger }: EditS
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    required
-                  />
-                </div>
+                <ValidatedInput
+                  id="email"
+                  label="Email"
+                  type="email"
+                  validationType="email"
+                  value={formData.email}
+                  onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
+                  required
+                  placeholder="Enter email address"
+                  realTimeValidation
+                  showValidationIcon
+                />
 
-                <div>
-                  <Label htmlFor="mobile">Mobile Number *</Label>
-                  <Input
-                    id="mobile"
-                    value={formData.mobile_number}
-                    onChange={(e) => setFormData(prev => ({ ...prev, mobile_number: e.target.value }))}
-                    required
-                  />
-                </div>
+                <ValidatedInput
+                  id="mobile"
+                  label="Mobile Number"
+                  validationType="phone"
+                  value={formData.mobile_number}
+                  onChange={(value) => setFormData(prev => ({ ...prev, mobile_number: ValidationHelpers.cleanPhone(value) }))}
+                  required
+                  mask="phone"
+                  formatValue
+                  placeholder="Enter 10-digit phone number"
+                  realTimeValidation
+                  showValidationIcon
+                />
 
                 <div>
                   <Label htmlFor="admission_date">Admission Date</Label>

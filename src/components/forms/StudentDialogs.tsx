@@ -13,7 +13,7 @@ import { useCollege } from "@/contexts/CollegeContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ValidatedInput } from "@/components/ui/validated-input";
 import { ValidatedForm, ValidatedFormField } from "@/components/ui/validated-form";
-import { FormSchemas } from "@/lib/validationSchemas";
+import { FormSchemas, ValidationHelpers } from "@/lib/validationSchemas";
 
 // Export the individual dialog components
 export { ViewStudentDialog } from "./ViewStudentDialog";
@@ -471,23 +471,34 @@ export function AddStudentDialog({
                   name: e.target.value
                 })} required />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input id="email" type="email" value={formData.email} onChange={e => setFormData({
-                  ...formData,
-                  email: e.target.value
-                })} required />
-                </div>
+                <ValidatedInput
+                  id="email"
+                  label="Email"
+                  type="email"
+                  validationType="email"
+                  value={formData.email}
+                  onChange={(value) => setFormData({ ...formData, email: value })}
+                  required
+                  placeholder="Enter email address"
+                  realTimeValidation
+                  showValidationIcon
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="mobile">Mobile Number *</Label>
-                  <Input id="mobile" type="tel" value={formData.mobile_number} onChange={e => setFormData({
-                  ...formData,
-                  mobile_number: e.target.value
-                })} placeholder="Enter 10-12 digit mobile number" required />
-                </div>
+                <ValidatedInput
+                  id="mobile"
+                  label="Mobile Number"
+                  validationType="phone"
+                  value={formData.mobile_number}
+                  onChange={(value) => setFormData({ ...formData, mobile_number: ValidationHelpers.cleanPhone(value) })}
+                  required
+                  mask="phone"
+                  formatValue
+                  placeholder="Enter 10-digit phone number"
+                  realTimeValidation
+                  showValidationIcon
+                />
                 <div className="space-y-2">
                   <Label htmlFor="course">Course *</Label>
                   <Select value={formData.course_id} onValueChange={value => setFormData({

@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useFaculty } from "@/hooks/useFaculty";
 import { useCourses } from "@/hooks/useCourses";
+import { validatePhone, validateEmail, ValidationHelpers } from "@/lib/validationSchemas";
 
 interface Enquiry {
   id: string;
@@ -138,6 +139,8 @@ interface EditEnquiryDialogProps {
 export function EditEnquiryDialog({ enquiry, trigger, onSuccess }: EditEnquiryDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState<string>("");
+  const [emailError, setEmailError] = useState<string>("");
   const { toast } = useToast();
   const { faculty, loading: facultyLoading } = useFaculty();
   const { courses, loading: coursesLoading } = useCourses();
@@ -197,6 +200,27 @@ export function EditEnquiryDialog({ enquiry, trigger, onSuccess }: EditEnquiryDi
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Validate phone in real-time
+    if (field === "phone") {
+      const cleanedPhone = value.replace(/\D/g, '');
+      try {
+        validatePhone.parse(cleanedPhone);
+        setPhoneError("");
+      } catch (error: any) {
+        setPhoneError(error.errors?.[0]?.message || "Invalid phone number");
+      }
+    }
+    
+    // Validate email in real-time
+    if (field === "email") {
+      try {
+        validateEmail.parse(value);
+        setEmailError("");
+      } catch (error: any) {
+        setEmailError(error.errors?.[0]?.message || "Invalid email");
+      }
+    }
   };
 
   return (
@@ -228,8 +252,20 @@ export function EditEnquiryDialog({ enquiry, trigger, onSuccess }: EditEnquiryDi
               <Input
                 id="phone"
                 value={formData.phone}
-                onChange={(e) => handleChange("phone", e.target.value)}
+                onChange={(e) => {
+                  const cleaned = e.target.value.replace(/\D/g, '');
+                  handleChange("phone", cleaned);
+                }}
+                placeholder="e.g., 9876543210"
+                maxLength={10}
+                className={phoneError ? "border-destructive" : ""}
               />
+              {phoneError && (
+                <p className="text-sm text-destructive mt-1">{phoneError}</p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Enter 10-digit mobile number (starts with 6-9)
+              </p>
             </div>
             <div>
               <Label htmlFor="email">Email</Label>
@@ -238,7 +274,11 @@ export function EditEnquiryDialog({ enquiry, trigger, onSuccess }: EditEnquiryDi
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleChange("email", e.target.value)}
+                className={emailError ? "border-destructive" : ""}
               />
+              {emailError && (
+                <p className="text-sm text-destructive mt-1">{emailError}</p>
+              )}
             </div>
             <div>
               <Label htmlFor="course">Course</Label>
@@ -308,7 +348,7 @@ export function EditEnquiryDialog({ enquiry, trigger, onSuccess }: EditEnquiryDi
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !!phoneError || !!emailError || formData.phone.length !== 10}>
               {loading ? "Updating..." : "Update Enquiry"}
             </Button>
           </div>

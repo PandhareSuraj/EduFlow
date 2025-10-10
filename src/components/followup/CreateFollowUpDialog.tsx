@@ -11,6 +11,7 @@ import { useFollowUpActions } from '@/hooks/useFollowUpActions';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { validatePhone, validateEmail, ValidationHelpers } from '@/lib/validationSchemas';
 
 interface CreateFollowUpDialogProps {
   open: boolean;
@@ -24,6 +25,8 @@ export const CreateFollowUpDialog = ({
   onSuccess,
 }: CreateFollowUpDialogProps) => {
   const { createCustomFollowUp, updating } = useFollowUpActions();
+  const [phoneError, setPhoneError] = useState<string>("");
+  const [emailError, setEmailError] = useState<string>("");
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -103,12 +106,28 @@ export const CreateFollowUpDialog = ({
             <Label htmlFor="contactPhone">Contact Phone *</Label>
             <Input
               id="contactPhone"
-              type="tel"
               value={formData.contactPhone}
-              onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-              placeholder="+91 98765 43210"
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/\D/g, '');
+                setFormData({ ...formData, contactPhone: cleaned });
+                try {
+                  validatePhone.parse(cleaned);
+                  setPhoneError("");
+                } catch (error: any) {
+                  setPhoneError(error.errors?.[0]?.message || "Invalid phone number");
+                }
+              }}
+              placeholder="e.g., 9876543210"
+              maxLength={10}
+              className={phoneError ? "border-destructive" : ""}
               required
             />
+            {phoneError && (
+              <p className="text-sm text-destructive mt-1">{phoneError}</p>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              Enter 10-digit mobile number (starts with 6-9)
+            </p>
           </div>
 
           {/* Contact Email */}
@@ -118,9 +137,25 @@ export const CreateFollowUpDialog = ({
               id="contactEmail"
               type="email"
               value={formData.contactEmail}
-              onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, contactEmail: e.target.value });
+                try {
+                  if (e.target.value) {
+                    validateEmail.parse(e.target.value);
+                    setEmailError("");
+                  } else {
+                    setEmailError("");
+                  }
+                } catch (error: any) {
+                  setEmailError(error.errors?.[0]?.message || "Invalid email");
+                }
+              }}
               placeholder="email@example.com"
+              className={emailError ? "border-destructive" : ""}
             />
+            {emailError && (
+              <p className="text-sm text-destructive mt-1">{emailError}</p>
+            )}
           </div>
 
           {/* Priority */}
@@ -174,7 +209,7 @@ export const CreateFollowUpDialog = ({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={updating}>
+            <Button type="submit" disabled={updating || !!phoneError || !!emailError || formData.contactPhone.length !== 10}>
               {updating ? 'Creating...' : 'Create Follow-up'}
             </Button>
           </div>
