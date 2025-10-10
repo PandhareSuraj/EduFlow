@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { validatePhone, validateEmail, validatePassword } from "@/lib/validationSchemas";
 
 interface SignupData {
   phone_number: string;
@@ -26,6 +27,9 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [otpCode, setOtpCode] = useState("");
@@ -51,13 +55,21 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
   }, [resendCooldown]);
 
   const validatePhoneNumber = (phone: string) => {
-    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-    return phoneRegex.test(phone.replace(/[\s-]/g, ''));
+    // For Indian phone numbers (10 digits starting with 6-9)
+    const cleaned = phone.replace(/\D/g, '');
+    try {
+      validatePhone.parse(cleaned);
+      setPhoneError("");
+      return true;
+    } catch (error: any) {
+      setPhoneError(error.errors?.[0]?.message || "Invalid phone number");
+      return false;
+    }
   };
 
   const sendOTP = async () => {
     if (!validatePhoneNumber(signupData.phone_number)) {
-      setError('Please enter a valid phone number with country code');
+      setError(phoneError || 'Please enter a valid 10-digit Indian mobile number');
       return;
     }
 
@@ -131,19 +143,29 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
       setError('Full name is required');
       return false;
     }
-    if (!signupData.email.trim()) {
-      setError('Email is required');
+    
+    // Validate email
+    try {
+      validateEmail.parse(signupData.email);
+      setEmailError("");
+    } catch (error: any) {
+      const message = error.errors?.[0]?.message || "Invalid email";
+      setEmailError(message);
+      setError(message);
       return false;
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(signupData.email)) {
-      setError('Please enter a valid email address');
+    
+    // Validate password
+    try {
+      validatePassword.parse(signupData.password);
+      setPasswordError("");
+    } catch (error: any) {
+      const message = error.errors?.[0]?.message || "Invalid password";
+      setPasswordError(message);
+      setError(message);
       return false;
     }
-    if (signupData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return false;
-    }
+    
     if (signupData.password !== signupData.confirmPassword) {
       setError('Passwords do not match');
       return false;
@@ -202,6 +224,35 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
   const handleInputChange = (field: keyof SignupData, value: string) => {
     setSignupData(prev => ({ ...prev, [field]: value }));
     if (error) setError('');
+    
+    // Real-time validation
+    if (field === 'phone_number') {
+      const cleaned = value.replace(/\D/g, '');
+      try {
+        validatePhone.parse(cleaned);
+        setPhoneError("");
+      } catch (error: any) {
+        setPhoneError(error.errors?.[0]?.message || "Invalid phone number");
+      }
+    }
+    
+    if (field === 'email') {
+      try {
+        validateEmail.parse(value);
+        setEmailError("");
+      } catch (error: any) {
+        setEmailError(error.errors?.[0]?.message || "Invalid email");
+      }
+    }
+    
+    if (field === 'password') {
+      try {
+        validatePassword.parse(value);
+        setPasswordError("");
+      } catch (error: any) {
+        setPasswordError(error.errors?.[0]?.message || "Invalid password");
+      }
+    }
   };
 
   const getProgressValue = () => {
@@ -241,19 +292,26 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
             <Label htmlFor="phone">Phone Number</Label>
             <Input
               id="phone"
-              type="tel"
-              placeholder="+1234567890"
               value={signupData.phone_number}
-              onChange={(e) => handleInputChange('phone_number', e.target.value)}
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/\D/g, '');
+                handleInputChange('phone_number', cleaned);
+              }}
+              placeholder="e.g., 9876543210"
+              maxLength={10}
+              className={phoneError ? "border-destructive" : ""}
               disabled={otpSent}
             />
+            {phoneError && (
+              <p className="text-sm text-destructive">{phoneError}</p>
+            )}
             <p className="text-xs text-muted-foreground">
-              Include country code (e.g., +91 for India, +1 for US)
+              Enter 10-digit Indian mobile number (starts with 6-9)
             </p>
           </div>
 
           {!otpSent ? (
-            <Button onClick={sendOTP} disabled={loading} className="w-full">
+            <Button onClick={sendOTP} disabled={loading || !!phoneError || signupData.phone_number.length !== 10} className="w-full">
               {loading ? 'Sending...' : 'Send OTP'}
             </Button>
           ) : (
@@ -332,7 +390,11 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
               placeholder="Enter your email"
               value={signupData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
+              className={emailError ? "border-destructive" : ""}
             />
+            {emailError && (
+              <p className="text-sm text-destructive">{emailError}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -341,9 +403,10 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Create a password"
+                placeholder="Create a password (min 8 chars)"
                 value={signupData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
+                className={passwordError ? "border-destructive" : ""}
               />
               <Button
                 type="button"
@@ -355,6 +418,12 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
             </div>
+            {passwordError && (
+              <p className="text-sm text-destructive">{passwordError}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Must be at least 8 characters with uppercase, lowercase, and number
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -388,7 +457,11 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
-            <Button onClick={completeSignup} disabled={loading} className="flex-1">
+            <Button 
+              onClick={completeSignup} 
+              disabled={loading || !!emailError || !!passwordError || signupData.password !== signupData.confirmPassword} 
+              className="flex-1"
+            >
               {loading ? 'Creating Account...' : 'Create Account'}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

@@ -20,7 +20,7 @@ export const ValidationSchemas = {
   email: z
     .string()
     .min(1, "Email is required")
-    .email("Please enter a valid email address")
+    .email("Please enter a valid email address (e.g., user@example.com)")
     .max(100, "Email cannot exceed 100 characters")
     .transform((email) => email.toLowerCase().trim()),
 
@@ -29,7 +29,7 @@ export const ValidationSchemas = {
     .min(1, "Mobile number is required")
     .transform((phone) => phone.replace(/\D/g, ''))
     .refine((phone) => phoneRegex.test(phone), {
-      message: "Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9"
+      message: "Enter a valid 10-digit mobile number starting with 6, 7, 8, or 9 (e.g., 9876543210)"
     }),
 
   // Academic Information
@@ -55,14 +55,14 @@ export const ValidationSchemas = {
   // Financial Information
   amount: z
     .number()
-    .min(0.01, "Amount must be greater than 0")
+    .min(0.01, "Amount must be greater than ₹0")
     .max(10000000, "Amount cannot exceed ₹1,00,00,000")
     .multipleOf(0.01, "Amount can have at most 2 decimal places"),
 
   percentage: z
     .number()
-    .min(0, "Percentage cannot be negative")
-    .max(100, "Percentage cannot exceed 100"),
+    .min(0, "Percentage cannot be negative (minimum: 0%)")
+    .max(100, "Percentage cannot exceed 100%"),
 
   // Authentication
   password: z
@@ -70,23 +70,23 @@ export const ValidationSchemas = {
     .min(8, "Password must be at least 8 characters")
     .max(128, "Password cannot exceed 128 characters")
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 
-      "Password must contain at least one uppercase letter, one lowercase letter, and one number"),
+      "Password must include uppercase letter, lowercase letter, and number (e.g., MyPass123)"),
 
   otp: z
     .string()
-    .regex(otpRegex, "OTP must be exactly 6 digits"),
+    .regex(otpRegex, "OTP must be exactly 6 digits (e.g., 123456)"),
 
   // Date validations
   futureDate: z
     .date()
     .refine((date) => date > new Date(), {
-      message: "Date must be in the future"
+      message: "Date must be in the future (select a date after today)"
     }),
 
   pastOrCurrentDate: z
     .date()
     .refine((date) => date <= new Date(), {
-      message: "Date cannot be in the future"
+      message: "Date cannot be in the future (select today or earlier)"
     }),
 
   // Text fields
@@ -121,34 +121,34 @@ export const ValidationSchemas = {
   // Library
   isbn: z
     .string()
-    .regex(/^(?:\d{10}|\d{13})$/, "ISBN must be 10 or 13 digits")
+    .regex(/^(?:\d{10}|\d{13})$/, "ISBN must be 10 or 13 digits (e.g., 1234567890)")
     .optional(),
 
   // Inventory
   quantity: z
     .number()
-    .int("Quantity must be a whole number")
-    .min(0, "Quantity cannot be negative")
-    .max(10000, "Quantity cannot exceed 10,000"),
+    .int("Quantity must be a whole number (no decimals)")
+    .min(0, "Quantity cannot be negative (minimum: 0)")
+    .max(10000, "Quantity cannot exceed 10,000 units"),
 
   // Payment methods
   transactionId: z
     .string()
     .min(5, "Transaction ID must be at least 5 characters")
     .max(50, "Transaction ID cannot exceed 50 characters")
-    .regex(/^[A-Za-z0-9-_]+$/, "Transaction ID can only contain letters, numbers, hyphens, and underscores"),
+    .regex(/^[A-Za-z0-9-_]+$/, "Transaction ID can only contain letters, numbers, hyphens, and underscores (e.g., TXN-12345)"),
 
   chequeNumber: z
     .string()
-    .min(6, "Cheque number must be at least 6 characters")
-    .max(12, "Cheque number cannot exceed 12 characters")
-    .regex(/^\d+$/, "Cheque number can only contain digits"),
+    .min(6, "Cheque number must be at least 6 digits")
+    .max(12, "Cheque number cannot exceed 12 digits")
+    .regex(/^\d+$/, "Cheque number can only contain digits (e.g., 123456)"),
 
   bankName: z
     .string()
     .min(2, "Bank name must be at least 2 characters")
     .max(50, "Bank name cannot exceed 50 characters")
-    .regex(/^[a-zA-Z\s&.'-]+$/, "Bank name can only contain letters, spaces, and basic punctuation"),
+    .regex(/^[a-zA-Z\s&.'-]+$/, "Bank name can only contain letters and basic punctuation (e.g., State Bank of India)"),
 };
 
 // Composite schemas for forms
