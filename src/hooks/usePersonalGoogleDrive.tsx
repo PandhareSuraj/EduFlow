@@ -61,9 +61,9 @@ export const usePersonalGoogleDrive = () => {
       }
 
       console.log('Starting Google Drive OAuth flow...');
-
-      // Pass token as query parameter to avoid CORS issues with redirects
-      const startUrl = `https://velhefqnjmevluskffzp.functions.supabase.co/personal-google-auth/start?access_token=${session.access_token}`;
+      
+      // Navigate to GET /start (no headers needed). Optionally include token for user context.
+      const startUrl = `https://velhefqnjmevluskffzp.functions.supabase.co/personal-google-auth/start${session?.access_token ? `?access_token=${session.access_token}` : ''}`;
       
       // Direct navigation to start OAuth flow
       window.location.href = startUrl;

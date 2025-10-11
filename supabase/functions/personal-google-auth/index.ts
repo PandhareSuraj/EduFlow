@@ -36,6 +36,7 @@ serve(async (req) => {
     method: req.method,
     url: req.url,
     pathname,
+    redirect_uri: REDIRECT_URI,
     env: {
       has_client_id: !!clientId,
       has_client_secret: !!clientSecret,
@@ -66,48 +67,33 @@ serve(async (req) => {
 
     // Handle GET /start - Initiate OAuth flow
     if (req.method === 'GET' && pathname.endsWith('/start')) {
-      // Try Authorization header first, then query parameter
-      let token = req.headers.get('Authorization')?.replace('Bearer ', '');
-      if (!token) {
-        token = url.searchParams.get('access_token');
-      }
-      
-      if (!token) {
-        console.error('No access token provided');
-        return new Response(
-          JSON.stringify({ error: 'unauthorized', message: 'No access token provided' }),
-          { 
-            status: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
+      // Secrets check
+      if (!clientId || !clientSecret) {
+        console.error("OAUTH_SECRETS_MISSING", { has_client_id: !!clientId, has_client_secret: !!clientSecret });
+        return new Response(JSON.stringify({ error: "missing_oauth_secrets" }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
 
-      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-      
-      console.log("USER_FROM_TOKEN", { 
-        user_id: user?.id,
-        has_user: !!user,
-        error: userError?.message,
-        token_source: req.headers.get('Authorization') ? 'header' : 'query'
-      });
-      
-      if (userError || !user) {
-        console.error('User auth failed:', userError);
-        return new Response(
-          JSON.stringify({ error: 'unauthorized', message: userError?.message }),
-          { 
-            status: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
+      // Accept token from header or query param, but do not require it
+      const authHeader = req.headers.get('Authorization');
+      let token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+      if (!token) token = url.searchParams.get('access_token');
+
+      // Optionally resolve user
+      let userId: string | null = null;
+      if (token) {
+        const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+        console.log("USER_FROM_TOKEN", { user_id: user?.id, has_user: !!user, error: userError?.message, token_source: authHeader ? 'header' : (url.searchParams.has('access_token') ? 'query' : 'none') });
+        if (!userError && user) {
+          userId = user.id;
+        }
+      } else {
+        console.log("USER_FROM_TOKEN", { user_id: null, has_user: false, error: "no_token", token_source: "none" });
       }
 
-      const state = JSON.stringify({ 
-        userId: user.id,
-        ts: Date.now(),
-        type: 'personal_drive'
-      });
+      const state = JSON.stringify({ userId, ts: Date.now(), type: 'personal_drive' });
 
       const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
       googleAuthUrl.searchParams.set('client_id', clientId!);
@@ -118,22 +104,13 @@ serve(async (req) => {
       googleAuthUrl.searchParams.set('prompt', 'consent');
       googleAuthUrl.searchParams.set('state', state);
 
-    console.log("AUTH_START", {
-      client_id: clientId,
-      redirect_uri: REDIRECT_URI,
-      scopes: SCOPES,
-      user_id: user.id
-    });
-    
-    const authUrlString = googleAuthUrl.toString();
-    console.log("AUTH_URL_GENERATED", authUrlString);
+      console.log("AUTH_START", { client_id: clientId, redirect_uri: REDIRECT_URI, userId });
+      console.log("AUTH_URL", googleAuthUrl.toString());
 
-    return new Response(null, {
-      status: 302,
-      headers: {
-        'Location': authUrlString
-      }
-    });
+      return new Response(null, {
+        status: 302,
+        headers: { 'Location': googleAuthUrl.toString() }
+      });
     }
 
     // Handle GET /callback - OAuth callback from Google
@@ -141,6 +118,13 @@ serve(async (req) => {
       const code = url.searchParams.get('code');
       const state = url.searchParams.get('state');
       const oauthError = url.searchParams.get('error');
+
+      // Determine frontend success URL dynamically from referer/origin or fallback
+      let frontendSuccessUrl = url.searchParams.get('redirect_to') || '';
+      if (!frontendSuccessUrl) {
+        const origin = req.headers.get('origin') || (() => { try { return new URL(req.headers.get('referer') || '').origin; } catch { return ''; } })();
+        frontendSuccessUrl = origin ? `${origin}/settings` : `https://${SUPABASE_REF}.supabase.co/settings`;
+      }
 
       console.log("AUTH_CALLBACK_PARAMS", {
         has_code: !!code,
@@ -153,7 +137,7 @@ serve(async (req) => {
         return new Response(null, {
           status: 302,
           headers: {
-            'Location': `${FRONTEND_SUCCESS_URL}?error=oauth_error`
+            'Location': `${frontendSuccessUrl}?error=oauth_error`
           }
         });
       }
@@ -163,7 +147,7 @@ serve(async (req) => {
         return new Response(null, {
           status: 302,
           headers: {
-            'Location': `${FRONTEND_SUCCESS_URL}?error=missing_params`
+            'Location': `${frontendSuccessUrl}?error=missing_params`
           }
         });
       }
@@ -172,7 +156,7 @@ serve(async (req) => {
       let stateData;
       try {
         stateData = JSON.parse(state);
-        if (!stateData.userId || !stateData.ts) {
+        if (!('userId' in stateData) || !stateData.ts) {
           throw new Error('Invalid state structure');
         }
         // Check timestamp freshness (within 10 minutes)
@@ -184,19 +168,19 @@ serve(async (req) => {
         return new Response(null, {
           status: 302,
           headers: {
-            'Location': `${FRONTEND_SUCCESS_URL}?error=missing_state`
+            'Location': `${frontendSuccessUrl}?error=missing_state`
           }
         });
       }
 
-      const userId = stateData.userId;
+      const userId = stateData.userId || null;
 
       if (!clientId || !clientSecret) {
         console.error('Google OAuth credentials not configured');
         return new Response(null, {
           status: 302,
           headers: {
-            'Location': `${FRONTEND_SUCCESS_URL}?error=config_error`
+            'Location': `${frontendSuccessUrl}?error=config_error`
           }
         });
       }
@@ -223,7 +207,7 @@ serve(async (req) => {
         return new Response(null, {
           status: 302,
           headers: {
-            'Location': `${FRONTEND_SUCCESS_URL}?error=token_exchange_failed`
+            'Location': `${frontendSuccessUrl}?error=token_exchange_failed`
           }
         });
       }
@@ -235,7 +219,6 @@ serve(async (req) => {
       });
 
       // Continue with the rest of the OAuth completion process...
-      // (The existing code from complete_oauth action)
       const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: {
           'Authorization': `Bearer ${tokenData.access_token}`,
@@ -249,7 +232,7 @@ serve(async (req) => {
         return new Response(null, {
           status: 302,
           headers: {
-            'Location': `${FRONTEND_SUCCESS_URL}?error=user_info_failed`
+            'Location': `${frontendSuccessUrl}?error=user_info_failed`
           }
         });
       }
@@ -257,7 +240,7 @@ serve(async (req) => {
       console.log("USERINFO", { email: userInfo.email });
 
       // Create main storage folder in user's Google Drive with idempotency
-      const folderName = `College-Documents-${userId.slice(0, 8)}`;
+      const folderName = `College-Documents-${(userId || 'anon').toString().slice(0, 8)}`;
       const folderResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
         method: 'POST',
         headers: {
@@ -293,7 +276,7 @@ serve(async (req) => {
             return new Response(null, {
               status: 302,
               headers: {
-                'Location': `${FRONTEND_SUCCESS_URL}?error=folder_creation_failed`
+                'Location': `${frontendSuccessUrl}?error=folder_creation_failed`
               }
             });
           }
@@ -302,7 +285,7 @@ serve(async (req) => {
           return new Response(null, {
             status: 302,
             headers: {
-              'Location': `${FRONTEND_SUCCESS_URL}?error=folder_creation_failed`
+              'Location': `${frontendSuccessUrl}?error=folder_creation_failed`
             }
           });
         }
@@ -349,18 +332,14 @@ serve(async (req) => {
         })
         .select();
 
-      console.log("DB_UPSERT_PERSONAL_DRIVE", { 
-        user_id: userId, 
-        ok: !error,
-        has_refresh_token: !!tokenData.refresh_token
-      });
+      console.log("DB_UPSERT_PERSONAL_DRIVE", { user_id: userId, ok: !error });
 
       if (error) {
         console.error('Database upsert error:', error);
         return new Response(null, {
           status: 302,
           headers: {
-            'Location': `${FRONTEND_SUCCESS_URL}?error=database_error`
+            'Location': `${frontendSuccessUrl}?error=database_error`
           }
         });
       }
@@ -371,7 +350,7 @@ serve(async (req) => {
       return new Response(null, {
         status: 302,
         headers: {
-          'Location': `${FRONTEND_SUCCESS_URL}?success=google_drive_connected`
+          'Location': `${frontendSuccessUrl}?success=google_drive_connected`
         }
       });
     }
