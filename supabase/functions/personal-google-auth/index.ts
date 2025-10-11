@@ -31,12 +31,31 @@ serve(async (req) => {
   // Startup validation
   const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
   const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
-  
+
+  console.log("FUNC_START", {
+    method: req.method,
+    url: req.url,
+    pathname,
+    env: {
+      has_client_id: !!clientId,
+      has_client_secret: !!clientSecret,
+      supabase_url: Deno.env.get("SUPABASE_URL"),
+      has_service_key: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+    }
+  });
+
   if (!clientId || !clientSecret) {
     console.error("OAUTH_SECRETS_MISSING", { 
       has_client_id: !!clientId, 
       has_client_secret: !!clientSecret 
     });
+    return new Response(
+      JSON.stringify({ error: "missing_oauth_secrets" }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
 
   try {
@@ -47,17 +66,41 @@ serve(async (req) => {
 
     // Handle GET /start - Initiate OAuth flow
     if (req.method === 'GET' && pathname.endsWith('/start')) {
-      const authHeader = req.headers.get('Authorization');
-      if (!authHeader) {
-        return new Response('Unauthorized', { status: 401 });
+      // Try Authorization header first, then query parameter
+      let token = req.headers.get('Authorization')?.replace('Bearer ', '');
+      if (!token) {
+        token = url.searchParams.get('access_token');
+      }
+      
+      if (!token) {
+        console.error('No access token provided');
+        return new Response(
+          JSON.stringify({ error: 'unauthorized', message: 'No access token provided' }),
+          { 
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
       }
 
-      const token = authHeader.replace('Bearer ', '');
       const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      
+      console.log("USER_FROM_TOKEN", { 
+        user_id: user?.id,
+        has_user: !!user,
+        error: userError?.message,
+        token_source: req.headers.get('Authorization') ? 'header' : 'query'
+      });
       
       if (userError || !user) {
         console.error('User auth failed:', userError);
-        return new Response('Unauthorized', { status: 401 });
+        return new Response(
+          JSON.stringify({ error: 'unauthorized', message: userError?.message }),
+          { 
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
       }
 
       const state = JSON.stringify({ 
@@ -75,20 +118,22 @@ serve(async (req) => {
       googleAuthUrl.searchParams.set('prompt', 'consent');
       googleAuthUrl.searchParams.set('state', state);
 
-      console.log("AUTH_START", {
-        client_id: clientId,
-        redirect_uri: REDIRECT_URI,
-        scopes: SCOPES,
-        user_id: user.id
-      });
-      console.log("AUTH_URL", googleAuthUrl.toString());
+    console.log("AUTH_START", {
+      client_id: clientId,
+      redirect_uri: REDIRECT_URI,
+      scopes: SCOPES,
+      user_id: user.id
+    });
+    
+    const authUrlString = googleAuthUrl.toString();
+    console.log("AUTH_URL_GENERATED", authUrlString);
 
-      return new Response(null, {
-        status: 302,
-        headers: {
-          'Location': googleAuthUrl.toString()
-        }
-      });
+    return new Response(null, {
+      status: 302,
+      headers: {
+        'Location': authUrlString
+      }
+    });
     }
 
     // Handle GET /callback - OAuth callback from Google
