@@ -54,19 +54,36 @@ export const usePersonalGoogleDrive = () => {
         throw new Error('User not authenticated');
       }
 
-      // Start OAuth flow by invoking edge function to get proper auth URL
-      const { data, error } = await supabase.functions.invoke('personal-google-auth', {
-        body: { 
-          action: 'start_oauth'
-        }
+      // Get auth session for bearer token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      // Redirect to GET /start endpoint with auth header
+      const startUrl = 'https://velhefqnjmevluskffzp.functions.supabase.co/personal-google-auth/start';
+      
+      // Redirect browser to start endpoint (which will redirect to Google)
+      const link = document.createElement('a');
+      link.href = startUrl;
+      link.target = '_self';
+      
+      // Add auth header via fetch first to validate, then redirect
+      const response = await fetch(startUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        redirect: 'manual'
       });
 
-      if (error) throw error;
-
-      if (data?.authUrl) {
-        window.location.href = data.authUrl;
+      if (response.status === 302 || response.type === 'opaqueredirect') {
+        // Follow the redirect manually
+        window.location.href = startUrl;
+      } else if (response.status === 401) {
+        throw new Error('Authentication required');
       } else {
-        throw new Error('Failed to get authorization URL');
+        throw new Error('Failed to start OAuth flow');
       }
     } catch (error) {
       console.error('Failed to connect Google Drive:', error);
