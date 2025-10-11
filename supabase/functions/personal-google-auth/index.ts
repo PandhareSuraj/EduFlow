@@ -32,12 +32,12 @@ serve(async (req) => {
     if (req.method === 'GET' && url.searchParams.has('code')) {
       const code = url.searchParams.get('code');
       const state = url.searchParams.get('state');
-      const error = url.searchParams.get('error');
+      const oauthError = url.searchParams.get('error');
 
-      console.log('OAuth callback received:', { code: !!code, state, error });
+      console.log('OAuth callback received:', { code: !!code, state, error: oauthError });
 
-      if (error) {
-        console.error('OAuth error:', error);
+      if (oauthError) {
+        console.error('OAuth error:', oauthError);
         return new Response(null, {
           status: 302,
           headers: {
