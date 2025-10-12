@@ -10,12 +10,66 @@ const corsHeaders = {
 // Configuration constants
 const SUPABASE_REF = "velhefqnjmevluskffzp";
 const REDIRECT_URI = `https://${SUPABASE_REF}.functions.supabase.co/personal-google-auth/callback`;
-const FRONTEND_SUCCESS_URL = `https://${SUPABASE_REF}.supabase.co/settings`;
+const FRONTEND_URL = Deno.env.get("FRONTEND_URL") || "https://collegecrm.vercel.app";
 const SCOPES = [
   'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/userinfo.profile'
 ];
+
+// Helper function to ensure Drive folder exists (search first, then create)
+async function ensureDriveFolder(accessToken: string, userId: string): Promise<string> {
+  const folderName = `College-Documents-${userId.slice(0, 8)}`;
+  
+  // Search for existing folder first
+  console.log("FOLDER_SEARCH_START", { folderName });
+  const searchUrl = new URL("https://www.googleapis.com/drive/v3/files");
+  searchUrl.searchParams.set("q", `name='${folderName.replace(/'/g, "\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+  searchUrl.searchParams.set("fields", "files(id,name)");
+  
+  const searchRes = await fetch(searchUrl.toString(), {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+  const searchData = await searchRes.json();
+  
+  if (!searchRes.ok) {
+    console.error("FOLDER_SEARCH_ERROR", { status: searchRes.status, error: searchData });
+  } else if (searchData.files?.length > 0) {
+    console.log("FOLDER_REUSE", { id: searchData.files[0].id, name: folderName });
+    return searchData.files[0].id;
+  }
+  
+  console.log("FOLDER_NOT_FOUND", { folderName, creating: true });
+  
+  // Create new folder
+  console.log("FOLDER_CREATE_START", { folderName });
+  const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name: folderName,
+      mimeType: "application/vnd.google-apps.folder",
+      parents: ["root"]
+    })
+  });
+  
+  const createData = await createRes.json();
+  
+  if (!createRes.ok) {
+    console.error("FOLDER_CREATE_ERROR", { 
+      status: createRes.status,
+      error: createData,
+      scopes_needed: "https://www.googleapis.com/auth/drive.file"
+    });
+    throw new Error("folder_creation_failed");
+  }
+  
+  console.log("FOLDER_CREATE_OK", { id: createData.id, name: folderName });
+  return createData.id;
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -124,12 +178,8 @@ serve(async (req) => {
       const state = url.searchParams.get('state');
       const oauthError = url.searchParams.get('error');
 
-      // Determine frontend success URL dynamically from referer/origin or fallback
-      let frontendSuccessUrl = url.searchParams.get('redirect_to') || '';
-      if (!frontendSuccessUrl) {
-        const origin = req.headers.get('origin') || (() => { try { return new URL(req.headers.get('referer') || '').origin; } catch { return ''; } })();
-        frontendSuccessUrl = origin ? `${origin}/settings` : `https://${SUPABASE_REF}.supabase.co/settings`;
-      }
+      // Use static frontend URL for all redirects
+      const frontendSuccessUrl = `${FRONTEND_URL}/settings`;
 
       console.log("AUTH_CALLBACK_PARAMS", {
         has_code: !!code,
@@ -220,8 +270,11 @@ serve(async (req) => {
       console.log("TOKENS_FETCHED", {
         has_access: !!tokenData.access_token,
         has_refresh: !!tokenData.refresh_token,
-        expires_in: tokenData.expires_in
+        expires_in: tokenData.expires_in,
+        scope: tokenData.scope || "not_provided"
       });
+      
+      console.log("SCOPES_GRANTED", { scopes: tokenData.scope || "none" });
 
       // Continue with the rest of the OAuth completion process...
       const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -244,64 +297,19 @@ serve(async (req) => {
 
       console.log("USERINFO", { email: userInfo.email });
 
-      // Create main storage folder in user's Google Drive with idempotency
-      const folderName = `College-Documents-${(userId || 'anon').toString().slice(0, 8)}`;
-      const folderResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${tokenData.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: folderName,
-          mimeType: 'application/vnd.google-apps.folder',
-          parents: ['root']
-        }),
-      });
-
-      let folderData = await folderResponse.json();
-      let folderId = folderData.id;
-      
-      // Handle duplicate folder (409 or already exists) - idempotency
-      if (!folderResponse.ok) {
-        if (folderResponse.status === 409 || folderData.error?.code === 409) {
-          console.log("FOLDER_EXISTS", { name: folderName, reusing: true });
-          // Search for existing folder
-          const searchResponse = await fetch(
-            `https://www.googleapis.com/drive/v3/files?q=name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-            { headers: { 'Authorization': `Bearer ${tokenData.access_token}` }}
-          );
-          const searchData = await searchResponse.json();
-          if (searchData.files && searchData.files.length > 0) {
-            folderId = searchData.files[0].id;
-            folderData = searchData.files[0];
-            console.log("FOLDER_REUSED", { id: folderId });
-          } else {
-            console.error('Folder creation/search error:', folderData);
-            return new Response(null, {
-              status: 302,
-              headers: {
-                'Location': `${frontendSuccessUrl}?error=folder_creation_failed`
-              }
-            });
+      // Use the robust helper function for folder creation
+      let folderId: string;
+      try {
+        folderId = await ensureDriveFolder(tokenData.access_token, userId || 'anon');
+      } catch (err) {
+        console.error("PERSONAL_DRIVE_SETUP_ERROR", { error: String(err), userId });
+        return new Response(null, {
+          status: 302,
+          headers: {
+            'Location': `${frontendSuccessUrl}?error=folder_creation_failed`
           }
-        } else {
-          console.error('Folder creation error:', folderData);
-          return new Response(null, {
-            status: 302,
-            headers: {
-              'Location': `${frontendSuccessUrl}?error=folder_creation_failed`
-            }
-          });
-        }
+        });
       }
-
-      console.log("FOLDER_CREATE", { 
-        id: folderId, 
-        name: folderName, 
-        ok: folderResponse.ok,
-        status: folderResponse.status 
-      });
 
       // Get drive quota information
       const aboutResponse = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', {
@@ -366,11 +374,14 @@ serve(async (req) => {
         JSON.stringify({
           client_id: clientId,
           redirect_uri: REDIRECT_URI,
+          frontend_url: FRONTEND_URL,
+          scopes_requested: SCOPES,
           env_check: {
             has_client_id: !!clientId,
             has_client_secret: !!clientSecret,
             has_supabase_url: !!Deno.env.get("SUPABASE_URL"),
-            has_service_key: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+            has_service_key: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+            has_frontend_url: !!Deno.env.get("FRONTEND_URL")
           }
         }),
         { 
