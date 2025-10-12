@@ -45,6 +45,11 @@ serve(async (req) => {
     }
   });
 
+  console.log("CONFIG_USE", { 
+    client_id: clientId, 
+    redirect_uri: REDIRECT_URI 
+  });
+
   if (!clientId || !clientSecret) {
     console.error("OAUTH_SECRETS_MISSING", { 
       has_client_id: !!clientId, 
@@ -353,6 +358,26 @@ serve(async (req) => {
           'Location': `${frontendSuccessUrl}?success=google_drive_connected`
         }
       });
+    }
+
+    // Debug endpoint to verify configuration
+    if (req.method === 'GET' && pathname.endsWith('/debug')) {
+      return new Response(
+        JSON.stringify({
+          client_id: clientId,
+          redirect_uri: REDIRECT_URI,
+          env_check: {
+            has_client_id: !!clientId,
+            has_client_secret: !!clientSecret,
+            has_supabase_url: !!Deno.env.get("SUPABASE_URL"),
+            has_service_key: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+          }
+        }),
+        { 
+          status: 200, 
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
     }
 
     // No other endpoints needed - OAuth is handled via GET /start and GET /callback
