@@ -22,7 +22,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.personal-google-auth]
-verify_jwt = true
+verify_jwt = false
 
 [functions.personal-google-upload]
 verify_jwt = true
