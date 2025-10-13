@@ -32,9 +32,31 @@ export const usePersonalGoogleDrive = () => {
         return;
       }
 
-      // For now, we'll simulate empty settings until types are updated
-      // This will be replaced with proper database queries once types are available
-      setSettings(null);
+      console.log('Fetching Google Drive settings for user:', user.user.id);
+
+      // Fetch from personal_google_drive table
+      const { data, error } = await supabase
+        .from('personal_google_drive')
+        .select('*')
+        .eq('user_id', user.user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Database error fetching Google Drive settings:', error);
+        throw error;
+      }
+
+      if (data) {
+        console.log('Google Drive settings loaded:', {
+          connected: data.connected,
+          email: data.google_email,
+          folder_id: data.drive_folder_id
+        });
+        setSettings(data as PersonalGoogleDriveSettings);
+      } else {
+        console.log('No Google Drive settings found for user');
+        setSettings(null);
+      }
     } catch (error) {
       console.error('Error fetching personal Google Drive settings:', error);
       toast({
@@ -65,6 +87,13 @@ export const usePersonalGoogleDrive = () => {
       // Navigate to GET /start (no headers needed). Optionally include token for user context.
       const startUrl = `https://velhefqnjmevluskffzp.functions.supabase.co/personal-google-auth/start${session?.access_token ? `?access_token=${session.access_token}` : ''}`;
       
+      console.log('OAuth Configuration:', {
+        user_id: user.user.id,
+        start_url: startUrl,
+        has_session: !!session,
+        redirect_uri: 'https://velhefqnjmevluskffzp.functions.supabase.co/personal-google-auth/callback'
+      });
+      
       // Direct navigation to start OAuth flow
       window.location.href = startUrl;
       
@@ -83,8 +112,32 @@ export const usePersonalGoogleDrive = () => {
     if (!settings?.id) return;
 
     try {
-      // For now, just show success message
-      // This will be replaced with proper database update once types are available
+      console.log('Disconnecting Google Drive...');
+
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Update database to mark as disconnected and clear tokens
+      const { error } = await supabase
+        .from('personal_google_drive')
+        .update({
+          connected: false,
+          access_token: null,
+          refresh_token: null,
+          token_expires_at: null
+        })
+        .eq('user_id', user.user.id);
+
+      if (error) {
+        console.error('Database error disconnecting Google Drive:', error);
+        throw error;
+      }
+
+      console.log('Google Drive disconnected successfully');
+      
+      // Update local state
       setSettings(prev => prev ? { 
         ...prev, 
         connected: false, 
@@ -196,6 +249,9 @@ export const usePersonalGoogleDrive = () => {
             break;
           case 'database_error':
             errorMessage = "Failed to save Google Drive settings";
+            break;
+          case 'insufficient_permissions':
+            errorMessage = "Insufficient Google Drive permissions. Please try reconnecting and grant all requested permissions.";
             break;
         }
 

@@ -14,7 +14,8 @@ const FRONTEND_URL = Deno.env.get("FRONTEND_URL") || "https://collegecrm.vercel.
 const SCOPES = [
   'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/userinfo.email',
-  'https://www.googleapis.com/auth/userinfo.profile'
+  'https://www.googleapis.com/auth/userinfo.profile',
+  'openid'
 ];
 
 // Helper function to ensure Drive folder exists (search first, then create)
@@ -59,11 +60,23 @@ async function ensureDriveFolder(accessToken: string, userId: string): Promise<s
   const createData = await createRes.json();
   
   if (!createRes.ok) {
-    console.error("FOLDER_CREATE_ERROR", { 
+    const errorDetail = {
       status: createRes.status,
       error: createData,
-      scopes_needed: "https://www.googleapis.com/auth/drive.file"
-    });
+      granted_scopes: 'check_token_response',
+      required_scope: 'https://www.googleapis.com/auth/drive.file'
+    };
+    
+    console.error("FOLDER_CREATE_ERROR", errorDetail);
+    
+    if (createRes.status === 403) {
+      console.error("PERMISSION_DENIED", {
+        message: "Insufficient Drive permissions. User may need to re-authorize with drive.file scope.",
+        ...errorDetail
+      });
+      throw new Error("insufficient_permissions");
+    }
+    
     throw new Error("folder_creation_failed");
   }
   
@@ -275,6 +288,17 @@ serve(async (req) => {
       });
       
       console.log("SCOPES_GRANTED", { scopes: tokenData.scope || "none" });
+      
+      // Log detailed scope breakdown
+      const grantedScopes = (tokenData.scope || '').split(' ').filter(Boolean);
+      console.log("SCOPES_BREAKDOWN", {
+        requested: SCOPES,
+        granted: grantedScopes,
+        has_drive: grantedScopes.includes('https://www.googleapis.com/auth/drive.file'),
+        has_email: grantedScopes.includes('https://www.googleapis.com/auth/userinfo.email'),
+        has_profile: grantedScopes.includes('https://www.googleapis.com/auth/userinfo.profile'),
+        has_openid: grantedScopes.includes('openid')
+      });
 
       // Continue with the rest of the OAuth completion process...
       const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -301,15 +325,19 @@ serve(async (req) => {
       let folderId: string;
       try {
         folderId = await ensureDriveFolder(tokenData.access_token, userId || 'anon');
-      } catch (err) {
-        console.error("PERSONAL_DRIVE_SETUP_ERROR", { error: String(err), userId });
-        return new Response(null, {
-          status: 302,
-          headers: {
-            'Location': `${frontendSuccessUrl}?error=folder_creation_failed`
-          }
-        });
-      }
+    } catch (err) {
+      console.error("PERSONAL_DRIVE_SETUP_ERROR", { error: String(err), userId });
+      const errorType = err instanceof Error && err.message === 'insufficient_permissions' 
+        ? 'insufficient_permissions' 
+        : 'folder_creation_failed';
+      
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': `${frontendSuccessUrl}?error=${errorType}`
+        }
+      });
+    }
 
       // Get drive quota information
       const aboutResponse = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', {
