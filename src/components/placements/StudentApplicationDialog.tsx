@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Upload } from "lucide-react";
+import { uploadDocument } from "@/utils/documentUpload";
 
 const applicationSchema = z.object({
   cover_letter: z.string().min(50, "Cover letter must be at least 50 characters"),
@@ -43,7 +44,7 @@ export function StudentApplicationDialog({ open, onOpenChange, jobId, jobTitle, 
       // Get student ID from email
       const { data: student } = await supabase
         .from("students")
-        .select("id, college_id")
+        .select("id, student_id, college_id")
         .eq("email", user.email)
         .single();
 
@@ -52,19 +53,11 @@ export function StudentApplicationDialog({ open, onOpenChange, jobId, jobTitle, 
       // Upload resume if provided
       let resumeUrl = null;
       if (resumeFile) {
-        const fileExt = resumeFile.name.split('.').pop();
-        const fileName = `${student.id}_${Date.now()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('student-documents')
-          .upload(`resumes/${fileName}`, resumeFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('student-documents')
-          .getPublicUrl(uploadData.path);
-
-        resumeUrl = publicUrl;
+        const uploadResult = await uploadDocument(resumeFile, 'resume', {
+          student_id: student.student_id,
+          college_id: student.college_id
+        });
+        resumeUrl = uploadResult.file_path;
       }
 
       // Create application

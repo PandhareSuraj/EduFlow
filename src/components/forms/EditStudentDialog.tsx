@@ -13,6 +13,7 @@ import { useCollege } from "@/contexts/CollegeContext";
 import { format } from "date-fns";
 import { ValidatedInput } from "@/components/ui/validated-input";
 import { ValidationHelpers } from "@/lib/validationSchemas";
+import { uploadDocument } from "@/utils/documentUpload";
 
 interface Student {
   id: number;
@@ -249,27 +250,19 @@ export function EditStudentDialog({ student, courses, onUpdate, trigger }: EditS
 
     setUploadingDoc(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${student.id}_${docType}_${Date.now()}.${fileExt}`;
-      const filePath = `${college?.id}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('student-documents')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('student-documents')
-        .getPublicUrl(filePath);
+      const uploadResult = await uploadDocument(file, docType, {
+        student_id: student.student_id,
+        college_id: college?.id
+      });
 
       const { error: dbError } = await supabase
         .from('student_documents')
         .insert({
           student_id: student.id,
           document_type: docType,
-          file_name: file.name,
-          file_url: publicUrl,
+          file_name: uploadResult.file_name,
+          file_url: uploadResult.file_path,
+          file_size: uploadResult.file_size,
           college_id: college?.id
         });
 

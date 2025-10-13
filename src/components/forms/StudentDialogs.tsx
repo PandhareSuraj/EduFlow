@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ValidatedInput } from "@/components/ui/validated-input";
 import { ValidatedForm, ValidatedFormField } from "@/components/ui/validated-form";
 import { FormSchemas, ValidationHelpers } from "@/lib/validationSchemas";
+import { uploadDocument as uploadToStorage } from "@/utils/documentUpload";
 
 // Export the individual dialog components
 export { ViewStudentDialog } from "./ViewStudentDialog";
@@ -261,54 +262,6 @@ export function AddStudentDialog({
     }
     setLoading(true);
     try {
-      const uploadDocument = async (file: File, type: string) => {
-        // Check if user has personal Google Drive connected
-        const {
-          data: personalDriveSettings
-        } = await supabase.from('personal_google_drive').select('connected').eq('user_id', (await supabase.auth.getUser()).data.user?.id).eq('connected', true).single();
-        if (personalDriveSettings?.connected) {
-          // Upload to personal Google Drive
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('documentType', type);
-          const {
-            data,
-            error
-          } = await supabase.functions.invoke('personal-google-upload', {
-            body: formData
-          });
-          if (error) throw error;
-          return {
-            file_name: file.name,
-            file_path: data.webViewLink,
-            file_type: type,
-            file_size: file.size,
-            upload_date: new Date().toISOString(),
-            college_id: college?.id,
-            storage_type: 'personal_google_drive',
-            google_drive_file_id: data.fileId
-          };
-        } else {
-          // Fallback to Supabase storage
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${Math.random()}.${fileExt}`;
-          const filePath = `${studentData.student_id}/${type}/${fileName}`;
-          const {
-            data,
-            error
-          } = await supabase.storage.from('student-documents').upload(filePath, file);
-          if (error) throw error;
-          return {
-            file_name: file.name,
-            file_path: filePath,
-            file_type: type,
-            file_size: file.size,
-            upload_date: new Date().toISOString(),
-            college_id: college?.id,
-            storage_type: 'supabase'
-          };
-        }
-      };
 
       // Check if email already exists
       const {
@@ -349,8 +302,26 @@ export function AddStudentDialog({
 
       // Upload documents if any
       if (Object.keys(documents).length > 0 && studentData) {
-        const documentPromises = Object.entries(documents).map(([docType, file]) => uploadDocument(file, docType));
-        await Promise.all(documentPromises);
+        const uploadedDocs = await Promise.all(
+          Object.entries(documents).map(([docType, file]) => 
+            uploadToStorage(file, docType, {
+              student_id: studentData.student_id,
+              college_id: college?.id
+            })
+          )
+        );
+
+        // Save document records to database
+        for (const doc of uploadedDocs) {
+          await supabase.from('student_documents').insert({
+            student_id: studentData.id,
+            document_type: doc.file_type,
+            file_name: doc.file_name,
+            file_url: doc.file_path,
+            file_size: doc.file_size,
+            college_id: college?.id
+          });
+        }
       }
 
       // Always ensure fee record creation if fee structure exists
@@ -445,7 +416,10 @@ export function AddStudentDialog({
   };
   return <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        
+        <Button>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Student
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>

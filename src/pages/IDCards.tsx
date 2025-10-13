@@ -25,6 +25,8 @@ import { useCollegeSettings } from "@/hooks/useCollegeSettings";
 import { downloadIDCardPDF, downloadMultipleIDCards, printIDCard } from "@/utils/pdfGenerator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { uploadDocument } from "@/utils/documentUpload";
+import { useCollege } from "@/contexts/CollegeContext";
 
 interface Student {
   id: string;
@@ -49,6 +51,7 @@ export default function IDCards() {
   const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { collegeInfo, getSelectedTemplate } = useCollegeSettings();
+  const { college } = useCollege();
 
   const fetchStudents = async () => {
     try {
@@ -228,28 +231,22 @@ export default function IDCards() {
 
     setUploadingPhoto(studentId);
     try {
-      const path = `student-photos/${studentId}/${file.name}`;
-      const { data, error } = await supabase.storage
-        .from('student-documents')
-        .upload(path, file, { upsert: true });
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('student-documents')
-        .getPublicUrl(path);
+      const uploadResult = await uploadDocument(file, 'photo', {
+        student_id: studentId,
+        college_id: college?.id
+      });
 
       // Update student photo URL in database
       const { error: updateError } = await supabase
         .from('students')
-        .update({ photo_url: publicUrl })
+        .update({ photo_url: uploadResult.file_path })
         .eq('student_id', studentId);
 
       if (updateError) throw updateError;
 
       // Update local state
       setStudents(prev => prev.map(s => 
-        s.id === studentId ? { ...s, photo: publicUrl } : s
+        s.id === studentId ? { ...s, photo: uploadResult.file_path } : s
       ));
 
       toast({
