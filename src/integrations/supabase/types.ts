@@ -3312,6 +3312,7 @@ export type Database = {
       }
       sms_configurations: {
         Row: {
+          api_key_encrypted: string | null
           api_key_name: string
           channel: number
           college_id: string | null
@@ -3319,6 +3320,7 @@ export type Database = {
           created_by: string | null
           dcs: number
           default_country_code: string | null
+          dev_mode: boolean
           dlt_template_id: string | null
           entity_id: string | null
           flash_sms: number
@@ -3333,6 +3335,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          api_key_encrypted?: string | null
           api_key_name?: string
           channel?: number
           college_id?: string | null
@@ -3340,6 +3343,7 @@ export type Database = {
           created_by?: string | null
           dcs?: number
           default_country_code?: string | null
+          dev_mode?: boolean
           dlt_template_id?: string | null
           entity_id?: string | null
           flash_sms?: number
@@ -3354,6 +3358,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          api_key_encrypted?: string | null
           api_key_name?: string
           channel?: number
           college_id?: string | null
@@ -3361,6 +3366,7 @@ export type Database = {
           created_by?: string | null
           dcs?: number
           default_country_code?: string | null
+          dev_mode?: boolean
           dlt_template_id?: string | null
           entity_id?: string | null
           flash_sms?: number

@@ -25,6 +25,8 @@ interface SMSConfig {
   login_otp_template: string;
   general_otp_template: string;
   default_country_code: string;
+  api_key_encrypted?: string;
+  dev_mode: boolean;
 }
 
 export const SMSSettings: React.FC = () => {
@@ -40,12 +42,15 @@ export const SMSSettings: React.FC = () => {
     signup_otp_template: 'Welcome to {{APP_NAME}}! Your signup OTP is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Do not share this code.',
     login_otp_template: 'Your login OTP for {{APP_NAME}} is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Keep it confidential.',
     general_otp_template: 'Your verification code is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Do not share with anyone.',
-    default_country_code: '+91'
+    default_country_code: '+91',
+    api_key_encrypted: '',
+    dev_mode: false
   });
   const [loading, setLoading] = useState(false);
   const [testPhone, setTestPhone] = useState('');
   const [testLoading, setTestLoading] = useState(false);
   const [error, setError] = useState('');
+  const [newApiKey, setNewApiKey] = useState('');
   const { toast } = useToast();
   const { userRole } = useAuth();
 
@@ -101,7 +106,9 @@ export const SMSSettings: React.FC = () => {
           signup_otp_template: data.signup_otp_template || 'Welcome to {{APP_NAME}}! Your signup OTP is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Do not share this code.',
           login_otp_template: data.login_otp_template || 'Your login OTP for {{APP_NAME}} is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Keep it confidential.',
           general_otp_template: data.general_otp_template || 'Your verification code is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes. Do not share with anyone.',
-          default_country_code: data.default_country_code || '+91'
+          default_country_code: data.default_country_code || '+91',
+          api_key_encrypted: '', // Never show the stored key
+          dev_mode: data.dev_mode || false
         });
       }
     } catch (err) {
@@ -114,7 +121,7 @@ export const SMSSettings: React.FC = () => {
     setError('');
 
     try {
-      const configData = {
+      const configData: any = {
         sender_id: config.sender_id,
         channel: config.channel,
         dcs: config.dcs,
@@ -126,8 +133,14 @@ export const SMSSettings: React.FC = () => {
         signup_otp_template: config.signup_otp_template,
         login_otp_template: config.login_otp_template,
         general_otp_template: config.general_otp_template,
-        default_country_code: config.default_country_code
+        default_country_code: config.default_country_code,
+        dev_mode: config.dev_mode
       };
+
+      // Only include API key if a new one is provided
+      if (newApiKey) {
+        configData.api_key_encrypted = newApiKey;
+      }
 
       if (config.id) {
         // Update existing config
@@ -153,6 +166,9 @@ export const SMSSettings: React.FC = () => {
         title: "SMS Configuration Saved",
         description: "SMS settings have been updated successfully.",
       });
+      
+      setNewApiKey(''); // Clear the API key input
+      await fetchSMSConfig();
     } catch (err: any) {
       setError(err.message || 'Failed to save SMS configuration');
     } finally {
@@ -177,15 +193,26 @@ export const SMSSettings: React.FC = () => {
 
       if (error) throw error;
 
-      if (data.error) {
-        setError(data.error);
+      if (data?.error) {
+        toast({
+          title: "Test Failed",
+          description: data.error,
+          variant: "destructive",
+        });
         return;
       }
 
-      toast({
-        title: "Test SMS Sent",
-        description: "Test OTP has been sent to the provided number.",
-      });
+      if (data?.dev_otp) {
+        toast({
+          title: "Test SMS Sent (Dev Mode)",
+          description: `OTP: ${data.dev_otp} - Dev mode enabled, no real SMS sent`,
+        });
+      } else {
+        toast({
+          title: "Test SMS Sent",
+          description: "Test OTP has been sent to the provided number.",
+        });
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to send test SMS');
     } finally {
@@ -288,6 +315,34 @@ export const SMSSettings: React.FC = () => {
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="api_key">SMS Gateway API Key</Label>
+            <Input
+              id="api_key"
+              type="password"
+              value={newApiKey}
+              onChange={(e) => setNewApiKey(e.target.value)}
+              placeholder="Enter your SMS Gateway API Key"
+            />
+            <p className="text-xs text-muted-foreground">
+              Stored securely (super admin only). Leave blank to keep existing key.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="dev_mode">Development Mode</Label>
+              <p className="text-sm text-muted-foreground">
+                Skip SMS provider and return OTP in response (for testing)
+              </p>
+            </div>
+            <Switch
+              id="dev_mode"
+              checked={config.dev_mode}
+              onCheckedChange={(checked) => handleInputChange('dev_mode', checked)}
+            />
+          </div>
+
           <div className="flex items-center space-x-2">
             <Switch
               id="is_active"
@@ -298,135 +353,93 @@ export const SMSSettings: React.FC = () => {
           </div>
 
           <Button onClick={saveSMSConfig} disabled={loading}>
+            <Settings className="h-4 w-4 mr-2" />
             {loading ? 'Saving...' : 'Save Configuration'}
           </Button>
         </CardContent>
       </Card>
 
+      {/* OTP Templates */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
-            SMS Templates Configuration
+            OTP Message Templates
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="signup_template">Signup OTP Template</Label>
-              <Textarea
-                id="signup_template"
-                value={config.signup_otp_template}
-                onChange={(e) => handleInputChange('signup_otp_template', e.target.value)}
-                placeholder="Welcome to {{APP_NAME}}! Your signup OTP is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes."
-                rows={3}
-              />
-            </div>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Use these variables in your templates: <code>{"{{OTP}}"}</code>, <code>{"{{APP_NAME}}"}</code>, <code>{"{{EXPIRY_MINUTES}}"}</code>, <code>{"{{COLLEGE_NAME}}"}</code>
+          </p>
 
-            <div className="space-y-2">
-              <Label htmlFor="login_template">Login OTP Template</Label>
-              <Textarea
-                id="login_template"
-                value={config.login_otp_template}
-                onChange={(e) => handleInputChange('login_otp_template', e.target.value)}
-                placeholder="Your login OTP for {{APP_NAME}} is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes."
-                rows={3}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="signup_otp_template">Signup OTP Template</Label>
+            <Textarea
+              id="signup_otp_template"
+              value={config.signup_otp_template}
+              onChange={(e) => handleInputChange('signup_otp_template', e.target.value)}
+              rows={3}
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="general_template">General OTP Template</Label>
-              <Textarea
-                id="general_template"
-                value={config.general_otp_template}
-                onChange={(e) => handleInputChange('general_otp_template', e.target.value)}
-                placeholder="Your verification code is {{OTP}}. Valid for {{EXPIRY_MINUTES}} minutes."
-                rows={3}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="login_otp_template">Login OTP Template</Label>
+            <Textarea
+              id="login_otp_template"
+              value={config.login_otp_template}
+              onChange={(e) => handleInputChange('login_otp_template', e.target.value)}
+              rows={3}
+            />
+          </div>
 
-            <Alert>
-              <MessageSquare className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Available Template Variables:</strong>
-                <br />
-                <code>{'{{OTP}}'}</code> - The actual OTP code
-                <br />
-                <code>{'{{EXPIRY_MINUTES}}'}</code> - Minutes until expiry (default: 5)
-                <br />
-                <code>{'{{COLLEGE_NAME}}'}</code> - Name of the college (if applicable)
-                <br />
-                <code>{'{{APP_NAME}}'}</code> - Application name
-              </AlertDescription>
-            </Alert>
+          <div className="space-y-2">
+            <Label htmlFor="general_otp_template">General OTP Template</Label>
+            <Textarea
+              id="general_otp_template"
+              value={config.general_otp_template}
+              onChange={(e) => handleInputChange('general_otp_template', e.target.value)}
+              rows={3}
+            />
           </div>
         </CardContent>
       </Card>
 
+      {/* Test SMS */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TestTube className="h-5 w-5" />
-            Test SMS Service
+            Test SMS
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="test_phone">Test Phone Number</Label>
-            <div className="flex gap-2">
-              <div className="w-20">
-                <Input
-                  value={config.default_country_code}
-                  readOnly
-                  className="text-center"
-                />
-              </div>
-              <Input
-                id="test_phone"
-                type="tel"
-                value={testPhone}
-                onChange={(e) => setTestPhone(e.target.value)}
-                placeholder="1234567890"
-                className="flex-1"
-              />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Phone number will be formatted with the default country code: {config.default_country_code}
-            </p>
+            <Label htmlFor="testPhone">Phone Number</Label>
+            <Input
+              id="testPhone"
+              placeholder="Enter 10-digit phone number"
+              value={testPhone}
+              onChange={(e) => setTestPhone(e.target.value)}
+              maxLength={10}
+            />
           </div>
-
-          <Button 
-            onClick={testSMS} 
-            disabled={testLoading || !config.is_active}
-            variant="outline"
-          >
-            <Send className="mr-2 h-4 w-4" />
-            {testLoading ? 'Sending Test SMS...' : 'Send Test SMS'}
+          <Button onClick={testSMS} disabled={testLoading || !config.is_active}>
+            <Send className="h-4 w-4 mr-2" />
+            {testLoading ? 'Sending...' : 'Send Test OTP'}
           </Button>
-
-          {!config.is_active && (
-            <Alert>
-              <AlertDescription>
-                SMS service is disabled. Please enable it in the configuration above to send test messages.
-              </AlertDescription>
-            </Alert>
-          )}
         </CardContent>
       </Card>
 
+      {/* API Information */}
       <Card>
         <CardHeader>
-          <CardTitle>API Information</CardTitle>
+          <CardTitle>SMS Gateway API Information</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm text-muted-foreground">
-            <strong>API Endpoint:</strong> https://www.smsgatewayhub.com/api/mt/SendSMS
-          </p>
-          <p className="text-sm text-muted-foreground">
-            <strong>API Key:</strong> Managed securely through Supabase secrets (SMS_GATEWAY_API_KEY)
-          </p>
-          <p className="text-sm text-muted-foreground">
-            <strong>Usage:</strong> Used for phone number verification during user registration
+        <CardContent className="space-y-2 text-sm">
+          <p><strong>API Endpoint:</strong> https://www.smsgatewayhub.com/api/mt/SendSMS</p>
+          <p><strong>Provider:</strong> SMS Gateway Hub</p>
+          <p className="text-muted-foreground">
+            Make sure you have registered your DLT templates and Entity ID at the SMS Gateway Hub portal before sending production messages.
           </p>
         </CardContent>
       </Card>
