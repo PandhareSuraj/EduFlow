@@ -78,24 +78,41 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
 
     try {
       const { data, error } = await supabase.functions.invoke('send-sms-otp', {
-        body: { phone_number: signupData.phone_number }
+        body: { phone_number: signupData.phone_number, sms_type: 'signup' }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
-      if (data.error) {
+      if (data?.error) {
+        // Show the specific error from the SMS service
         setError(data.error);
+        console.error('SMS service error:', data);
         return;
       }
 
+      // Success case
       setOtpSent(true);
       setResendCooldown(60);
-      toast({
-        title: "OTP Sent",
-        description: "Please check your phone for the verification code.",
-      });
+      
+      // In dev mode, show OTP if available
+      if (data?.dev_otp) {
+        console.log('🔧 DEV MODE - OTP Code:', data.dev_otp);
+        toast({
+          title: "OTP Sent (Dev Mode)",
+          description: `OTP: ${data.dev_otp} - Check console for verification code.`,
+        });
+      } else {
+        toast({
+          title: "OTP Sent",
+          description: "Please check your phone for the verification code.",
+        });
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to send OTP');
+      console.error('Send OTP error:', err);
+      setError(err.message || 'Failed to send OTP. Please try again.');
     } finally {
       setLoading(false);
     }

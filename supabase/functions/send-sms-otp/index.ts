@@ -23,6 +23,9 @@ serve(async (req) => {
     const { phone_number, college_id, sms_type = 'general' }: SendSMSRequest = await req.json();
     console.log('Send SMS OTP request:', { phone_number, college_id });
 
+    // Development mode bypass
+    const isDevelopment = Deno.env.get('ENVIRONMENT') === 'development';
+
     // Validate phone number format (basic validation)
     const phoneRegex = /^\+?[1-9]\d{1,14}$/;
     if (!phoneRegex.test(phone_number.replace(/[\s-]/g, ''))) {
@@ -58,6 +61,41 @@ serve(async (req) => {
     // Generate 6-digit OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+
+    // Development mode - skip SMS sending
+    if (isDevelopment) {
+      console.log('🔧 DEVELOPMENT MODE: OTP Code is:', otpCode);
+      
+      // Store OTP but skip actual SMS sending
+      const { error: otpError } = await supabase
+        .from('otp_verifications')
+        .insert({
+          phone_number,
+          otp_code: otpCode,
+          expires_at: expiresAt.toISOString(),
+          college_id,
+          attempts: 0,
+          verified: false
+        });
+
+      if (otpError) {
+        console.error('Error storing OTP:', otpError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to store verification code' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'OTP sent successfully (dev mode)',
+          expires_at: expiresAt.toISOString(),
+          dev_otp: otpCode // Only in dev mode!
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Get SMS configuration with templates
     const { data: smsConfig, error: configError } = await supabase
@@ -149,13 +187,40 @@ serve(async (req) => {
     
     console.log('SMS API Response:', smsResult);
 
-    if (!smsResponse.ok) {
-      console.error('SMS API Error:', smsResponse.status, smsResult);
+    // Parse the SMS Gateway Hub response
+    let smsData;
+    try {
+      smsData = JSON.parse(smsResult);
+    } catch (e) {
+      console.error('Failed to parse SMS API response:', smsResult);
       return new Response(
-        JSON.stringify({ error: 'Failed to send SMS' }),
+        JSON.stringify({ error: 'SMS service error - invalid response format' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Check for SMS Gateway Hub specific error codes
+    if (smsData.ErrorCode && smsData.ErrorCode !== "0") {
+      console.error('SMS API Error:', smsData);
+      return new Response(
+        JSON.stringify({ 
+          error: `SMS service error: ${smsData.ErrorMessage || 'Failed to send SMS'}. Please check your SMS Gateway credentials.`,
+          details: smsData
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verify we got a JobId (success indicator)
+    if (!smsData.JobId) {
+      console.error('SMS API did not return JobId:', smsData);
+      return new Response(
+        JSON.stringify({ error: 'SMS service error - no job ID received' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('SMS sent successfully with JobId:', smsData.JobId);
 
     // Store OTP in database
     const { error: otpError } = await supabase
