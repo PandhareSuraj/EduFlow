@@ -87,14 +87,27 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
         // Extract the actual error message from the response
         let errorMessage = 'Failed to send OTP. Please try again.';
         
-        if (error instanceof Error) {
-          // Check if the error has context with the response body
-          const errorContext = (error as any).context;
-          if (errorContext?.body?.error) {
-            errorMessage = errorContext.body.error;
-          } else if (error.message && error.message !== 'Edge Function returned a non-2xx status code') {
-            errorMessage = error.message;
-          }
+        const anyErr = error as any;
+        const ctx = anyErr?.context;
+        
+        if (ctx?.body?.error) {
+          errorMessage = ctx.body.error;
+        } else if (ctx?.response) {
+          try {
+            const cloned = ctx.response.clone();
+            try {
+              const body = await cloned.json();
+              if (body?.error) errorMessage = body.error;
+              else if (typeof body === 'string') errorMessage = body;
+            } catch {
+              const text = await cloned.text();
+              if (text) errorMessage = text;
+            }
+          } catch {}
+        } else if (ctx?.statusText) {
+          errorMessage = ctx.statusText;
+        } else if (anyErr?.message && anyErr.message !== 'Edge Function returned a non-2xx status code') {
+          errorMessage = anyErr.message;
         }
         
         setError(errorMessage);
@@ -156,13 +169,27 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
         // Extract the actual error message from the response
         let errorMessage = 'Failed to verify OTP. Please try again.';
         
-        if (error instanceof Error) {
-          const errorContext = (error as any).context;
-          if (errorContext?.body?.error) {
-            errorMessage = errorContext.body.error;
-          } else if (error.message && error.message !== 'Edge Function returned a non-2xx status code') {
-            errorMessage = error.message;
-          }
+        const anyErr = error as any;
+        const ctx = anyErr?.context;
+        
+        if (ctx?.body?.error) {
+          errorMessage = ctx.body.error;
+        } else if (ctx?.response) {
+          try {
+            const cloned = ctx.response.clone();
+            try {
+              const body = await cloned.json();
+              if (body?.error) errorMessage = body.error;
+              else if (typeof body === 'string') errorMessage = body;
+            } catch {
+              const text = await cloned.text();
+              if (text) errorMessage = text;
+            }
+          } catch {}
+        } else if (ctx?.statusText) {
+          errorMessage = ctx.statusText;
+        } else if (anyErr?.message && anyErr.message !== 'Edge Function returned a non-2xx status code') {
+          errorMessage = anyErr.message;
         }
         
         setError(errorMessage);

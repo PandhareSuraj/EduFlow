@@ -314,7 +314,7 @@ export default function Auth() {
 
         <div className="text-center mt-6 space-y-3">
           
-          <p className="text-sm text-muted-foreground">© 2024 EduERP Platform. Empowering Educational Institutions.</p>
+          <p className="text-sm text-muted-foreground">© 2025 EduERP Platform. Empowering Educational Institutions Worldwide. Built at myweb (<a href="https://www.mywebz.in" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline transition-colors">www.mywebz.in</a>)</p>
         </div>
       </div>
     </div>;
