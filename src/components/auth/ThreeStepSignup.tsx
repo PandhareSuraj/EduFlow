@@ -83,7 +83,22 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
 
       if (error) {
         console.error('Edge function error:', error);
-        throw error;
+        
+        // Extract the actual error message from the response
+        let errorMessage = 'Failed to send OTP. Please try again.';
+        
+        if (error instanceof Error) {
+          // Check if the error has context with the response body
+          const errorContext = (error as any).context;
+          if (errorContext?.body?.error) {
+            errorMessage = errorContext.body.error;
+          } else if (error.message && error.message !== 'Edge Function returned a non-2xx status code') {
+            errorMessage = error.message;
+          }
+        }
+        
+        setError(errorMessage);
+        return;
       }
 
       if (data?.error) {
@@ -135,7 +150,24 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Verify OTP error:', error);
+        
+        // Extract the actual error message from the response
+        let errorMessage = 'Failed to verify OTP. Please try again.';
+        
+        if (error instanceof Error) {
+          const errorContext = (error as any).context;
+          if (errorContext?.body?.error) {
+            errorMessage = errorContext.body.error;
+          } else if (error.message && error.message !== 'Edge Function returned a non-2xx status code') {
+            errorMessage = error.message;
+          }
+        }
+        
+        setError(errorMessage);
+        return;
+      }
 
       if (data.error) {
         setError(data.error);
