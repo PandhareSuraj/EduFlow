@@ -191,7 +191,29 @@ export const SMSSettings: React.FC = () => {
         body: { phone_number: formattedPhone, sms_type: 'general' }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Test SMS edge function error:', error);
+        
+        // Extract the actual error message from the response
+        let errorMessage = 'Failed to send test SMS. Please try again.';
+        
+        if (error instanceof Error) {
+          const errorContext = (error as any).context;
+          if (errorContext?.body?.error) {
+            errorMessage = errorContext.body.error;
+          } else if (error.message && error.message !== 'Edge Function returned a non-2xx status code') {
+            errorMessage = error.message;
+          }
+        }
+        
+        setError(errorMessage);
+        toast({
+          title: "Test Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
 
       if (data?.error) {
         toast({
