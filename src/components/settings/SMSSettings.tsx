@@ -191,52 +191,47 @@ export const SMSSettings: React.FC = () => {
         body: { phone_number: formattedPhone, sms_type: 'general' }
       });
 
+      // With new contract, error should only happen on network/system failures
       if (error) {
-        console.error('Test SMS edge function error:', error);
-        
-        // Extract the actual error message from the response
-        let errorMessage = 'Failed to send test SMS. Please try again.';
-        
-        if (error instanceof Error) {
-          const errorContext = (error as any).context;
-          if (errorContext?.body?.error) {
-            errorMessage = errorContext.body.error;
-          } else if (error.message && error.message !== 'Edge Function returned a non-2xx status code') {
-            errorMessage = error.message;
-          }
-        }
-        
-        setError(errorMessage);
+        console.error('Test SMS invocation error:', error);
+        const errorMsg = 'Network error. Please check your connection and try again.';
+        setError(errorMsg);
         toast({
-          title: "Test Failed",
-          description: errorMessage,
-          variant: "destructive",
+          title: 'Test Failed',
+          description: errorMsg,
+          variant: 'destructive',
         });
         return;
       }
 
-      if (data?.error) {
+      // Check the response body for ok status
+      if (!data?.ok) {
+        const errorMsg = data?.error || 'Failed to send test SMS';
+        setError(errorMsg);
         toast({
-          title: "Test Failed",
-          description: data.error,
-          variant: "destructive",
+          title: 'Test Failed',
+          description: errorMsg,
+          variant: 'destructive',
         });
         return;
       }
 
-      if (data?.dev_otp) {
-        toast({
-          title: "Test SMS Sent (Dev Mode)",
-          description: `OTP: ${data.dev_otp} - Dev mode enabled, no real SMS sent`,
-        });
-      } else {
-        toast({
-          title: "Test SMS Sent",
-          description: "Test OTP has been sent to the provided number.",
-        });
-      }
+      // Success!
+      toast({
+        title: data.dev_otp ? 'Test SMS Sent (Dev Mode)' : 'Test SMS Sent',
+        description: data.dev_otp 
+          ? `OTP: ${data.dev_otp}${data.store_ok === false ? ' (Not stored in DB)' : ''}`
+          : 'SMS sent successfully. Please check the phone.',
+      });
     } catch (err: any) {
-      setError(err.message || 'Failed to send test SMS');
+      console.error('Unexpected test SMS error:', err);
+      const errorMsg = err.message || 'An unexpected error occurred';
+      setError(errorMsg);
+      toast({
+        title: 'Test Failed',
+        description: errorMsg,
+        variant: 'destructive',
+      });
     } finally {
       setTestLoading(false);
     }

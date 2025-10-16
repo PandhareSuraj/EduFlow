@@ -26,8 +26,8 @@ serve(async (req) => {
     // Phone number validation
     if (!phone_number || phone_number.length < 10) {
       return new Response(
-        JSON.stringify({ error: 'Invalid phone number' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ ok: false, error: 'Invalid phone number' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -46,15 +46,15 @@ serve(async (req) => {
     if (configError || !smsConfig) {
       console.error('SMS configuration not found:', configError);
       return new Response(
-        JSON.stringify({ error: 'SMS service not configured. Please contact administrator.' }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ ok: false, error: 'SMS service not configured. Please contact administrator.' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (!smsConfig.is_active) {
       return new Response(
-        JSON.stringify({ error: 'SMS service is currently disabled' }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ ok: false, error: 'SMS service is currently disabled' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -82,19 +82,20 @@ serve(async (req) => {
     if (existingOtp) {
       return new Response(
         JSON.stringify({ 
-          success: true, 
+          ok: true, 
           message: 'OTP already sent. Please check your messages or wait for it to expire.',
           expires_at: existingOtp.expires_at 
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Development mode bypass
+    // Development mode bypass - always succeeds even if DB insert fails
     if (isDevelopment) {
       console.log('DEV_MODE_ACTIVE - OTP Code:', otpCode);
       
-      // Store OTP but skip actual SMS sending
+      let storeOk = true;
+      // Try to store OTP but don't fail if it errors
       const { error: otpError } = await supabase
         .from('otp_verifications')
         .insert({
@@ -107,22 +108,24 @@ serve(async (req) => {
         });
 
       if (otpError) {
-        console.error('Error storing OTP:', otpError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to store verification code' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        console.error('OTP_STORE_ERROR_DEV:', otpError);
+        storeOk = false;
       }
 
-      console.log('OTP_STORED - Dev mode bypass successful');
+      console.log('DEV_MODE_SUCCESS:', { phone_number, otp: otpCode, store_ok: storeOk });
+      
+      // Always return success in dev mode
       return new Response(
         JSON.stringify({ 
-          success: true, 
-          message: 'OTP sent successfully (dev mode)',
-          expires_at: expiresAt.toISOString(),
-          dev_otp: otpCode // Only in dev mode!
+          ok: true, 
+          dev_otp: otpCode,
+          message: storeOk 
+            ? 'OTP created in dev mode' 
+            : 'OTP created in dev mode (not stored - check otp_verifications schema/RLS)',
+          store_ok: storeOk,
+          expires_at: expiresAt.toISOString()
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -144,8 +147,8 @@ serve(async (req) => {
     if (!apiKey) {
       console.error('API key not configured');
       return new Response(
-        JSON.stringify({ error: 'SMS service not properly configured - missing API key' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ ok: false, error: 'SMS service not properly configured - missing API key' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -211,8 +214,8 @@ serve(async (req) => {
     } catch (e) {
       console.error('SMS_API_ERROR - Failed to parse response:', smsResult);
       return new Response(
-        JSON.stringify({ error: 'SMS service error: Invalid response format' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ ok: false, error: 'SMS service error: Invalid response format' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -221,10 +224,11 @@ serve(async (req) => {
       console.error('SMS_API_ERROR:', smsData);
       return new Response(
         JSON.stringify({ 
+          ok: false,
           error: `SMS service error: ${smsData.ErrorMessage || 'Failed to send SMS'}. Please check SMS Gateway credentials in Settings.`,
           details: smsData
         }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -232,8 +236,8 @@ serve(async (req) => {
     if (!smsData.JobId) {
       console.error('SMS_API_ERROR - No JobId received:', smsData);
       return new Response(
-        JSON.stringify({ error: 'SMS service error: No job ID received' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ ok: false, error: 'SMS service error: No job ID received' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -254,23 +258,23 @@ serve(async (req) => {
     if (otpError) {
       console.error('OTP_STORAGE_ERROR:', otpError);
       return new Response(
-        JSON.stringify({ error: 'Failed to store verification code' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ ok: false, error: 'Failed to store verification code' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     console.log('OTP_STORED - Successfully stored OTP');
     
     return new Response(
-      JSON.stringify({ success: true, message: 'OTP sent successfully', expires_at: expiresAt.toISOString() }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ ok: true, message: 'OTP sent successfully', expires_at: expiresAt.toISOString() }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('Error in send-sms-otp function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ ok: false, error: error.message || 'An unexpected error occurred' }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

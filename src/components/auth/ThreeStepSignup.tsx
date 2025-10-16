@@ -81,66 +81,38 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
         body: { phone_number: signupData.phone_number, sms_type: 'signup' }
       });
 
+      // With new contract, error should only happen on network/system failures
       if (error) {
-        console.error('Edge function error:', error);
-        
-        // Extract the actual error message from the response
-        let errorMessage = 'Failed to send OTP. Please try again.';
-        
-        const anyErr = error as any;
-        const ctx = anyErr?.context;
-        
-        if (ctx?.body?.error) {
-          errorMessage = ctx.body.error;
-        } else if (ctx?.response) {
-          try {
-            const cloned = ctx.response.clone();
-            try {
-              const body = await cloned.json();
-              if (body?.error) errorMessage = body.error;
-              else if (typeof body === 'string') errorMessage = body;
-            } catch {
-              const text = await cloned.text();
-              if (text) errorMessage = text;
-            }
-          } catch {}
-        } else if (ctx?.statusText) {
-          errorMessage = ctx.statusText;
-        } else if (anyErr?.message && anyErr.message !== 'Edge Function returned a non-2xx status code') {
-          errorMessage = anyErr.message;
-        }
-        
-        setError(errorMessage);
+        console.error('Edge function invocation error:', error);
+        setError('Network error. Please check your connection and try again.');
         return;
       }
 
-      if (data?.error) {
-        // Show the specific error from the SMS service
-        setError(data.error);
-        console.error('SMS service error:', data);
+      // Check the response body for ok status
+      if (!data?.ok) {
+        setError(data?.error || 'Failed to send OTP. Please try again.');
         return;
       }
 
-      // Success case
+      // Success!
       setOtpSent(true);
       setResendCooldown(60);
-      
-      // In dev mode, show OTP if available
-      if (data?.dev_otp) {
-        console.log('🔧 DEV MODE - OTP Code:', data.dev_otp);
+
+      if (data.dev_otp) {
+        console.log('🔧 DEV MODE OTP:', data.dev_otp);
         toast({
-          title: "OTP Sent (Dev Mode)",
-          description: `OTP: ${data.dev_otp} - Check console for verification code.`,
+          title: 'OTP Sent (Dev Mode)',
+          description: `Use OTP: ${data.dev_otp}${data.store_ok === false ? ' (Not stored in DB)' : ''}`,
         });
       } else {
         toast({
-          title: "OTP Sent",
-          description: "Please check your phone for the verification code.",
+          title: 'OTP Sent',
+          description: 'Please check your phone for the verification code.',
         });
       }
-    } catch (err: any) {
-      console.error('Send OTP error:', err);
-      setError(err.message || 'Failed to send OTP. Please try again.');
+    } catch (e: any) {
+      console.error('Unexpected error:', e);
+      setError(e?.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -163,44 +135,20 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
         }
       });
 
+      // With new contract, error should only happen on network/system failures
       if (error) {
-        console.error('Verify OTP error:', error);
-        
-        // Extract the actual error message from the response
-        let errorMessage = 'Failed to verify OTP. Please try again.';
-        
-        const anyErr = error as any;
-        const ctx = anyErr?.context;
-        
-        if (ctx?.body?.error) {
-          errorMessage = ctx.body.error;
-        } else if (ctx?.response) {
-          try {
-            const cloned = ctx.response.clone();
-            try {
-              const body = await cloned.json();
-              if (body?.error) errorMessage = body.error;
-              else if (typeof body === 'string') errorMessage = body;
-            } catch {
-              const text = await cloned.text();
-              if (text) errorMessage = text;
-            }
-          } catch {}
-        } else if (ctx?.statusText) {
-          errorMessage = ctx.statusText;
-        } else if (anyErr?.message && anyErr.message !== 'Edge Function returned a non-2xx status code') {
-          errorMessage = anyErr.message;
-        }
-        
-        setError(errorMessage);
+        console.error('Edge function invocation error:', error);
+        setError('Network error. Please check your connection and try again.');
         return;
       }
 
-      if (data.error) {
-        setError(data.error);
+      // Check the response body for ok status
+      if (!data?.ok) {
+        setError(data?.error || 'Failed to verify OTP. Please try again.');
         return;
       }
 
+      // Success!
       setIsPhoneVerified(true);
       toast({
         title: "Phone Verified",
@@ -208,7 +156,8 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
       });
       setCurrentStep(2);
     } catch (err: any) {
-      setError(err.message || 'Failed to verify OTP');
+      console.error('Unexpected error:', err);
+      setError(err?.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
