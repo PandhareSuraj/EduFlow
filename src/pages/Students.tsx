@@ -36,6 +36,7 @@ import {
 import { ViewStudentDialog, EditStudentDialog, DeleteStudentDialog, AddStudentDialog } from "@/components/forms/StudentDialogs";
 import { CreateStudentLoginDialog } from "@/components/forms/CreateStudentLoginDialog";
 import { ManageStudentLoginDialog } from "@/components/forms/ManageStudentLoginDialog";
+import { VideoTutorialButton } from "@/components/videos/VideoTutorialButton";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -231,9 +232,12 @@ export default function Students() {
           <h1 className="text-3xl font-bold">Students</h1>
           <p className="text-muted-foreground">Manage student records and information</p>
         </div>
-        <PermissionWrapper permission="STUDENTS_CREATE">
-          <AddStudentDialog onStudentAdded={refreshData} />
-        </PermissionWrapper>
+        <div className="flex items-center gap-2">
+          <VideoTutorialButton pageIdentifier="students" pageName="Students" />
+          <PermissionWrapper permission="STUDENTS_CREATE">
+            <AddStudentDialog onStudentAdded={refreshData} />
+          </PermissionWrapper>
+        </div>
       </div>
 
       {/* Summary Cards */}

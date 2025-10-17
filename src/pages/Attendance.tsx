@@ -10,6 +10,7 @@ import { AttendanceMarkingDialog } from "@/components/attendance/AttendanceMarki
 import { SessionDetailsDialog } from "@/components/attendance/SessionDetailsDialog";
 import { StudentDetailsDialog } from "@/components/attendance/StudentDetailsDialog";
 import { AttendanceReportsContainer } from "@/components/attendance/AttendanceReportsContainer";
+import { VideoTutorialButton } from "@/components/videos/VideoTutorialButton";
 import { useAttendanceData } from "@/hooks/useAttendanceData";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { format } from "date-fns";
@@ -42,6 +43,7 @@ export default function Attendance() {
           <p className="text-muted-foreground">Streamlined daily attendance tracking</p>
         </div>
         <div className="flex gap-2">
+          <VideoTutorialButton pageIdentifier="attendance" pageName="Attendance" />
           <Button variant="outline" size="sm" onClick={refreshData} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh

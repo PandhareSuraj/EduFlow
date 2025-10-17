@@ -33,6 +33,7 @@ import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
 import { FacultyDashboard } from "@/components/dashboard/FacultyDashboard";
 import { AccountantDashboard } from "@/components/dashboard/AccountantDashboard";
 import { LibrarianDashboard } from "@/components/dashboard/LibrarianDashboard";
+import { VideoTutorialButton } from "@/components/videos/VideoTutorialButton";
 import StudentDashboard from './StudentDashboard';
 
 interface DashboardStats {
@@ -257,15 +258,22 @@ export default function Dashboard() {
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Welcome Header */}
       <div className="bg-gradient-header rounded-lg p-4 sm:p-6 text-white shadow-header">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 leading-tight">
-          {isSuperAdmin ? 'Multi-College Management Dashboard' : `Welcome to ${collegeName} ERP`}
-        </h1>
-        <p className="text-white/90 text-sm sm:text-base">
-          {isSuperAdmin 
-            ? 'Manage all colleges and monitor system-wide performance' 
-            : 'Manage your institution efficiently with our comprehensive system'
-          }
-        </p>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 leading-tight">
+              {isSuperAdmin ? 'Multi-College Management Dashboard' : `Welcome to ${collegeName} ERP`}
+            </h1>
+            <p className="text-white/90 text-sm sm:text-base">
+              {isSuperAdmin 
+                ? 'Manage all colleges and monitor system-wide performance' 
+                : 'Manage your institution efficiently with our comprehensive system'
+              }
+            </p>
+          </div>
+          <div className="ml-4">
+            <VideoTutorialButton pageIdentifier="dashboard" pageName="Dashboard" variant="ghost" />
+          </div>
+        </div>
       </div>
 
       {/* Stats Grid */}

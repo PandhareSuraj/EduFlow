@@ -16,6 +16,7 @@ import { StudentFeeLedger } from "@/components/fees/StudentFeeLedger";
 import { TodaysDueReport } from "@/components/fees/TodaysDueReport";
 import { FeeStructureDialog } from "@/components/forms/FeeStructureDialog";
 import { EditStudentFeeDialog } from "@/components/fees/EditStudentFeeDialog";
+import { VideoTutorialButton } from "@/components/videos/VideoTutorialButton";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 
 interface StudentFeeData {
@@ -231,6 +232,7 @@ export default function Fees() {
           </p>
         </div>
           <div className="flex items-center gap-2">
+            <VideoTutorialButton pageIdentifier="fees" pageName="Fees" />
             <TodaysDueReport 
               trigger={
                 <Button variant="outline" className="gap-2">

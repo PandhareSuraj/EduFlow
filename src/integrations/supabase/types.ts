@@ -4206,6 +4206,56 @@ export type Database = {
           },
         ]
       }
+      tutorial_videos: {
+        Row: {
+          college_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          page_identifier: string
+          page_title: string
+          updated_at: string | null
+          video_id: string
+          video_url: string
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          page_identifier: string
+          page_title: string
+          updated_at?: string | null
+          video_id: string
+          video_url: string
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          page_identifier?: string
+          page_title?: string
+          updated_at?: string | null
+          video_id?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutorial_videos_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           college_id: string | null

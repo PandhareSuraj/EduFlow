@@ -17,6 +17,7 @@ import { IDCardSettings } from '@/components/settings/IDCardSettings';
 import { SMSSettings } from '@/components/settings/SMSSettings';
 import { AMCSettings } from '@/components/settings/AMCSettings';
 import { PersonalGoogleDriveSettings } from '@/components/settings/PersonalGoogleDriveSettings';
+import { VideoManagement } from '@/components/videos/VideoManagement';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from "@/integrations/supabase/client";
@@ -268,6 +269,7 @@ export default function Settings() {
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
           <TabsTrigger value="backup">Backup</TabsTrigger>
+          {userRole === 'super_admin' && <TabsTrigger value="videos">Tutorial Videos</TabsTrigger>}
           <TabsTrigger value="database">Database</TabsTrigger>
         </TabsList>
 
@@ -783,6 +785,13 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
+          </RoleGuard>
+        </TabsContent>
+
+        {/* Tutorial Videos */}
+        <TabsContent value="videos" className="space-y-6">
+          <RoleGuard allowedRoles={['super_admin']}>
+            <VideoManagement />
           </RoleGuard>
         </TabsContent>
       </Tabs>
