@@ -127,7 +127,9 @@ export function AddCourseDialog({ trigger, onSuccess }: AddCourseDialogProps) {
         "6 Months": 6,
         "1 Year": 12,
         "2 Years": 24,
-        "3 Years": 36
+        "3 Years": 36,
+        "4 Years": 48,
+        "5 Years": 60
       };
 
       const { error } = await supabase
@@ -222,6 +224,8 @@ export function AddCourseDialog({ trigger, onSuccess }: AddCourseDialogProps) {
                   <SelectItem value="1 Year">1 Year</SelectItem>
                   <SelectItem value="2 Years">2 Years</SelectItem>
                   <SelectItem value="3 Years">3 Years</SelectItem>
+                  <SelectItem value="4 Years">4 Years</SelectItem>
+                  <SelectItem value="5 Years">5 Years</SelectItem>
                 </SelectContent>
               </Select>
             </div>
