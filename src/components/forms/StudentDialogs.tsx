@@ -121,7 +121,7 @@ export function AddStudentDialog({
         const {
           data,
           error
-        } = await supabase.from('courses').select('id, name, code').eq('status', 'active').order('name');
+        } = await supabase.from('courses').select('id, name, code').eq('status', 'active').eq('college_id', college?.id).order('name');
         if (error) {
           console.error('Error loading courses:', error);
           toast({
@@ -153,7 +153,7 @@ export function AddStudentDialog({
       const {
         data,
         error
-      } = await supabase.from('fee_structures').select('*').eq('course_id', courseId).eq('semester', semester).order('created_at', {
+      } = await supabase.from('fee_structures').select('*').eq('course_id', courseId).eq('semester', semester).eq('college_id', college?.id).order('created_at', {
         ascending: false
       }).limit(1).maybeSingle();
       if (error) {
