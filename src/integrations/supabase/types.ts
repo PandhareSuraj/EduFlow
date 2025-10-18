@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      academic_years: {
+        Row: {
+          college_id: string | null
+          created_at: string
+          created_by: string | null
+          end_date: string
+          id: string
+          is_current: boolean
+          start_date: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+          year_code: string
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date: string
+          id?: string
+          is_current?: boolean
+          start_date: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          year_code: string
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string
+          id?: string
+          is_current?: boolean
+          start_date?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          year_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_years_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_logs: {
         Row: {
           action: string
@@ -1547,57 +1597,89 @@ export type Database = {
       }
       fee_structures: {
         Row: {
+          academic_year_id: string | null
           college_id: string | null
           course_id: number
           created_at: string
           created_by: string | null
           due_date: string | null
+          effective_from: string | null
+          effective_to: string | null
+          fee_status: Database["public"]["Enums"]["fee_structure_status"]
           id: string
+          is_published: boolean
           lab_fee: number | null
           library_fee: number | null
           other_fees: number | null
+          published_at: string | null
+          published_by: string | null
           registration_fee: number | null
           semester: number
           total_fee: number
           tuition_fee: number | null
           updated_at: string
           updated_by: string | null
+          version: number
         }
         Insert: {
+          academic_year_id?: string | null
           college_id?: string | null
           course_id: number
           created_at?: string
           created_by?: string | null
           due_date?: string | null
+          effective_from?: string | null
+          effective_to?: string | null
+          fee_status?: Database["public"]["Enums"]["fee_structure_status"]
           id?: string
+          is_published?: boolean
           lab_fee?: number | null
           library_fee?: number | null
           other_fees?: number | null
+          published_at?: string | null
+          published_by?: string | null
           registration_fee?: number | null
           semester: number
           total_fee?: number
           tuition_fee?: number | null
           updated_at?: string
           updated_by?: string | null
+          version?: number
         }
         Update: {
+          academic_year_id?: string | null
           college_id?: string | null
           course_id?: number
           created_at?: string
           created_by?: string | null
           due_date?: string | null
+          effective_from?: string | null
+          effective_to?: string | null
+          fee_status?: Database["public"]["Enums"]["fee_structure_status"]
           id?: string
+          is_published?: boolean
           lab_fee?: number | null
           library_fee?: number | null
           other_fees?: number | null
+          published_at?: string | null
+          published_by?: string | null
           registration_fee?: number | null
           semester?: number
           total_fee?: number
           tuition_fee?: number | null
           updated_at?: string
           updated_by?: string | null
+          version?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fee_structures_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feedback_forms: {
         Row: {
@@ -3120,6 +3202,180 @@ export type Database = {
         }
         Relationships: []
       }
+      promotion_job_events: {
+        Row: {
+          college_id: string
+          created_at: string
+          details: Json | null
+          error_message: string | null
+          event_type: string
+          id: string
+          new_semester: number
+          new_year: number
+          previous_semester: number
+          previous_year: number
+          promotion_job_id: string
+          student_id: number
+        }
+        Insert: {
+          college_id: string
+          created_at?: string
+          details?: Json | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          new_semester: number
+          new_year: number
+          previous_semester: number
+          previous_year: number
+          promotion_job_id: string
+          student_id: number
+        }
+        Update: {
+          college_id?: string
+          created_at?: string
+          details?: Json | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          new_semester?: number
+          new_year?: number
+          previous_semester?: number
+          previous_year?: number
+          promotion_job_id?: string
+          student_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_job_events_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_job_events_promotion_job_id_fkey"
+            columns: ["promotion_job_id"]
+            isOneToOne: false
+            referencedRelation: "promotion_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_job_events_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "promotion_job_events_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotion_jobs: {
+        Row: {
+          can_rollback: boolean
+          college_id: string
+          completed_at: string | null
+          created_at: string
+          failed_count: number
+          filters: Json | null
+          from_academic_year_id: string | null
+          id: string
+          job_name: string
+          new_semester: number
+          new_year: number
+          processed_count: number
+          rollback_window_hours: number
+          skipped_count: number
+          started_at: string | null
+          started_by: string
+          status: Database["public"]["Enums"]["promotion_status"]
+          success_count: number
+          target_semester: number | null
+          target_year: number | null
+          to_academic_year_id: string | null
+          total_students: number
+          updated_at: string
+        }
+        Insert: {
+          can_rollback?: boolean
+          college_id: string
+          completed_at?: string | null
+          created_at?: string
+          failed_count?: number
+          filters?: Json | null
+          from_academic_year_id?: string | null
+          id?: string
+          job_name: string
+          new_semester: number
+          new_year: number
+          processed_count?: number
+          rollback_window_hours?: number
+          skipped_count?: number
+          started_at?: string | null
+          started_by: string
+          status?: Database["public"]["Enums"]["promotion_status"]
+          success_count?: number
+          target_semester?: number | null
+          target_year?: number | null
+          to_academic_year_id?: string | null
+          total_students?: number
+          updated_at?: string
+        }
+        Update: {
+          can_rollback?: boolean
+          college_id?: string
+          completed_at?: string | null
+          created_at?: string
+          failed_count?: number
+          filters?: Json | null
+          from_academic_year_id?: string | null
+          id?: string
+          job_name?: string
+          new_semester?: number
+          new_year?: number
+          processed_count?: number
+          rollback_window_hours?: number
+          skipped_count?: number
+          started_at?: string | null
+          started_by?: string
+          status?: Database["public"]["Enums"]["promotion_status"]
+          success_count?: number
+          target_semester?: number | null
+          target_year?: number | null
+          to_academic_year_id?: string | null
+          total_students?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_jobs_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_jobs_from_academic_year_id_fkey"
+            columns: ["from_academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_jobs_to_academic_year_id_fkey"
+            columns: ["to_academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reminders: {
         Row: {
           college_id: string | null
@@ -3386,6 +3642,77 @@ export type Database = {
             columns: ["college_id"]
             isOneToOne: false
             referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_academic_history: {
+        Row: {
+          college_id: string | null
+          created_at: string
+          id: string
+          previous_course_id: number | null
+          previous_semester: number
+          previous_status: string | null
+          previous_year: number
+          promotion_job_id: string | null
+          snapshot_data: Json
+          snapshot_taken_at: string
+          student_id: number
+        }
+        Insert: {
+          college_id?: string | null
+          created_at?: string
+          id?: string
+          previous_course_id?: number | null
+          previous_semester: number
+          previous_status?: string | null
+          previous_year: number
+          promotion_job_id?: string | null
+          snapshot_data: Json
+          snapshot_taken_at?: string
+          student_id: number
+        }
+        Update: {
+          college_id?: string | null
+          created_at?: string
+          id?: string
+          previous_course_id?: number | null
+          previous_semester?: number
+          previous_status?: string | null
+          previous_year?: number
+          promotion_job_id?: string | null
+          snapshot_data?: Json
+          snapshot_taken_at?: string
+          student_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_student_academic_history_promotion_job"
+            columns: ["promotion_job_id"]
+            isOneToOne: false
+            referencedRelation: "promotion_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_academic_history_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_academic_history_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_academic_history_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -3684,6 +4011,91 @@ export type Database = {
           },
           {
             foreignKeyName: "student_exam_sessions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_fee_assignments: {
+        Row: {
+          academic_year_id: string | null
+          assigned_at: string
+          assigned_by: string | null
+          college_id: string
+          created_at: string
+          fee_structure_id: string
+          id: string
+          promotion_job_id: string | null
+          status: string
+          student_id: number
+          updated_at: string
+        }
+        Insert: {
+          academic_year_id?: string | null
+          assigned_at?: string
+          assigned_by?: string | null
+          college_id: string
+          created_at?: string
+          fee_structure_id: string
+          id?: string
+          promotion_job_id?: string | null
+          status?: string
+          student_id: number
+          updated_at?: string
+        }
+        Update: {
+          academic_year_id?: string | null
+          assigned_at?: string
+          assigned_by?: string | null
+          college_id?: string
+          created_at?: string
+          fee_structure_id?: string
+          id?: string
+          promotion_job_id?: string | null
+          status?: string
+          student_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_fee_assignments_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_fee_assignments_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_fee_assignments_fee_structure_id_fkey"
+            columns: ["fee_structure_id"]
+            isOneToOne: false
+            referencedRelation: "fee_structures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_fee_assignments_promotion_job_id_fkey"
+            columns: ["promotion_job_id"]
+            isOneToOne: false
+            referencedRelation: "promotion_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_fee_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_fee_assignments_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
@@ -4447,6 +4859,22 @@ export type Database = {
         }
         Returns: string
       }
+      calculate_next_year_semester: {
+        Args: {
+          course_duration_months: number
+          current_semester: number
+          current_year: number
+        }
+        Returns: {
+          is_graduating: boolean
+          next_semester: number
+          next_year: number
+        }[]
+      }
+      can_rollback_promotion: {
+        Args: { job_id: string }
+        Returns: boolean
+      }
       clean_college_data: {
         Args: {
           college_uuid: string
@@ -4546,6 +4974,13 @@ export type Database = {
         | "assistant"
         | "super_admin"
         | "student"
+      fee_structure_status: "draft" | "published" | "archived"
+      promotion_status:
+        | "preview"
+        | "running"
+        | "completed"
+        | "failed"
+        | "rolled_back"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4682,6 +5117,14 @@ export const Constants = {
         "assistant",
         "super_admin",
         "student",
+      ],
+      fee_structure_status: ["draft", "published", "archived"],
+      promotion_status: [
+        "preview",
+        "running",
+        "completed",
+        "failed",
+        "rolled_back",
       ],
     },
   },
