@@ -41,6 +41,7 @@ import Transport from "./pages/Transport";
 import Events from "./pages/Events";
 import Placements from "./pages/Placements";
 import Grievances from "./pages/Grievances";
+import StudentPromotion from "./pages/StudentPromotion";
 
 const queryClient = new QueryClient();
 
@@ -281,6 +282,13 @@ const App = () => (
                   <Layout>
                     <Grievances />
                   </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Student Promotion Routes */}
+              <Route path="/student-promotion" element={
+                <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                  <StudentPromotion />
                 </ProtectedRoute>
               } />
               

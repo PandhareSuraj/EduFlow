@@ -21,7 +21,8 @@ import {
   Bus,
   CalendarDays,
   Briefcase,
-  PhoneCall
+  PhoneCall,
+  ArrowUpCircle
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -60,6 +61,7 @@ export function AppSidebar() {
         { name: "System Health", href: "/system-health", icon: Shield },
         { name: "Reports", href: "/reports", icon: FileText },
         { name: "Audit Trail", href: "/audit-trail", icon: Database },
+        { name: "Student Promotion", href: "/student-promotion", icon: ArrowUpCircle },
         { name: "Events", href: "/events", icon: CalendarDays },
         { name: "Placements", href: "/placements", icon: Briefcase },
         { name: "Grievances", href: "/grievances", icon: MessageSquare },
@@ -88,6 +90,7 @@ export function AppSidebar() {
         { name: "Enquiries", href: "/enquiries", icon: MessageSquare },
         { name: "Attendance", href: "/attendance", icon: ClipboardCheck },
         { name: "Exams", href: "/exams", icon: FileText },
+        { name: "Student Promotion", href: "/student-promotion", icon: ArrowUpCircle },
         { name: "Library", href: "/library", icon: BookOpen },
         { name: "Hostel", href: "/hostel", icon: Building },
         { name: "Transport", href: "/transport", icon: Bus },
