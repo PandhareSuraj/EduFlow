@@ -4,17 +4,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Info } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface PromotionResultsDialogProps {
   open: boolean;
@@ -27,113 +20,88 @@ export const PromotionResultsDialog = ({
   onClose,
   job,
 }: PromotionResultsDialogProps) => {
-  if (!job?.results) return null;
+  if (!job) return null;
 
-  const results = job.results;
-  const details = results.details || [];
-
-  const eligible = details.filter((d: any) => d.status === 'eligible' || d.status === 'graduating');
-  const notEligible = details.filter((d: any) => d.status === 'not_eligible');
+  // For now, show basic job stats since we don't have detailed results in the schema yet
+  const stats = {
+    total: job.total_students || 0,
+    success: job.success_count || 0,
+    failed: job.failed_count || 0,
+    skipped: job.skipped_count || 0,
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Promotion Results</DialogTitle>
+          <DialogTitle>Promotion Job Results</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="text-center p-4 bg-secondary rounded-lg">
-            <div className="text-2xl font-bold">{results.total}</div>
-            <div className="text-sm text-muted-foreground">Total Students</div>
-          </div>
-          <div className="text-center p-4 bg-green-100 dark:bg-green-900 rounded-lg">
-            <div className="text-2xl font-bold text-green-700 dark:text-green-300">
-              {results.eligible}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-secondary rounded-lg">
+              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-sm text-muted-foreground">Total Students</div>
             </div>
-            <div className="text-sm text-muted-foreground">Eligible</div>
-          </div>
-          <div className="text-center p-4 bg-red-100 dark:bg-red-900 rounded-lg">
-            <div className="text-2xl font-bold text-red-700 dark:text-red-300">
-              {results.failed}
+            <div className="text-center p-4 bg-green-100 dark:bg-green-900 rounded-lg">
+              <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+                {stats.success}
+              </div>
+              <div className="text-sm text-muted-foreground">Successful</div>
             </div>
-            <div className="text-sm text-muted-foreground">Not Eligible</div>
+            <div className="text-center p-4 bg-red-100 dark:bg-red-900 rounded-lg">
+              <div className="text-2xl font-bold text-red-700 dark:text-red-300">
+                {stats.failed}
+              </div>
+              <div className="text-sm text-muted-foreground">Failed</div>
+            </div>
+            <div className="text-center p-4 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
+              <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
+                {stats.skipped}
+              </div>
+              <div className="text-sm text-muted-foreground">Skipped</div>
+            </div>
           </div>
+
+          <div className="border rounded-lg p-4 space-y-2">
+            <h3 className="font-semibold">Job Details</h3>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <span className="text-muted-foreground">Job Name:</span>
+                <div className="font-medium">{job.job_name}</div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Status:</span>
+                <div className="font-medium capitalize">{job.status}</div>
+              </div>
+              {job.started_at && (
+                <div>
+                  <span className="text-muted-foreground">Started:</span>
+                  <div className="font-medium">
+                    {format(new Date(job.started_at), 'MMM d, yyyy HH:mm')}
+                  </div>
+                </div>
+              )}
+              {job.completed_at && (
+                <div>
+                  <span className="text-muted-foreground">Completed:</span>
+                  <div className="font-medium">
+                    {format(new Date(job.completed_at), 'MMM d, yyyy HH:mm')}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>View Detailed History</AlertTitle>
+            <AlertDescription>
+              For detailed student-level results, check the Student Academic History section
+              or export the job data.
+            </AlertDescription>
+          </Alert>
         </div>
-
-        <Tabs defaultValue="eligible">
-          <TabsList>
-            <TabsTrigger value="eligible">
-              Eligible ({eligible.length})
-            </TabsTrigger>
-            <TabsTrigger value="not-eligible">
-              Not Eligible ({notEligible.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="eligible">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student Name</TableHead>
-                  <TableHead>From</TableHead>
-                  <TableHead>To</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {eligible.map((detail: any) => (
-                  <TableRow key={detail.student_id}>
-                    <TableCell>{detail.student_name}</TableCell>
-                    <TableCell>{detail.from}</TableCell>
-                    <TableCell>{detail.to}</TableCell>
-                    <TableCell>
-                      {detail.status === 'graduating' ? (
-                        <Badge variant="secondary">
-                          <AlertCircle className="mr-1 h-3 w-3" />
-                          Graduating
-                        </Badge>
-                      ) : (
-                        <Badge variant="default">
-                          <CheckCircle2 className="mr-1 h-3 w-3" />
-                          Eligible
-                        </Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TabsContent>
-
-          <TabsContent value="not-eligible">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student Name</TableHead>
-                  <TableHead>Reasons</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {notEligible.map((detail: any) => (
-                  <TableRow key={detail.student_id}>
-                    <TableCell>{detail.student_name}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        {detail.reasons?.map((reason: string, idx: number) => (
-                          <Badge key={idx} variant="destructive">
-                            <XCircle className="mr-1 h-3 w-3" />
-                            {reason}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TabsContent>
-        </Tabs>
       </DialogContent>
     </Dialog>
   );

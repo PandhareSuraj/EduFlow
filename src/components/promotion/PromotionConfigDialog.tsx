@@ -27,9 +27,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { usePromotion } from '@/hooks/usePromotion';
 import { useAcademicYears } from '@/hooks/useAcademicYears';
 import { useCourses } from '@/hooks/useCourses';
+import { HelpCircle } from 'lucide-react';
 
 const formSchema = z.object({
   academic_year_id: z.string().min(1, 'Academic year is required'),
@@ -64,7 +71,7 @@ export const PromotionConfigDialog = ({
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const criteria: any = {};
     if (values.min_attendance_percentage) {
       criteria.min_attendance_percentage = values.min_attendance_percentage;
@@ -76,15 +83,20 @@ export const PromotionConfigDialog = ({
       criteria.check_fee_payment = true;
     }
 
-    initiatePromotion({
-      academic_year_id: values.academic_year_id,
-      course_ids: values.course_ids,
-      year: values.year,
-      semester: values.semester,
-      criteria: Object.keys(criteria).length > 0 ? criteria : undefined,
-      dry_run: values.dry_run,
-    });
-    onClose();
+    try {
+      await initiatePromotion({
+        academic_year_id: values.academic_year_id,
+        course_ids: values.course_ids,
+        year: values.year,
+        semester: values.semester,
+        criteria: Object.keys(criteria).length > 0 ? criteria : undefined,
+        dry_run: values.dry_run,
+      });
+      onClose();
+      form.reset();
+    } catch (error) {
+      console.error('Failed to initiate promotion:', error);
+    }
   };
 
   return (
@@ -104,7 +116,22 @@ export const PromotionConfigDialog = ({
               name="academic_year_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Academic Year *</FormLabel>
+                  <FormLabel className="flex items-center gap-2">
+                    Academic Year *
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-sm max-w-xs">
+                            Select the academic year for which students will be promoted.
+                            This helps track promotion history.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -165,7 +192,22 @@ export const PromotionConfigDialog = ({
             </div>
 
             <div className="space-y-2">
-              <h4 className="font-medium">Eligibility Criteria</h4>
+              <h4 className="font-medium flex items-center gap-2">
+                Eligibility Criteria
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm max-w-xs">
+                        Set minimum requirements for students to be eligible for promotion.
+                        Leave blank to skip that criteria.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </h4>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -177,10 +219,15 @@ export const PromotionConfigDialog = ({
                         <Input
                           type="number"
                           placeholder="e.g., 75"
+                          min="0"
+                          max="100"
                           {...field}
                           value={field.value || ''}
                         />
                       </FormControl>
+                      <FormDescription className="text-xs">
+                        Students below this % won't be promoted
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -196,10 +243,15 @@ export const PromotionConfigDialog = ({
                         <Input
                           type="number"
                           placeholder="e.g., 40"
+                          min="0"
+                          max="100"
                           {...field}
                           value={field.value || ''}
                         />
                       </FormControl>
+                      <FormDescription className="text-xs">
+                        Based on latest exam results
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
