@@ -27,6 +27,7 @@ interface Student {
   semester?: number;
   status: string;
   class?: string;
+  academic_year_id?: string;
 }
 
 interface Course {
@@ -82,6 +83,7 @@ export function EditStudentDialog({ student, courses, onUpdate, trigger }: EditS
   const [studentFee, setStudentFee] = useState<StudentFee | null>(null);
   const [documents, setDocuments] = useState<StudentDocument[]>([]);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     name: student.name,
@@ -92,7 +94,8 @@ export function EditStudentDialog({ student, courses, onUpdate, trigger }: EditS
     year: student.year?.toString() || "none",
     semester: student.semester?.toString() || "none",
     status: student.status,
-    class: student.class || ""
+    class: student.class || "",
+    academic_year_id: student.academic_year_id || ""
   });
 
   const [feeData, setFeeData] = useState({
@@ -112,12 +115,28 @@ export function EditStudentDialog({ student, courses, onUpdate, trigger }: EditS
     }
   }, [open, formData.course_id, formData.semester]);
 
-  // Fetch documents when dialog opens
+  // Fetch documents and academic years when dialog opens
   useEffect(() => {
     if (open) {
       fetchDocuments();
+      fetchAcademicYears();
     }
   }, [open]);
+
+  const fetchAcademicYears = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('academic_years')
+        .select('*')
+        .in('status', ['draft', 'active'])
+        .order('start_date', { ascending: false });
+
+      if (error) throw error;
+      setAcademicYears(data || []);
+    } catch (error) {
+      console.error('Error fetching academic years:', error);
+    }
+  };
 
   const fetchFeeStructure = async () => {
     try {
@@ -189,7 +208,8 @@ export function EditStudentDialog({ student, courses, onUpdate, trigger }: EditS
         year: formData.year && formData.year !== "none" ? parseInt(formData.year) : null,
         semester: formData.semester && formData.semester !== "none" ? parseInt(formData.semester) : null,
         status: formData.status,
-        class: formData.class || null
+        class: formData.class || null,
+        academic_year_id: formData.academic_year_id || null
       };
 
       const { error } = await supabase
@@ -459,6 +479,26 @@ export function EditStudentDialog({ student, courses, onUpdate, trigger }: EditS
                       {[1,2,3,4,5,6,7,8].map(sem => (
                         <SelectItem key={sem} value={sem.toString()}>
                           Semester {sem}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="academic_year">Academic Year</Label>
+                  <Select 
+                    value={formData.academic_year_id} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, academic_year_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select academic year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Not Specified</SelectItem>
+                      {academicYears.map((year) => (
+                        <SelectItem key={year.id} value={year.id}>
+                          {year.year_code} {year.is_current && '(Current)'}
                         </SelectItem>
                       ))}
                     </SelectContent>

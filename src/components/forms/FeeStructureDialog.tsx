@@ -61,12 +61,15 @@ interface FeeStructureForm {
   library_fee: string;
   other_fees: string;
   due_date: Date | undefined;
+  academic_year_id: string;
 }
 
 export function FeeStructureDialog({ trigger, onSuccess, editData, isEdit = false }: FeeStructureDialogProps) {
   const [open, setOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState<FeeStructureForm>({
@@ -78,6 +81,7 @@ export function FeeStructureDialog({ trigger, onSuccess, editData, isEdit = fals
     library_fee: editData?.library_fee.toString() || '',
     other_fees: editData?.other_fees.toString() || '',
     due_date: editData?.due_date ? new Date(editData.due_date) : undefined,
+    academic_year_id: (editData as any)?.academic_year_id || '',
   });
 
   // Auto-calculate total fee based on component fees
@@ -92,9 +96,10 @@ export function FeeStructureDialog({ trigger, onSuccess, editData, isEdit = fals
 
   const totalFee = calculateTotalFee();
 
-  // Fetch courses on component mount
+  // Fetch courses and academic years on component mount
   useEffect(() => {
     fetchCourses();
+    fetchAcademicYears();
   }, []);
 
   const fetchCourses = async () => {
@@ -113,6 +118,27 @@ export function FeeStructureDialog({ trigger, onSuccess, editData, isEdit = fals
       setCourses(data || []);
     } catch (error) {
       console.error('Error fetching courses:', error);
+    }
+  };
+
+  const fetchAcademicYears = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('academic_years')
+        .select('*')
+        .in('status', ['draft', 'active'])
+        .order('start_date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching academic years:', error);
+        return;
+      }
+
+      setAcademicYears(data || []);
+      const current = data?.find(y => y.is_current);
+      setCurrentAcademicYear(current);
+    } catch (error) {
+      console.error('Error fetching academic years:', error);
     }
   };
 
@@ -176,6 +202,7 @@ export function FeeStructureDialog({ trigger, onSuccess, editData, isEdit = fals
             library_fee: parseFloat(formData.library_fee) || 0,
             other_fees: parseFloat(formData.other_fees) || 0,
             due_date: formData.due_date ? format(formData.due_date, 'yyyy-MM-dd') : null,
+            academic_year_id: formData.academic_year_id || currentAcademicYear?.id || null,
           })
           .eq('id', editData.id);
 
@@ -213,6 +240,7 @@ export function FeeStructureDialog({ trigger, onSuccess, editData, isEdit = fals
             other_fees: parseFloat(formData.other_fees) || 0,
             due_date: formData.due_date ? format(formData.due_date, 'yyyy-MM-dd') : null,
             college_id: collegeId,
+            academic_year_id: formData.academic_year_id || currentAcademicYear?.id || null,
           }]);
 
         if (error) throw error;
@@ -234,6 +262,7 @@ export function FeeStructureDialog({ trigger, onSuccess, editData, isEdit = fals
           library_fee: '',
           other_fees: '',
           due_date: undefined,
+          academic_year_id: '',
         });
       }
       
@@ -305,6 +334,32 @@ export function FeeStructureDialog({ trigger, onSuccess, editData, isEdit = fals
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="academic_year">Academic Year</Label>
+            <Select 
+              value={formData.academic_year_id || currentAcademicYear?.id || ''} 
+              onValueChange={(value) => handleChange('academic_year_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select academic year" />
+              </SelectTrigger>
+              <SelectContent>
+                {academicYears.length === 0 ? (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">No academic years available</div>
+                ) : (
+                  academicYears.map((year) => (
+                    <SelectItem key={year.id} value={year.id}>
+                      {year.year_code} {year.is_current && '(Current)'}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Fee structure will be linked to this academic year
+            </p>
           </div>
 
           <div className="space-y-2">

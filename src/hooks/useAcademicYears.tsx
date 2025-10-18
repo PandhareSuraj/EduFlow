@@ -19,6 +19,34 @@ export const useAcademicYears = () => {
     },
   });
 
+  const { data: currentAcademicYear } = useQuery({
+    queryKey: ['current-academic-year'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('academic_years')
+        .select('*')
+        .eq('is_current', true)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: activeAcademicYears } = useQuery({
+    queryKey: ['active-academic-years'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('academic_years')
+        .select('*')
+        .in('status', ['draft', 'active'])
+        .order('start_date', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const createAcademicYear = useMutation({
     mutationFn: async (values: {
       year_code: string;
@@ -116,6 +144,8 @@ export const useAcademicYears = () => {
 
   return {
     academicYears,
+    currentAcademicYear,
+    activeAcademicYears,
     isLoading,
     createAcademicYear: createAcademicYear.mutate,
     updateAcademicYear: updateAcademicYear.mutate,

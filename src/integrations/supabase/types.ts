@@ -4309,6 +4309,7 @@ export type Database = {
       }
       students: {
         Row: {
+          academic_year_id: string | null
           admission_date: string
           class: string | null
           college_id: string | null
@@ -4329,6 +4330,7 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          academic_year_id?: string | null
           admission_date?: string
           class?: string | null
           college_id?: string | null
@@ -4349,6 +4351,7 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          academic_year_id?: string | null
           admission_date?: string
           class?: string | null
           college_id?: string | null
@@ -4374,6 +4377,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
             referencedColumns: ["id"]
           },
           {

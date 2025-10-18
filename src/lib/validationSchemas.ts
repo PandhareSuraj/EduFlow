@@ -131,6 +131,12 @@ export const ValidationSchemas = {
     .min(0, "Quantity cannot be negative (minimum: 0)")
     .max(10000, "Quantity cannot exceed 10,000 units"),
 
+  // Academic Year
+  academicYearId: z
+    .string()
+    .uuid({ message: "Please select a valid academic year" })
+    .optional(),
+
   // Payment methods
   transactionId: z
     .string()
@@ -162,6 +168,7 @@ export const FormSchemas = {
     year: ValidationSchemas.year,
     admission_date: ValidationSchemas.pastOrCurrentDate,
     class: z.string().optional(),
+    academic_year_id: ValidationSchemas.academicYearId,
   }),
 
   addFaculty: z.object({

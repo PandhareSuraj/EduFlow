@@ -32,38 +32,56 @@ export function ValidatedStudentDialog({ onStudentAdded, trigger }: ValidatedStu
   const [open, setOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
   const { toast } = useToast();
   const { college } = useCollege();
 
-  // Load courses from Supabase
+  // Load courses and academic years from Supabase
   useEffect(() => {
-    const loadCourses = async () => {
+    const loadData = async () => {
       try {
-        const { data, error } = await supabase
+        // Load courses
+        const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
           .select('id, name, code')
           .eq('status', 'active')
           .order('name');
 
-        if (error) {
-          console.error('Error loading courses:', error);
+        if (coursesError) {
+          console.error('Error loading courses:', coursesError);
           toast({
             title: "Error",
             description: "Failed to load courses",
             variant: "destructive",
           });
         } else {
-          setCourses(data || []);
+          setCourses(coursesData || []);
+        }
+
+        // Load academic years
+        const { data: yearsData, error: yearsError } = await supabase
+          .from('academic_years')
+          .select('*')
+          .in('status', ['draft', 'active'])
+          .order('start_date', { ascending: false });
+
+        if (yearsError) {
+          console.error('Error loading academic years:', yearsError);
+        } else {
+          setAcademicYears(yearsData || []);
+          const current = yearsData?.find(y => y.is_current);
+          setCurrentAcademicYear(current);
         }
       } catch (error) {
-        console.error('Error loading courses:', error);
+        console.error('Error loading data:', error);
       } finally {
         setLoadingCourses(false);
       }
     };
 
     if (open) {
-      loadCourses();
+      loadData();
     }
   }, [toast, open]);
 
@@ -97,7 +115,8 @@ export function ValidatedStudentDialog({ onStudentAdded, trigger }: ValidatedStu
           semester: formData.semester || 1,
           college_id: college?.id,
           status: 'active',
-          admission_date: formData.admission_date || new Date().toISOString().split('T')[0]
+          admission_date: formData.admission_date || new Date().toISOString().split('T')[0],
+          academic_year_id: formData.academic_year_id || currentAcademicYear?.id || null
         }])
         .select()
         .single();
@@ -218,6 +237,41 @@ export function ValidatedStudentDialog({ onStudentAdded, trigger }: ValidatedStu
                         courses.map((course) => (
                           <SelectItem key={course.id} value={course.id.toString()}>
                             {course.code} - {course.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {error && (
+                    <p className="text-sm text-destructive">{error}</p>
+                  )}
+                </div>
+              )}
+            </ValidatedFormField>
+
+            <ValidatedFormField name="academic_year_id">
+              {({ value, onChange, onValidationChange, error }) => (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Academic Year <span className="text-muted-foreground">(Optional)</span>
+                  </label>
+                  <Select 
+                    value={value || currentAcademicYear?.id || ''} 
+                    onValueChange={(val) => {
+                      onChange(val);
+                      onValidationChange(true);
+                    }}
+                  >
+                    <SelectTrigger className={error ? "border-destructive" : ""}>
+                      <SelectValue placeholder="Select academic year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {academicYears.length === 0 ? (
+                        <div className="px-2 py-1.5 text-sm text-muted-foreground">No academic years available</div>
+                      ) : (
+                        academicYears.map((year) => (
+                          <SelectItem key={year.id} value={year.id}>
+                            {year.year_code} {year.is_current && '(Current)'}
                           </SelectItem>
                         ))
                       )}
