@@ -118,6 +118,8 @@ export function EditCourseDialog({ course, trigger, onSuccess }: EditCourseDialo
     if (months === 12) return "1 Year";
     if (months === 24) return "2 Years";
     if (months === 36) return "3 Years";
+    if (months === 48) return "4 Years";
+    if (months === 60) return "5 Years";
     return `${months} Months`;
   };
   
@@ -136,6 +138,8 @@ export function EditCourseDialog({ course, trigger, onSuccess }: EditCourseDialo
       case "1 Year": return 12;
       case "2 Years": return 24;
       case "3 Years": return 36;
+      case "4 Years": return 48;
+      case "5 Years": return 60;
       default: return 24;
     }
   };
@@ -237,6 +241,8 @@ export function EditCourseDialog({ course, trigger, onSuccess }: EditCourseDialo
                   <SelectItem value="1 Year">1 Year</SelectItem>
                   <SelectItem value="2 Years">2 Years</SelectItem>
                   <SelectItem value="3 Years">3 Years</SelectItem>
+                  <SelectItem value="4 Years">4 Years</SelectItem>
+                  <SelectItem value="5 Years">5 Years</SelectItem>
                 </SelectContent>
               </Select>
             </div>
