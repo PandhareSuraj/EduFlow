@@ -1,5 +1,14 @@
 project_id = "velhefqnjmevluskffzp"
 
+[functions.initiate-promotion]
+verify_jwt = true
+
+[functions.process-promotion]
+verify_jwt = true
+
+[functions.rollback-promotion]
+verify_jwt = true
+
 [functions.create-general-user]
 verify_jwt = false
 
