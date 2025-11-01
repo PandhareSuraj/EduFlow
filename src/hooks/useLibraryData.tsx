@@ -132,28 +132,68 @@ export function useLibraryData() {
         .from('library_members')
         .select(`
           *,
-          students!library_members_student_id_fkey (
+          students!fk_library_members_student (
             name,
             email
           ),
-          faculty!library_members_faculty_id_fkey (
+          faculty!fk_library_members_faculty (
             name,
             email
           )
         `)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      // If JOIN isn't available yet in schema cache, fallback to safe N+1 approach
+      if (error) {
+        const { data: baseMembers, error: baseError } = await supabase
+          .from('library_members')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (baseError || !baseMembers) throw (baseError || error);
+
+        const membersWithNames = await Promise.all(
+          baseMembers.map(async (member) => {
+            let memberName = 'Unknown';
+            let memberEmail = '';
+
+            if (member.member_type === 'student' && member.student_id) {
+              const { data: student } = await supabase
+                .from('students')
+                .select('name, email')
+                .eq('id', member.student_id)
+                .single();
+              if (student) {
+                memberName = (student as any).name;
+                memberEmail = (student as any).email;
+              }
+            } else if (member.member_type === 'faculty' && member.faculty_id) {
+              const { data: faculty } = await supabase
+                .from('faculty')
+                .select('name, email')
+                .eq('id', member.faculty_id)
+                .single();
+              if (faculty) {
+                memberName = (faculty as any).name;
+                memberEmail = (faculty as any).email;
+              }
+            }
+
+            return { ...member, member_name: memberName, member_email: memberEmail } as LibraryMember;
+          })
+        );
+
+        return membersWithNames as LibraryMember[];
+      }
       
       // Transform the data to match the expected format
-      return data.map(member => ({
+      return (data || []).map(member => ({
         ...member,
         member_name: member.member_type === 'student' 
-          ? (member.students as any)?.name || 'Unknown Student'
-          : (member.faculty as any)?.name || 'Unknown Faculty',
+          ? (member as any).students?.name || 'Unknown Student'
+          : (member as any).faculty?.name || 'Unknown Faculty',
         member_email: member.member_type === 'student'
-          ? (member.students as any)?.email || ''
-          : (member.faculty as any)?.email || ''
+          ? (member as any).students?.email || ''
+          : (member as any).faculty?.email || ''
       })) as LibraryMember[];
     }
   });
