@@ -2872,7 +2872,29 @@ export type Database = {
           updated_by?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_library_members_faculty"
+            columns: ["faculty_id"]
+            isOneToOne: false
+            referencedRelation: "faculty"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_library_members_student"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_payment_ledger"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "fk_library_members_student"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       library_settings: {
         Row: {
@@ -4856,10 +4878,7 @@ export type Database = {
       }
     }
     Functions: {
-      analyze_college_data: {
-        Args: { college_uuid: string }
-        Returns: Json
-      }
+      analyze_college_data: { Args: { college_uuid: string }; Returns: Json }
       auto_create_student_fees_with_discount: {
         Args: {
           p_discount_amount?: number
@@ -4881,10 +4900,7 @@ export type Database = {
           next_year: number
         }[]
       }
-      can_rollback_promotion: {
-        Args: { job_id: string }
-        Returns: boolean
-      }
+      can_rollback_promotion: { Args: { job_id: string }; Returns: boolean }
       clean_college_data: {
         Args: {
           college_uuid: string
@@ -4893,32 +4909,14 @@ export type Database = {
         }
         Returns: Json
       }
-      cleanup_expired_otps: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      exec_sql: {
-        Args: { params?: string[]; query: string }
-        Returns: Json[]
-      }
-      export_college_data: {
-        Args: { college_uuid: string }
-        Returns: Json
-      }
-      finalize_demo_setup: {
-        Args: { demo: Json }
-        Returns: undefined
-      }
-      generate_role_based_notifications: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      get_current_user_email: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      cleanup_expired_otps: { Args: never; Returns: undefined }
+      exec_sql: { Args: { params?: string[]; query: string }; Returns: Json[] }
+      export_college_data: { Args: { college_uuid: string }; Returns: Json }
+      finalize_demo_setup: { Args: { demo: Json }; Returns: undefined }
+      generate_role_based_notifications: { Args: never; Returns: undefined }
+      get_current_user_email: { Args: never; Returns: string }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_faculty_login_status: {
@@ -4933,14 +4931,14 @@ export type Database = {
         }[]
       }
       get_role_counts_global: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           count: number
           role: Database["public"]["Enums"]["app_role"]
         }[]
       }
       get_student_data: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           admission_date: string
           course_name: string
@@ -4958,14 +4956,8 @@ export type Database = {
         Args: { _student_id: number }
         Returns: boolean
       }
-      get_user_college: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_user_email_by_id: {
-        Args: { user_uuid: string }
-        Returns: string
-      }
+      get_user_college: { Args: never; Returns: string }
+      get_user_email_by_id: { Args: { user_uuid: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

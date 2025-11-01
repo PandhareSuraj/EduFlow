@@ -22,6 +22,14 @@ export function IssueBookDialog({ open, onOpenChange }: IssueBookDialogProps) {
   });
 
   const availableBooks = books?.filter(book => book.available_copies > 0) || [];
+  
+  // Filter out members with invalid/missing names (orphaned records)
+  const validMembers = libraryMembers?.filter(
+    member => member.member_name && 
+    member.member_name !== 'Unknown' && 
+    member.member_name !== 'Unknown Student' && 
+    member.member_name !== 'Unknown Faculty'
+  ) || [];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,9 +85,13 @@ export function IssueBookDialog({ open, onOpenChange }: IssueBookDialogProps) {
                 <SelectValue placeholder="Select a member" />
               </SelectTrigger>
               <SelectContent>
-                {libraryMembers?.length === 0 ? (
+                {validMembers.length === 0 ? (
                   <div className="p-4 text-center">
-                    <p className="text-sm text-muted-foreground mb-2">No library members found</p>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {libraryMembers?.length === 0 
+                        ? 'No library members found' 
+                        : 'No valid members found'}
+                    </p>
                     <Button 
                       size="sm" 
                       onClick={() => autoCreateMembers()}
@@ -89,9 +101,9 @@ export function IssueBookDialog({ open, onOpenChange }: IssueBookDialogProps) {
                     </Button>
                   </div>
                 ) : (
-                  libraryMembers?.map((member) => (
+                  validMembers.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
-                      {member.member_name || 'Unknown'} - {member.membership_number} ({member.member_type})
+                      {member.member_name} - {member.membership_number} ({member.member_type})
                     </SelectItem>
                   ))
                 )}

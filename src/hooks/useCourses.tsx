@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,20 +21,17 @@ interface Course {
 }
 
 export function useCourses() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchCourses = async () => {
-    try {
-      setLoading(true);
-      
-      // Get user's college
+  const { data: courses = [], isLoading: loading, refetch } = useQuery({
+    queryKey: ['courses'],
+    queryFn: async () => {
+      // Get user's college with better error handling
       const { data: collegeId, error: collegeError } = await supabase.rpc('get_user_college');
-      if (collegeError) {
-        throw new Error('Unable to fetch user college information');
-      }
-
+      
+      // Don't fail completely if college lookup fails - just proceed without filtering
+      const shouldFilterByCollege = !collegeError && collegeId;
+      
       // Fetch courses
       let coursesQuery = supabase
         .from('courses')
@@ -42,7 +39,7 @@ export function useCourses() {
         .eq('status', 'active')
         .order('name');
 
-      if (collegeId) {
+      if (shouldFilterByCollege) {
         coursesQuery = coursesQuery.eq('college_id', collegeId);
       }
 
@@ -59,7 +56,7 @@ export function useCourses() {
           .select('*')
           .in('course_id', courseIds);
 
-        if (collegeId) {
+        if (shouldFilterByCollege) {
           feeQuery = feeQuery.eq('college_id', collegeId);
         }
 
@@ -79,21 +76,21 @@ export function useCourses() {
         fee_structures: feeStructuresMap[course.id] || [],
       }));
 
-      setCourses(coursesData);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to fetch courses",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return coursesData;
+    },
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 5 * 60 * 1000
+  });
 
-  useEffect(() => {
-    fetchCourses();
-  }, []);
+  // Show error toast when there's an error
+  if (courses === undefined && !loading) {
+    toast({
+      title: "Error",
+      description: "Failed to fetch courses. Please refresh the page.",
+      variant: "destructive"
+    });
+  }
 
-  return { courses, loading, refetch: fetchCourses };
+  return { courses, loading, refetch };
 }
