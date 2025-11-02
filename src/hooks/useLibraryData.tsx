@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-interface Book {
+export interface Book {
   id: string;
   title: string;
   author: string;
@@ -19,15 +19,16 @@ interface Book {
   description?: string;
   status: string;
   college_id?: string;
+  category?: string;
 }
 
-interface BookCategory {
+export interface BookCategory {
   id: string;
   name: string;
   description?: string;
 }
 
-interface BookIssue {
+export interface BookIssue {
   id: string;
   book_id: string;
   member_id: string;
@@ -38,7 +39,7 @@ interface BookIssue {
   renewal_count?: number;
 }
 
-interface LibraryFine {
+export interface LibraryFine {
   id: string;
   issue_id: string;
   member_id: string;
@@ -48,7 +49,7 @@ interface LibraryFine {
   status: string;
 }
 
-interface LibraryMember {
+export interface LibraryMember {
   id: string;
   user_id?: string;
   student_id?: number;
@@ -61,6 +62,8 @@ interface LibraryMember {
   created_at?: string;
   member_name?: string;
   member_email?: string;
+  phone?: string;
+  department?: string;
 }
 
 export function useLibraryData() {
@@ -73,11 +76,19 @@ export function useLibraryData() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('books')
-        .select('*')
+        .select(`
+          *,
+          book_categories (
+            name
+          )
+        `)
         .order('title');
       
       if (error) throw error;
-      return data as Book[];
+      return (data || []).map(book => ({
+        ...book,
+        category: (book as any).book_categories?.name || undefined
+      })) as Book[];
     }
   });
 

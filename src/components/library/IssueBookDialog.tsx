@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLibraryData } from '@/hooks/useLibraryData';
 import { addDays } from 'date-fns';
+import { BookSearchCombobox } from './BookSearchCombobox';
+import { MemberSearchCombobox } from './MemberSearchCombobox';
 
 interface IssueBookDialogProps {
   open: boolean;
@@ -48,67 +49,32 @@ export function IssueBookDialog({ open, onOpenChange }: IssueBookDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Issue Book</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="book">Select Book *</Label>
-            <Select 
-              value={formData.book_id} 
-              onValueChange={(value) => setFormData({ ...formData, book_id: value })}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a book" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableBooks.map((book) => (
-                  <SelectItem key={book.id} value={book.id}>
-                    {book.title} by {book.author} ({book.available_copies} available)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <BookSearchCombobox
+              books={availableBooks}
+              value={formData.book_id}
+              onSelect={(bookId) => setFormData({ ...formData, book_id: bookId })}
+              placeholder="Search by title, author, ISBN..."
+            />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="member">Select Member *</Label>
-            <Select 
-              value={formData.member_id} 
-              onValueChange={(value) => setFormData({ ...formData, member_id: value })}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a member" />
-              </SelectTrigger>
-              <SelectContent>
-                {validMembers.length === 0 ? (
-                  <div className="p-4 text-center">
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {libraryMembers?.length === 0 
-                        ? 'No library members found' 
-                        : 'No valid members found'}
-                    </p>
-                    <Button 
-                      size="sm" 
-                      onClick={() => autoCreateMembers()}
-                      disabled={isCreatingMembers}
-                    >
-                      {isCreatingMembers ? 'Creating...' : 'Create Members from Students/Faculty'}
-                    </Button>
-                  </div>
-                ) : (
-                  validMembers.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.member_name} - {member.membership_number} ({member.member_type})
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
+            <MemberSearchCombobox
+              members={validMembers}
+              value={formData.member_id}
+              onSelect={(memberId) => setFormData({ ...formData, member_id: memberId })}
+              onCreateMembers={autoCreateMembers}
+              isCreatingMembers={isCreatingMembers}
+              placeholder="Search by name, ID, email..."
+            />
           </div>
 
           <div className="space-y-2">
