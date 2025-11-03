@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Calendar, FileText, Award, Download, Clock, Users, BookOpen, TrendingUp, CheckCircle, Loader2, AlertCircle, Eye, Play, Trash2 } from "lucide-react";
+import { Search, Plus, Calendar, FileText, Award, Download, Clock, Users, BookOpen, TrendingUp, CheckCircle, Loader2, AlertCircle, Eye, Play, Trash2, RefreshCw } from "lucide-react";
 // Update existing ExamDialogs import and add MCQ components
 import { ScheduleExamDialog, ViewExamsDialog } from "@/components/forms/ExamDialogs";
 import { MCQExamCreationDialog } from "@/components/exams/MCQExamCreationDialog";
@@ -68,11 +68,19 @@ export default function Exams() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [resultsLoading, setResultsLoading] = useState(false);
+  const [updatingStatuses, setUpdatingStatuses] = useState(false);
 
   // Fetch data
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Auto-update exam statuses based on current time
+      try {
+        await supabase.rpc('update_exam_statuses');
+      } catch (error) {
+        console.log('Status update skipped:', error);
+      }
+
       // Fetch courses
       const { data: coursesData, error: coursesError } = await supabase
         .from('courses')
@@ -118,10 +126,27 @@ export default function Exams() {
           }
         }
 
+        // Calculate actual status based on time (frontend override for better UX)
+        let actualStatus = exam.status;
+        const now = new Date();
+        const examDate = new Date(exam.exam_date);
+        const startTime = exam.start_time ? new Date(exam.start_time) : examDate;
+        const endTime = exam.end_time ? new Date(exam.end_time) : 
+                        new Date(startTime.getTime() + (exam.duration_minutes || 60) * 60000);
+        
+        // Auto-calculate status if exam is marked as "scheduled"
+        if (exam.status === 'scheduled') {
+          if (now > endTime) {
+            actualStatus = 'completed';
+          } else if (now >= startTime && now <= endTime) {
+            actualStatus = 'ongoing';
+          }
+        }
+
         return {
           ...exam,
           actual_question_count: actualQuestionCount,
-          status: exam.status as 'scheduled' | 'ongoing' | 'completed' | 'cancelled',
+          status: actualStatus as 'scheduled' | 'ongoing' | 'completed' | 'cancelled',
           course: courses.find(c => c.id === exam.course_id)
         };
       }));
@@ -407,6 +432,54 @@ export default function Exams() {
     }
   };
 
+  // Handle manual mark as completed
+  const handleMarkCompleted = async (examId: string) => {
+    try {
+      const { error } = await supabase
+        .from('exams')
+        .update({ status: 'completed' })
+        .eq('id', examId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Exam marked as completed. Analytics now available.",
+      });
+      
+      fetchData(); // Refresh the list
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update exam status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle bulk status update
+  const handleUpdateAllStatuses = async () => {
+    setUpdatingStatuses(true);
+    try {
+      await supabase.rpc('update_exam_statuses');
+      
+      toast({
+        title: "Success",
+        description: "All exam statuses updated based on current time",
+      });
+      
+      fetchData(); // Refresh
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update statuses",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingStatuses(false);
+    }
+  };
+
   // Handle bulk certificate generation
   const handleBulkCertificateGeneration = (type: string) => {
     const passedResults = results.filter(r => r.percentage >= 40);
@@ -591,8 +664,29 @@ export default function Exams() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Examination Schedule</CardTitle>
-              <CardDescription>Manage all scheduled and completed examinations</CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Examination Schedule</CardTitle>
+                  <CardDescription>Manage all scheduled and completed examinations</CardDescription>
+                </div>
+                <Button 
+                  variant="outline"
+                  onClick={handleUpdateAllStatuses}
+                  disabled={updatingStatuses}
+                >
+                  {updatingStatuses ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Update All Statuses
+                    </>
+                  )}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -657,13 +751,30 @@ export default function Exams() {
                         </TableCell>
                         <TableCell>{exam.total_marks}</TableCell>
                         <TableCell>
-                          <Badge variant={
-                            exam.status === 'completed' ? 'default' : 
-                            exam.status === 'ongoing' ? 'secondary' :
-                            exam.status === 'cancelled' ? 'destructive' : 'outline'
-                          }>
-                            {exam.status}
-                          </Badge>
+                          <div className="flex flex-col gap-1">
+                            <Badge variant={
+                              exam.status === 'completed' ? 'default' : 
+                              exam.status === 'ongoing' ? 'destructive' :
+                              exam.status === 'cancelled' ? 'destructive' : 
+                              'secondary'
+                            }>
+                              {exam.status}
+                            </Badge>
+                            
+                            {/* Show time-based hint */}
+                            {exam.status === 'scheduled' && 
+                             new Date(exam.end_time || exam.exam_date) < new Date() && (
+                              <span className="text-xs text-orange-500">
+                                ⚠️ Past due
+                              </span>
+                            )}
+                            
+                            {exam.status === 'ongoing' && (
+                              <span className="text-xs text-red-500">
+                                🔴 Live now
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2 flex-wrap">
@@ -729,6 +840,21 @@ export default function Exams() {
                             )}
                             {exam.status === 'completed' && courses.find(c => c.id === exam.course_id) && (
                               <ViewResultsDialog course={courses.find(c => c.id === exam.course_id)!} />
+                            )}
+                            
+                            {/* Show "Mark as Completed" for past scheduled exams */}
+                            {exam.status === 'scheduled' && 
+                             new Date(exam.end_time || exam.exam_date) < new Date() && (
+                              <PermissionWrapper permission="EXAMS_CREATE" fallback={null}>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleMarkCompleted(exam.id)}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Mark Completed
+                                </Button>
+                              </PermissionWrapper>
                             )}
                             
                             {/* Analytics Report for completed exams */}

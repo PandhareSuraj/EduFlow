@@ -4965,6 +4965,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_exam_statuses: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role:
