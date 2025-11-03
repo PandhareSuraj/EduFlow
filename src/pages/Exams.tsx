@@ -15,6 +15,8 @@ import { DeleteExamDialog } from "@/components/exams/DeleteExamDialog";
 import { RunExamNowDialog } from "@/components/exams/RunExamNowDialog";
 import { EditExamDialog } from "@/components/forms/EditExamDialog";
 import { ViewResultsDialog } from "@/components/forms/ResultDialogs";
+import { ExamAnalyticsReport } from "@/components/exams/ExamAnalyticsReport";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportGenerator, ReportConfigs } from "@/utils/reportGenerator";
@@ -27,6 +29,9 @@ interface Exam {
   name: string;
   course_id: number;
   exam_date: string;
+  start_time?: string;
+  end_time?: string;
+  duration_minutes?: number;
   total_marks: number;
   total_questions?: number;
   exam_type?: string;
@@ -83,7 +88,10 @@ export default function Exams() {
           id, 
           name, 
           course_id, 
-          exam_date, 
+          exam_date,
+          start_time,
+          end_time,
+          duration_minutes,
           total_marks, 
           total_questions,
           exam_type,
@@ -615,9 +623,36 @@ export default function Exams() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            {new Date(exam.exam_date).toLocaleDateString()}
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">
+                                {new Date(exam.exam_date).toLocaleDateString('en-IN')}
+                              </span>
+                            </div>
+                            {exam.start_time && exam.end_time && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                <span>
+                                  {new Date(exam.start_time).toLocaleTimeString('en-IN', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit',
+                                    hour12: true 
+                                  })}
+                                  {' - '}
+                                  {new Date(exam.end_time).toLocaleTimeString('en-IN', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit',
+                                    hour12: true 
+                                  })}
+                                </span>
+                                {exam.duration_minutes && (
+                                  <Badge variant="secondary" className="ml-2">
+                                    {exam.duration_minutes} min
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>{exam.total_marks}</TableCell>
@@ -694,6 +729,24 @@ export default function Exams() {
                             )}
                             {exam.status === 'completed' && courses.find(c => c.id === exam.course_id) && (
                               <ViewResultsDialog course={courses.find(c => c.id === exam.course_id)!} />
+                            )}
+                            
+                            {/* Analytics Report for completed exams */}
+                            {exam.status === 'completed' && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <TrendingUp className="h-4 w-4 mr-1" />
+                                    Analytics
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+                                  <DialogHeader>
+                                    <DialogTitle>Exam Analytics Report</DialogTitle>
+                                  </DialogHeader>
+                                  <ExamAnalyticsReport examId={exam.id} />
+                                </DialogContent>
+                              </Dialog>
                             )}
                           </div>
                         </TableCell>
