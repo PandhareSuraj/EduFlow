@@ -32,6 +32,8 @@ interface PaymentReceiptProps {
       address: string;
       phone: string;
       email: string;
+      signature_url?: string;
+      signature_title?: string;
     };
   };
   onClose?: () => void;
@@ -99,6 +101,15 @@ export function PaymentReceipt({ receipt, onClose }: PaymentReceiptProps) {
               ${receipt.bank_name ? `<div class="row"><span class="label">Bank Name:</span><span>${receipt.bank_name}</span></div>` : ''}
               ${receipt.remarks ? `<div class="row"><span class="label">Remarks:</span><span>${receipt.remarks}</span></div>` : ''}
             </div>
+            ${receipt.college.signature_url ? `
+              <div style="text-align: right; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc;">
+                <img src="${receipt.college.signature_url}" alt="Signature" style="width: 150px; height: 60px; object-fit: contain; margin-bottom: 8px;" />
+                <div style="border-top: 1px solid #000; width: 200px; margin-left: auto; padding-top: 5px; text-align: center;">
+                  <p style="margin: 0; font-weight: bold; font-size: 14px;">${receipt.college.signature_title || 'Authorized Signature'}</p>
+                  <p style="margin: 0; font-size: 12px; color: #666;">Date: ${new Date().toLocaleDateString('en-IN')}</p>
+                </div>
+              </div>
+            ` : ''}
           </body>
         </html>
       `);
@@ -220,6 +231,30 @@ export function PaymentReceipt({ receipt, onClose }: PaymentReceiptProps) {
             )}
           </div>
         </div>
+
+        {/* Signature Section */}
+        {receipt.college.signature_url && (
+          <>
+            <Separator />
+            <div className="flex justify-end items-end">
+              <div className="text-center space-y-2">
+                <img
+                  src={receipt.college.signature_url}
+                  alt="Authorized Signature"
+                  className="w-36 h-14 object-contain mx-auto"
+                />
+                <div className="border-t border-foreground/20 pt-1 px-4">
+                  <p className="text-sm font-medium">
+                    {receipt.college.signature_title || 'Authorized Signature'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Date: {new Date().toLocaleDateString('en-IN')}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         <Separator />
 

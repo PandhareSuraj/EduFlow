@@ -44,6 +44,12 @@ export function ExamResultsDisplay({ sessionId }: ExamResultsDisplayProps) {
   const [result, setResult] = useState<ExamResult | null>(null);
   const [questionResults, setQuestionResults] = useState<QuestionResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const [collegeInfo, setCollegeInfo] = useState<{
+    name: string;
+    logo_url?: string;
+    signature_url?: string;
+    signature_title?: string;
+  } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -84,6 +90,17 @@ export function ExamResultsDisplay({ sessionId }: ExamResultsDisplayProps) {
         .order('mcq_questions.question_number');
 
       if (answersError) throw answersError;
+
+      // Fetch college information
+      const { data: collegeData } = await supabase
+        .from('colleges')
+        .select('name, logo_url, signature_url, signature_title')
+        .eq('id', sessionData.college_id)
+        .single();
+
+      if (collegeData) {
+        setCollegeInfo(collegeData);
+      }
 
       // Calculate duration taken
       const startTime = new Date(sessionData.start_time);
@@ -250,6 +267,33 @@ export function ExamResultsDisplay({ sessionId }: ExamResultsDisplayProps) {
               Download Detailed Report
             </Button>
           </div>
+
+          {/* Signature and Verification */}
+          {collegeInfo?.signature_url && (
+            <>
+              <Separator className="my-6" />
+              <div className="flex justify-between items-end">
+                <div className="text-sm text-muted-foreground">
+                  <p>Result Date: {new Date(result.submit_time).toLocaleDateString('en-IN')}</p>
+                  <p className="mt-1">
+                    This is a computer-generated result. Signature may be digital.
+                  </p>
+                </div>
+                <div className="text-center">
+                  <img
+                    src={collegeInfo.signature_url}
+                    alt="Authorized Signature"
+                    className="w-32 h-12 object-contain mx-auto mb-2"
+                  />
+                  <div className="border-t border-foreground/20 pt-1">
+                    <p className="text-sm font-medium">
+                      {collegeInfo.signature_title || 'Authorized Signature'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

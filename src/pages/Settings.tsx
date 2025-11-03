@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Settings as SettingsIcon, User, Bell, Shield, Database as DatabaseIcon, Mail, Globe, Users, Edit, Trash2 } from "lucide-react";
+import { Settings as SettingsIcon, User, Bell, Shield, Database as DatabaseIcon, Mail, Globe, Users, Edit, Trash2, Upload, Loader2 } from "lucide-react";
 import { DatabaseManagementDialog } from '@/components/database/DatabaseManagementDialog';
 import { RoleGuard } from '@/components/permissions/RoleGuard';
 import { DepartmentManagement } from '@/components/forms/DepartmentManagement';
@@ -20,6 +20,7 @@ import { PersonalGoogleDriveSettings } from '@/components/settings/PersonalGoogl
 import { VideoManagement } from '@/components/videos/VideoManagement';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
+import { useCollegeSettings } from '@/hooks/useCollegeSettings';
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -34,9 +35,11 @@ type UserWithRole = {
 export default function Settings() {
   const { toast } = useToast();
   const { userRole } = useAuth();
+  const { collegeInfo, loading: collegeLoading, updateCollegeInfo, uploadSignature } = useCollegeSettings();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [roleStats, setRoleStats] = useState<{ role: string; count: number; description: string }[]>([]);
+  const [uploadingSignature, setUploadingSignature] = useState(false);
 
   // Fetch users and their roles
   useEffect(() => {
@@ -244,6 +247,35 @@ export default function Settings() {
       description: `Downloading backup from ${date}`,
     });
   };
+
+  const handleSignatureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File",
+        description: "Please select an image file",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUploadingSignature(true);
+    try {
+      await uploadSignature(file);
+      toast({
+        title: "Success",
+        description: "Signature uploaded successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload signature",
+        variant: "destructive"
+      });
+    } finally {
+      setUploadingSignature(false);
+    }
+  };
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -284,27 +316,129 @@ export default function Settings() {
               <CardDescription>Basic information about your institution</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="text-sm text-muted-foreground mb-4">
-                These settings are managed through the ID Cards section. College-specific branding and information can be updated there.
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-60">
-                <div className="space-y-2">
-                  <Label htmlFor="college-name">College Name</Label>
-                  <Input id="college-name" value="Managed in ID Cards Settings" disabled />
+              {collegeLoading ? (
+                <div className="text-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Loading college information...</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="college-code">College Code</Label>
-                  <Input id="college-code" value="Managed in ID Cards Settings" disabled />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="contact-number">Contact Number</Label>
-                  <Input id="contact-number" value="Managed in ID Cards Settings" disabled />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="college-address">College Address</Label>
-                  <Input id="college-address" value="Managed in ID Cards Settings" disabled />
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="college-name">College Name</Label>
+                      <Input 
+                        id="college-name" 
+                        value={collegeInfo?.name || ''} 
+                        onChange={(e) => updateCollegeInfo({ name: e.target.value })}
+                        placeholder="Enter college name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="college-code">College Code</Label>
+                      <Input 
+                        id="college-code" 
+                        value={collegeInfo?.code || ''} 
+                        onChange={(e) => updateCollegeInfo({ code: e.target.value })}
+                        placeholder="Enter college code"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contact-number">Contact Number</Label>
+                      <Input 
+                        id="contact-number" 
+                        value={collegeInfo?.phone || ''} 
+                        onChange={(e) => updateCollegeInfo({ phone: e.target.value })}
+                        placeholder="Enter contact number"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="college-email">Email Address</Label>
+                      <Input 
+                        id="college-email" 
+                        type="email"
+                        value={collegeInfo?.email || ''} 
+                        onChange={(e) => updateCollegeInfo({ email: e.target.value })}
+                        placeholder="Enter email address"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="college-address">College Address</Label>
+                    <Textarea 
+                      id="college-address" 
+                      value={collegeInfo?.address || ''} 
+                      onChange={(e) => updateCollegeInfo({ address: e.target.value })}
+                      placeholder="Enter complete address"
+                      rows={3}
+                    />
+                  </div>
+
+                  <Separator className="my-6" />
+                  
+                  {/* Authorized Signature Section */}
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-base font-semibold">Authorized Signature</Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        This signature will appear on fee receipts, exam results, and ID cards
+                      </p>
+                    </div>
+                    
+                    {/* Signature Preview */}
+                    {collegeInfo?.signature_url && (
+                      <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
+                        <img
+                          src={collegeInfo.signature_url}
+                          alt="Authorized Signature"
+                          className="w-40 h-20 object-contain border border-border rounded p-2 bg-background"
+                        />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Current Signature</p>
+                          <p className="text-xs text-muted-foreground">
+                            {collegeInfo.signature_title || 'No title set'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Upload Button */}
+                    <div className="space-y-2">
+                      <Label htmlFor="signature-upload">Upload Signature Image</Label>
+                      <div className="flex items-center gap-4">
+                        <Input
+                          id="signature-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleSignatureUpload}
+                          disabled={uploadingSignature}
+                          className="max-w-md"
+                        />
+                        {uploadingSignature && (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Recommended: PNG or JPG format, transparent background preferred
+                      </p>
+                    </div>
+                    
+                    {/* Signature Title */}
+                    <div className="space-y-2 max-w-md">
+                      <Label htmlFor="signature-title">Signature Title/Designation</Label>
+                      <Input
+                        id="signature-title"
+                        value={collegeInfo?.signature_title || ''}
+                        onChange={(e) => updateCollegeInfo({ signature_title: e.target.value })}
+                        placeholder="e.g., Principal, Registrar, Director"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        This will appear below the signature on all documents
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
