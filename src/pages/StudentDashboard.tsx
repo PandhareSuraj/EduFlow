@@ -36,8 +36,17 @@ export default function StudentDashboard() {
       fetchStudentData();
       fetchAttendanceData();
       fetchFeeStatus();
+      generateNotifications();
     }
   }, [user]);
+
+  const generateNotifications = async () => {
+    try {
+      await supabase.rpc('generate_role_based_notifications');
+    } catch (error) {
+      console.error('Error generating notifications:', error);
+    }
+  };
 
   const fetchStudentData = async () => {
     try {
