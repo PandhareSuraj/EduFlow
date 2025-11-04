@@ -11,7 +11,7 @@ export function StudentNotifications() {
   const navigate = useNavigate();
 
   const getNotificationIcon = (notification: any) => {
-    // Enhanced icons for exam notifications with animation for urgent ones
+    // Special icons for exam notifications
     if (notification.title.includes('Today')) {
       return <AlertCircle className="h-5 w-5 text-destructive animate-pulse" />;
     }
@@ -22,7 +22,7 @@ export function StudentNotifications() {
       return <CheckCircle className="h-5 w-5 text-success" />;
     }
     
-    // Default type-based icons
+    // Default icons by type
     switch (notification.type) {
       case 'error':
         return <AlertCircle className="h-4 w-4 text-destructive" />;
@@ -62,18 +62,10 @@ export function StudentNotifications() {
 
   const unreadNotifications = notifications.filter(n => !n.is_read);
   
-  // Sort notifications by urgency: error > warning > success > info
+  // Sort notifications by urgency (error > warning > info > success)
   const sortedNotifications = [...notifications].sort((a, b) => {
-    const typeOrder = { error: 0, warning: 1, success: 2, info: 3 };
-    const aOrder = typeOrder[a.type as keyof typeof typeOrder] ?? 4;
-    const bOrder = typeOrder[b.type as keyof typeof typeOrder] ?? 4;
-    
-    // If same type, sort by created_at (newest first)
-    if (aOrder === bOrder) {
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    }
-    
-    return aOrder - bOrder;
+    const typeOrder: Record<string, number> = { error: 0, warning: 1, info: 2, success: 3 };
+    return (typeOrder[a.type] || 4) - (typeOrder[b.type] || 4);
   });
   
   const recentNotifications = sortedNotifications.slice(0, 5);
@@ -106,10 +98,6 @@ export function StudentNotifications() {
                 key={notification.id}
                 className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50 ${
                   !notification.is_read ? 'bg-muted/30 border-primary/20' : 'border-border'
-                } ${
-                  notification.type === 'error' && !notification.is_read 
-                    ? 'border-destructive/40 shadow-sm' 
-                    : ''
                 }`}
                 onClick={() => handleNotificationClick(notification)}
               >
