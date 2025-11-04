@@ -1,5 +1,8 @@
 project_id = "velhefqnjmevluskffzp"
 
+[functions.generate-vapid-keys]
+verify_jwt = false
+
 [functions.initiate-promotion]
 verify_jwt = true
 
