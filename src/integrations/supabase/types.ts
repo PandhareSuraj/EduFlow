@@ -3398,6 +3398,33 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          created_at: string | null
+          device_info: string | null
+          id: string
+          subscription: Json
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_info?: string | null
+          id?: string
+          subscription: Json
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          device_info?: string | null
+          id?: string
+          subscription?: Json
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           college_id: string | null

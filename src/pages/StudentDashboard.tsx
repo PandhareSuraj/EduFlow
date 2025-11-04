@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, GraduationCap, FileText, Clock, Phone, Mail, DollarSign, AlertCircle, Users } from "lucide-react";
+import { Calendar, GraduationCap, FileText, Clock, Phone, Mail, DollarSign, AlertCircle, Users, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { StudentNotifications } from "@/components/notifications/StudentNotifications";
+import { PushNotificationManager } from "@/components/notifications/PushNotificationManager";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -232,6 +233,22 @@ export default function StudentDashboard() {
 
       {/* Notifications */}
       <StudentNotifications />
+
+      {/* Push Notifications Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Push Notifications
+          </CardTitle>
+          <CardDescription>
+            Get exam reminders on your device, even when the app is closed
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PushNotificationManager />
+        </CardContent>
+      </Card>
 
       {/* Academic Performance */}
       <Card>

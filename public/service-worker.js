@@ -55,3 +55,73 @@ self.addEventListener('activate', (event) => {
     })
   );
 });
+
+// Push notification event - show notification when received
+self.addEventListener('push', (event) => {
+  console.log('Push notification received:', event);
+  
+  const data = event.data?.json() || {};
+  
+  const options = {
+    body: data.message || 'You have a new notification',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-192x192.png',
+    vibrate: [200, 100, 200],
+    data: {
+      url: data.action_url || '/',
+      notificationId: data.id
+    },
+    actions: [
+      {
+        action: 'open',
+        title: 'View'
+      },
+      {
+        action: 'close',
+        title: 'Dismiss'
+      }
+    ],
+    tag: data.type || 'general', // Group notifications by type
+    requireInteraction: data.type === 'error', // Keep error notifications visible
+    timestamp: Date.now()
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'EduERP Notification', options)
+  );
+});
+
+// Notification click event - handle user interaction
+self.addEventListener('notificationclick', (event) => {
+  console.log('Notification clicked:', event.action);
+  
+  event.notification.close();
+  
+  if (event.action === 'close') {
+    return;
+  }
+  
+  // Open the app at the specified URL
+  const urlToOpen = event.notification.data.url || '/';
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // Check if there's already a window open
+        for (const client of clientList) {
+          if (client.url === urlToOpen && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // If no window is open, open a new one
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
+// Notification close event (for analytics/tracking if needed)
+self.addEventListener('notificationclose', (event) => {
+  console.log('Notification closed:', event.notification.tag);
+});
