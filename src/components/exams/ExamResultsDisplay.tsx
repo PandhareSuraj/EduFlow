@@ -87,7 +87,7 @@ export function ExamResultsDisplay({ sessionId }: ExamResultsDisplayProps) {
           )
         `)
         .eq('session_id', sessionId)
-        .order('mcq_questions.question_number');
+        .order('question_number', { foreignTable: 'mcq_questions' });
 
       if (answersError) throw answersError;
 
