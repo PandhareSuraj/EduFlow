@@ -14,6 +14,7 @@ import { AdminExamPreview } from "@/components/exams/AdminExamPreview";
 import { DeleteExamDialog } from "@/components/exams/DeleteExamDialog";
 import { RunExamNowDialog } from "@/components/exams/RunExamNowDialog";
 import { EditExamDialog } from "@/components/forms/EditExamDialog";
+import { RescheduleExamDialog } from "@/components/exams/RescheduleExamDialog";
 import { ViewResultsDialog } from "@/components/forms/ResultDialogs";
 import { ExamAnalyticsReport } from "@/components/exams/ExamAnalyticsReport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -778,6 +779,14 @@ export default function Exams() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2 flex-wrap">
+                            {/* Reschedule Exam - Works for all statuses */}
+                            <PermissionWrapper permission="EXAMS_CREATE" fallback={null}>
+                              <RescheduleExamDialog 
+                                exam={exam}
+                                onExamRescheduled={fetchData}
+                              />
+                            </PermissionWrapper>
+
                             {/* Edit Exam */}
                             <PermissionWrapper permission="EXAMS_CREATE" fallback={null}>
                               <EditExamDialog 
