@@ -217,13 +217,9 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
         });
       }
 
-      // Reset form and refresh questions list
+      // Refresh questions list first, then reset form with correct next question number
+      await fetchQuestions();
       resetForm();
-      
-      // Wait a bit before fetching to ensure database consistency
-      setTimeout(() => {
-        fetchQuestions();
-      }, 100);
       
       onQuestionsUpdated?.();
     } catch (error: any) {
