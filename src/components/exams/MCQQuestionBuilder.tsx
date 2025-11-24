@@ -304,7 +304,11 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
           Manage Questions ({exam.actual_question_count || 0}/{exam.total_questions || 30})
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[1000px] h-[90vh] flex flex-col">
+      <DialogContent 
+        className="sm:max-w-[1000px] h-[90vh] flex flex-col"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>MCQ Questions - {exam.name}</DialogTitle>
           <DialogDescription>
