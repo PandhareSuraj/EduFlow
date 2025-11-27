@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // IMPORTANT: Replace this with your actual VAPID public key after generating it
 // Generate VAPID keys by running: npx web-push generate-vapid-keys
-const VAPID_PUBLIC_KEY = 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY';
+const VAPID_PUBLIC_KEY = 'BGk5S2GMChDTq9jlh1nzoeZsiPBuyjVIxvt6ppecgYOMD7f6Xp9mXxHifzW9Hb0qrNnJPQ90Xge3_CGmdfi37x8';
 
 export function PushNotificationManager() {
   const [isSupported, setIsSupported] = useState(false);
@@ -54,24 +54,6 @@ export function PushNotificationManager() {
   const subscribeToPush = async () => {
     setLoading(true);
     try {
-      // Check if VAPID key is configured
-      if (VAPID_PUBLIC_KEY === 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY') {
-        toast.error('Push notifications not configured', {
-          description: 'Please configure VAPID keys first. See console for instructions.'
-        });
-        console.error(`
-          ⚠️ VAPID Keys Not Configured ⚠️
-          
-          To enable push notifications:
-          1. Run: npx web-push generate-vapid-keys
-          2. Add VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY to Supabase secrets
-          3. Update VAPID_PUBLIC_KEY in PushNotificationManager.tsx
-          
-          See: https://github.com/web-push-libs/web-push#command-line
-        `);
-        return;
-      }
-
       // Request notification permission
       const perm = await Notification.requestPermission();
       setPermission(perm);
