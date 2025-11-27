@@ -1182,6 +1182,7 @@ export type Database = {
           location: string | null
           max_attendees: number | null
           organizer_id: string | null
+          poster_url: string | null
           start_time: string | null
           status: string
           title: string
@@ -1202,6 +1203,7 @@ export type Database = {
           location?: string | null
           max_attendees?: number | null
           organizer_id?: string | null
+          poster_url?: string | null
           start_time?: string | null
           status?: string
           title: string
@@ -1222,6 +1224,7 @@ export type Database = {
           location?: string | null
           max_attendees?: number | null
           organizer_id?: string | null
+          poster_url?: string | null
           start_time?: string | null
           status?: string
           title?: string
