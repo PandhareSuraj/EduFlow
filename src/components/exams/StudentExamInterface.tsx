@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Clock, ChevronLeft, ChevronRight, Flag, CheckCircle, AlertCircle, Send, Timer } from "lucide-react";
-import { getCurrentISTTime, formatISTDate, convertToIST } from "@/utils/dateUtils";
+import { getCurrentISTTime, formatISTDate, convertToIST, isCurrentISTBefore } from "@/utils/dateUtils";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -39,6 +39,8 @@ interface Exam {
   total_questions: number;
   total_marks: number;
   passing_marks: number;
+  start_time?: string;
+  end_time?: string;
 }
 
 interface StudentExamInterfaceProps {
@@ -90,6 +92,18 @@ export function StudentExamInterface({ exam, studentId, onExamComplete }: Studen
   const startExam = async () => {
     setLoading(true);
     try {
+      // Validate exam hasn't started yet (IST timezone aware)
+      if (exam.start_time && isCurrentISTBefore(exam.start_time)) {
+        const startTimeIST = formatISTDate(exam.start_time, 'hh:mm a');
+        toast({
+          title: "Exam Not Started Yet",
+          description: `This exam will start at ${startTimeIST} IST. Please wait.`,
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
       // Check for existing active session
       const { data: existingSession } = await supabase
         .from('student_exam_sessions')
