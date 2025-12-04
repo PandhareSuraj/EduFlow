@@ -86,6 +86,18 @@ export const convertISTToUTC = (istDate: Date): Date => {
 };
 
 /**
+ * Convert form time input (assumed IST) to UTC ISO string for database storage
+ * This is critical for exam scheduling where admin inputs time in IST
+ */
+export const convertFormTimeToUTC = (date: string, time: string): string => {
+  // Create a date string in IST format
+  const istDateTimeString = `${date}T${time}:00`;
+  // Parse as IST and convert to UTC
+  const utcDate = fromZonedTime(istDateTimeString, IST_TIMEZONE);
+  return utcDate.toISOString();
+};
+
+/**
  * Format time duration in human readable format
  */
 export const formatDuration = (minutes: number): string => {

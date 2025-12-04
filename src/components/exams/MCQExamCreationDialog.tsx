@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Clock, FileText, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { convertFormTimeToUTC } from "@/utils/dateUtils";
 
 interface Course {
   id: number;
@@ -83,8 +84,8 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
           name: formData.name.trim(),
           exam_type: formData.exam_type,
           exam_date: formData.exam_date,
-          start_time: formData.start_time ? `${formData.exam_date}T${formData.start_time}:00.000Z` : null,
-          end_time: formData.end_time ? `${formData.exam_date}T${formData.end_time}:00.000Z` : null,
+          start_time: formData.start_time ? convertFormTimeToUTC(formData.exam_date, formData.start_time) : null,
+          end_time: formData.end_time ? convertFormTimeToUTC(formData.exam_date, formData.end_time) : null,
           duration_minutes: formData.duration_minutes,
           total_questions: formData.total_questions,
           total_marks: formData.total_marks,
@@ -208,7 +209,7 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="start_time">Start Time</Label>
+                <Label htmlFor="start_time">Start Time (IST)</Label>
                 <Input
                   id="start_time"
                   type="time"
@@ -217,7 +218,7 @@ export function MCQExamCreationDialog({ courses, onExamCreated }: MCQExamCreatio
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="end_time">End Time</Label>
+                <Label htmlFor="end_time">End Time (IST)</Label>
                 <Input
                   id="end_time"
                   type="time"
