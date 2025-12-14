@@ -1,4 +1,4 @@
-import { Search, User, LogOut, Settings, Menu, School } from "lucide-react";
+import { Search, User, LogOut, Settings, School, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,12 +18,14 @@ import { useNavigate } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
-
+import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 export function Header() {
   const { user, userRole } = useAuth();
   const { collegeName, logoUrl } = useBranding();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { startTour } = useOnboarding();
 
   const handleSignOut = async () => {
     try {
@@ -87,6 +89,23 @@ export function Header() {
               <Search className="h-4 w-4" />
             </Button>
           )}
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={startTour}
+                data-tour="help-button"
+              >
+                <HelpCircle className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Take a guided tour</p>
+            </TooltipContent>
+          </Tooltip>
           
           <NotificationDropdown />
           

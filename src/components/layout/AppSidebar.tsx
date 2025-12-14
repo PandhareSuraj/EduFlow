@@ -178,22 +178,27 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {navigation.map((item) => (
-                <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton 
-                    asChild 
-                    className={getNavClassName(item.href)}
-                  >
-                    <NavLink 
-                      to={item.href} 
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
+              {navigation.map((item) => {
+                // Generate data-tour attribute from href
+                const tourId = item.href.replace('/', '').replace(/-/g, '-') || 'dashboard';
+                return (
+                  <SidebarMenuItem key={item.name}>
+                    <SidebarMenuButton 
+                      asChild 
+                      className={getNavClassName(item.href)}
+                      data-tour={tourId}
                     >
-                      <item.icon className="h-4 w-4 flex-shrink-0" />
-                      {!isCollapsed && <span className="truncate">{item.name}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                      <NavLink 
+                        to={item.href} 
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
+                      >
+                        <item.icon className="h-4 w-4 flex-shrink-0" />
+                        {!isCollapsed && <span className="truncate">{item.name}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
