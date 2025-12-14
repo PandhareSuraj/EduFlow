@@ -29,10 +29,20 @@ export function useCourses() {
     try {
       setLoading(true);
       
+      // Check if user is authenticated first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // User not logged in, return empty courses silently
+        setCourses([]);
+        setLoading(false);
+        return;
+      }
+      
       // Get user's college
       const { data: collegeId, error: collegeError } = await supabase.rpc('get_user_college');
       if (collegeError) {
-        throw new Error('Unable to fetch user college information');
+        // If RPC fails, continue without college filter instead of throwing
+        console.warn('Could not fetch user college:', collegeError.message);
       }
 
       // Fetch courses
