@@ -220,22 +220,26 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 ))
               ) : (
-                navigation.map((item) => (
-                  <SidebarMenuItem key={item.name}>
-                    <SidebarMenuButton 
-                      asChild 
-                      className={getNavClassName(item.href)}
-                    >
-                      <NavLink 
-                        to={item.href} 
-                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
+                navigation.map((item) => {
+                  const tourKey = item.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                  return (
+                    <SidebarMenuItem key={item.name}>
+                      <SidebarMenuButton 
+                        asChild 
+                        className={getNavClassName(item.href)}
+                        data-tour={`nav-${tourKey}`}
                       >
-                        <item.icon className="h-4 w-4 flex-shrink-0" />
-                        {!isCollapsed && <span className="truncate">{item.name}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))
+                        <NavLink 
+                          to={item.href} 
+                          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
+                        >
+                          <item.icon className="h-4 w-4 flex-shrink-0" />
+                          {!isCollapsed && <span className="truncate">{item.name}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })
               )}
             </SidebarMenu>
           </SidebarGroupContent>

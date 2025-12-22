@@ -180,7 +180,7 @@ export function AdminDashboard() {
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Welcome Header */}
-      <div className="bg-gradient-header rounded-lg p-4 sm:p-6 text-white shadow-header">
+      <div className="bg-gradient-header rounded-lg p-4 sm:p-6 text-white shadow-header" data-tour="welcome-header">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 leading-tight">
           College Administration Dashboard
         </h1>
@@ -190,7 +190,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" data-tour="stats-grid">
         <StatsCard
           title="Total Students"
           value={loading ? "..." : stats.totalStudents.toLocaleString()}
@@ -254,7 +254,9 @@ export function AdminDashboard() {
       {/* Main Content Grid */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3">
         {/* Quick Actions */}
-        <QuickActions userRole="admin" className="lg:col-span-1" />
+        <div data-tour="quick-actions">
+          <QuickActions userRole="admin" className="lg:col-span-1" />
+        </div>
         
         {/* Recent Activity */}
         <div className="lg:col-span-2">
@@ -265,7 +267,7 @@ export function AdminDashboard() {
       {/* Pending Actions and Upcoming Events */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Pending Actions */}
-        <Card className="shadow-card">
+        <Card className="shadow-card" data-tour="pending-actions">
           <CardHeader>
             <CardTitle className="flex items-center">
               <AlertTriangle className="mr-2 h-5 w-5" />

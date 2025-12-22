@@ -1,4 +1,4 @@
-import { Search, User, LogOut, Settings, Menu, School, BookOpen, Users, GraduationCap } from "lucide-react";
+import { Search, User, LogOut, Settings, Menu, School, BookOpen, Users, GraduationCap, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -25,6 +25,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
 import { useGlobalSearch, SearchResult } from "@/hooks/useGlobalSearch";
 import { useState } from "react";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 export function Header() {
   const { user, userRole } = useAuth();
@@ -33,6 +34,7 @@ export function Header() {
   const isMobile = useIsMobile();
   const { searchTerm, setSearchTerm, results, isLoading, clearSearch } = useGlobalSearch();
   const [searchOpen, setSearchOpen] = useState(false);
+  const { restartTour } = useOnboarding();
 
   const handleSignOut = async () => {
     try {
@@ -96,7 +98,7 @@ export function Header() {
           {!isMobile && (
             <Popover open={searchOpen} onOpenChange={setSearchOpen}>
               <PopoverTrigger asChild>
-                <div className="relative ml-4">
+                <div className="relative ml-4" data-tour="header-search">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     placeholder="Search students, courses..."
@@ -230,7 +232,9 @@ export function Header() {
             </Popover>
           )}
           
-          <NotificationDropdown />
+          <div data-tour="header-notifications">
+            <NotificationDropdown />
+          </div>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -276,6 +280,10 @@ export function Header() {
               <DropdownMenuItem onClick={() => navigate('/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={restartTour}>
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Take a Tour
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>
