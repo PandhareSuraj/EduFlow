@@ -141,7 +141,7 @@ export default function StudentDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" data-tour="welcome-header">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Welcome, {studentData.name}</h1>
           <p className="text-muted-foreground">Student ID: {studentData.student_id}</p>
@@ -152,7 +152,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* Student Profile Card */}
-      <Card>
+      <Card data-tour="profile-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Avatar className="h-10 w-10">
@@ -192,7 +192,7 @@ export default function StudentDashboard() {
       </Card>
 
       {/* Academic Information */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6" data-tour="academic-info">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Current Year</CardTitle>
@@ -235,7 +235,7 @@ export default function StudentDashboard() {
       <StudentNotifications />
 
       {/* Push Notifications Settings */}
-      <Card>
+      <Card data-tour="notifications-section">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
@@ -280,7 +280,7 @@ export default function StudentDashboard() {
       </Card>
 
       {/* Fee Status */}
-      <Card>
+      <Card data-tour="fee-status">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
@@ -315,7 +315,7 @@ export default function StudentDashboard() {
       </Card>
 
       {/* Quick Actions */}
-      <Card>
+      <Card data-tour="quick-actions">
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
           <CardDescription>
