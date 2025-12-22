@@ -114,14 +114,19 @@ export function AddStudentDialog({
     return Math.max(finalAmount, 0);
   };
 
-  // Load courses from Supabase
+  // Load courses from Supabase - only when dialog is open
   useEffect(() => {
     const loadCourses = async () => {
+      if (!open || !college?.id) {
+        if (!open) setLoadingCourses(true); // Reset loading state when closed
+        return;
+      }
+      setLoadingCourses(true);
       try {
         const {
           data,
           error
-        } = await supabase.from('courses').select('id, name, code').eq('status', 'active').eq('college_id', college?.id).order('name');
+        } = await supabase.from('courses').select('id, name, code').eq('status', 'active').eq('college_id', college.id).order('name');
         if (error) {
           console.error('Error loading courses:', error);
           toast({
@@ -139,7 +144,7 @@ export function AddStudentDialog({
       }
     };
     loadCourses();
-  }, [toast]);
+  }, [toast, college?.id, open]);
 
   // Load fee structure when course or semester changes
   useEffect(() => {
