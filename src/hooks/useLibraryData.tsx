@@ -70,25 +70,17 @@ export function useLibraryData() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch books
+  // Fetch books - simple query without JOIN for reliability
   const { data: books, isLoading: booksLoading } = useQuery({
     queryKey: ['books'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('books')
-        .select(`
-          *,
-          book_categories (
-            name
-          )
-        `)
+        .select('*')
         .order('title');
       
       if (error) throw error;
-      return (data || []).map(book => ({
-        ...book,
-        category: (book as any).book_categories?.name || undefined
-      })) as Book[];
+      return data as Book[];
     }
   });
 
