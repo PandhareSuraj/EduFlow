@@ -134,78 +134,58 @@ export function useLibraryData() {
     }
   });
 
-  // Fetch library members with names using JOIN for better performance
+  // Fetch library members - simple query without JOINs for reliability
   const { data: libraryMembers, isLoading: membersLoading } = useQuery({
     queryKey: ['library_members'],
     queryFn: async () => {
-      // Single query with JOINs - much faster than N+1 queries!
-      const { data, error } = await supabase
+      const { data: baseMembers, error } = await supabase
         .from('library_members')
-        .select(`
-          *,
-          students!fk_library_members_student (
-            name,
-            email
-          ),
-          faculty!fk_library_members_faculty (
-            name,
-            email
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
       
-      // If JOIN isn't available yet in schema cache, fallback to safe N+1 approach
-      if (error) {
-        const { data: baseMembers, error: baseError } = await supabase
-          .from('library_members')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (baseError || !baseMembers) throw (baseError || error);
+      if (error) throw error;
+      if (!baseMembers || baseMembers.length === 0) return [] as LibraryMember[];
 
-        const membersWithNames = await Promise.all(
-          baseMembers.map(async (member) => {
-            let memberName = 'Unknown';
-            let memberEmail = '';
+      // Batch fetch student and faculty names for efficiency
+      const studentIds = baseMembers
+        .filter(m => m.member_type === 'student' && m.student_id)
+        .map(m => m.student_id);
+      const facultyIds = baseMembers
+        .filter(m => m.member_type === 'faculty' && m.faculty_id)
+        .map(m => m.faculty_id);
 
-            if (member.member_type === 'student' && member.student_id) {
-              const { data: student } = await supabase
-                .from('students')
-                .select('name, email')
-                .eq('id', member.student_id)
-                .single();
-              if (student) {
-                memberName = (student as any).name;
-                memberEmail = (student as any).email;
-              }
-            } else if (member.member_type === 'faculty' && member.faculty_id) {
-              const { data: faculty } = await supabase
-                .from('faculty')
-                .select('name, email')
-                .eq('id', member.faculty_id)
-                .single();
-              if (faculty) {
-                memberName = (faculty as any).name;
-                memberEmail = (faculty as any).email;
-              }
-            }
+      const [studentsResult, facultyResult] = await Promise.all([
+        studentIds.length > 0 
+          ? supabase.from('students').select('id, name, email').in('id', studentIds)
+          : Promise.resolve({ data: [], error: null }),
+        facultyIds.length > 0 
+          ? supabase.from('faculty').select('id, name, email').in('id', facultyIds)
+          : Promise.resolve({ data: [], error: null })
+      ]);
 
-            return { ...member, member_name: memberName, member_email: memberEmail } as LibraryMember;
-          })
-        );
+      const studentsMap = new Map((studentsResult.data || []).map((s: any) => [s.id, s]));
+      const facultyMap = new Map((facultyResult.data || []).map((f: any) => [f.id, f]));
 
-        return membersWithNames as LibraryMember[];
-      }
-      
-      // Transform the data to match the expected format
-      return (data || []).map(member => ({
-        ...member,
-        member_name: member.member_type === 'student' 
-          ? (member as any).students?.name || 'Unknown Student'
-          : (member as any).faculty?.name || 'Unknown Faculty',
-        member_email: member.member_type === 'student'
-          ? (member as any).students?.email || ''
-          : (member as any).faculty?.email || ''
-      })) as LibraryMember[];
+      return baseMembers.map(member => {
+        let memberName = 'Unknown';
+        let memberEmail = '';
+
+        if (member.member_type === 'student' && member.student_id) {
+          const student = studentsMap.get(member.student_id);
+          if (student) {
+            memberName = student.name;
+            memberEmail = student.email || '';
+          }
+        } else if (member.member_type === 'faculty' && member.faculty_id) {
+          const faculty = facultyMap.get(member.faculty_id);
+          if (faculty) {
+            memberName = faculty.name;
+            memberEmail = faculty.email || '';
+          }
+        }
+
+        return { ...member, member_name: memberName, member_email: memberEmail } as LibraryMember;
+      });
     }
   });
 
