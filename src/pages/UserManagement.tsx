@@ -10,15 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, Users, Edit, Trash2, RefreshCw, Eye } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-
-interface UserRoleData {
-  user_id: string;
-  role: string;
-  college_id: string | null;
-  created_at: string;
-}
+import { Plus, Search, Users, Trash2, RefreshCw, Key } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 interface User {
   id: string;
@@ -27,6 +20,7 @@ interface User {
   college_id: string | null;
   college_name: string | null;
   created_at: string;
+  last_sign_in: string | null;
 }
 
 interface College {
@@ -46,17 +40,21 @@ const ROLE_COLORS = {
   'student': 'bg-gradient-to-r from-violet-500 to-purple-500',
 };
 
+const ALL_ROLES = ['super_admin', 'admin', 'teacher', 'clerk', 'librarian', 'accountant', 'assistant', 'student'];
+
 export default function UserManagement() {
   const { userRole } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
   const [users, setUsers] = useState<User[]>([]);
   const [colleges, setColleges] = useState<College[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedCollege, setSelectedCollege] = useState<string>(searchParams.get('college') || 'all');
+  const [selectedRole, setSelectedRole] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     email: '',
@@ -64,6 +62,11 @@ export default function UserManagement() {
     role: '',
     college_id: ''
   });
+  const [passwordFormData, setPasswordFormData] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   useEffect(() => {
     if (userRole === 'super_admin') {
@@ -73,56 +76,19 @@ export default function UserManagement() {
 
   const fetchData = async () => {
     try {
-      // Fetch colleges
-      const { data: collegesData, error: collegesError } = await supabase
-        .from('colleges')
-        .select('id, name, code')
-        .order('name');
+      setLoading(true);
+      
+      // Use edge function to fetch users with emails
+      const { data, error } = await supabase.functions.invoke('list-all-users');
 
-      if (collegesError) throw collegesError;
-      setColleges(collegesData || []);
+      if (error) throw error;
 
-      // Fetch users with college information
-      const { data: usersData, error: usersError } = await supabase
-        .from('user_roles')
-        .select(`
-          user_id,
-          role,
-          college_id,
-          created_at
-        `)
-        .order('created_at', { ascending: false }) as { data: UserRoleData[] | null, error: any };
-
-      if (usersError) throw usersError;
-
-      // Get college names separately
-      const collegeMap = new Map(collegesData?.map(c => [c.id, c.name]) || []);
-
-      // Get user emails from auth metadata (might not work with admin client limitations)
-      let authUsers: any = null;
-      try {
-        const { data, error } = await supabase.auth.admin.listUsers();
-        if (!error) {
-          authUsers = data;
-        }
-      } catch (e) {
-        console.log('Auth admin access not available, using fallback');
+      if (data.success) {
+        setUsers(data.users || []);
+        setColleges(data.colleges || []);
+      } else {
+        throw new Error(data.error || 'Failed to fetch users');
       }
-
-      // Combine user data
-      const combinedUsers: User[] = (usersData || []).map((user: UserRoleData) => {
-        const authUser = authUsers?.users?.find((au: any) => au.id === user.user_id);
-        return {
-          id: user.user_id,
-          email: authUser?.email || 'N/A',
-          role: user.role,
-          college_id: user.college_id,
-          college_name: user.college_id ? collegeMap.get(user.college_id) || null : null,
-          created_at: user.created_at
-        };
-      });
-
-      setUsers(combinedUsers);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -174,7 +140,6 @@ export default function UserManagement() {
     }
 
     try {
-      // First delete from user_roles
       const { error: rolesError } = await supabase
         .from('user_roles')
         .delete()
@@ -198,13 +163,87 @@ export default function UserManagement() {
     }
   };
 
-  // Filter users based on selected college and search query
+  const openPasswordDialog = (user: User) => {
+    setSelectedUser(user);
+    setPasswordFormData({ newPassword: '', confirmPassword: '' });
+    setIsPasswordDialogOpen(true);
+  };
+
+  const generateRandomPassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setPasswordFormData({ newPassword: password, confirmPassword: password });
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedUser) return;
+
+    if (passwordFormData.newPassword !== passwordFormData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordFormData.newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsResettingPassword(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-user-password', {
+        body: {
+          userId: selectedUser.id,
+          newPassword: passwordFormData.newPassword
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: "Success",
+          description: `Password reset successfully for ${selectedUser.email}`,
+        });
+        setIsPasswordDialogOpen(false);
+        setSelectedUser(null);
+        setPasswordFormData({ newPassword: '', confirmPassword: '' });
+      } else {
+        throw new Error(data.error || 'Failed to reset password');
+      }
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reset password",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
+  // Filter users based on selected college, role, and search query
   const filteredUsers = users.filter(user => {
     const matchesCollege = selectedCollege === 'all' || user.college_id === selectedCollege;
+    const matchesRole = selectedRole === 'all' || user.role === selectedRole;
     const matchesSearch = user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          user.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (user.college_name && user.college_name.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCollege && matchesSearch;
+    return matchesCollege && matchesRole && matchesSearch;
   });
 
   const getUserStats = () => {
@@ -362,12 +401,12 @@ export default function UserManagement() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 items-center">
-        <div className="flex-1">
+      <div className="flex gap-4 items-center flex-wrap">
+        <div className="flex-1 min-w-[200px]">
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search users..."
+              placeholder="Search by email, role, or college..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8"
@@ -375,9 +414,23 @@ export default function UserManagement() {
           </div>
         </div>
         
+        <Select value={selectedRole} onValueChange={setSelectedRole}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Roles</SelectItem>
+            {ALL_ROLES.map((role) => (
+              <SelectItem key={role} value={role}>
+                <span className="capitalize">{role.replace('_', ' ')}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <Select value={selectedCollege} onValueChange={setSelectedCollege}>
           <SelectTrigger className="w-[200px]">
-            <SelectValue />
+            <SelectValue placeholder="Filter by college" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Colleges</SelectItem>
@@ -417,7 +470,7 @@ export default function UserManagement() {
                     <Badge 
                       className={`text-white ${ROLE_COLORS[user.role as keyof typeof ROLE_COLORS] || 'bg-gray-500'}`}
                     >
-                      {user.role}
+                      {user.role.replace('_', ' ')}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -431,7 +484,16 @@ export default function UserManagement() {
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => openPasswordDialog(user)}
+                        title="Change Password"
+                      >
+                        <Key className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => handleDeleteUser(user.id, user.email)}
+                        title="Delete User"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -444,7 +506,7 @@ export default function UserManagement() {
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8">
                     <div className="text-muted-foreground">
-                      {searchQuery || selectedCollege !== 'all' 
+                      {searchQuery || selectedCollege !== 'all' || selectedRole !== 'all'
                         ? 'No users found matching your criteria' 
                         : 'No users found'}
                     </div>
@@ -455,6 +517,71 @@ export default function UserManagement() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Password Reset Dialog */}
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              Reset password for user: <span className="font-semibold">{selectedUser?.email}</span>
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleResetPassword}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={generateRandomPassword}
+                  >
+                    Generate
+                  </Button>
+                </div>
+                <Input
+                  id="newPassword"
+                  type="text"
+                  value={passwordFormData.newPassword}
+                  onChange={(e) => setPasswordFormData({ ...passwordFormData, newPassword: e.target.value })}
+                  placeholder="Enter new password"
+                  required
+                  minLength={6}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="text"
+                  value={passwordFormData.confirmPassword}
+                  onChange={(e) => setPasswordFormData({ ...passwordFormData, confirmPassword: e.target.value })}
+                  placeholder="Confirm new password"
+                  required
+                  minLength={6}
+                />
+              </div>
+              {passwordFormData.newPassword && passwordFormData.confirmPassword && 
+               passwordFormData.newPassword !== passwordFormData.confirmPassword && (
+                <p className="text-sm text-destructive">Passwords do not match</p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isResettingPassword || passwordFormData.newPassword !== passwordFormData.confirmPassword}
+              >
+                {isResettingPassword ? 'Resetting...' : 'Reset Password'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -38,3 +38,9 @@ verify_jwt = false
 
 [functions.personal-google-upload]
 verify_jwt = true
+
+[functions.list-all-users]
+verify_jwt = true
+
+[functions.reset-user-password]
+verify_jwt = true
