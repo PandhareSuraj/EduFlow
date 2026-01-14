@@ -1,4 +1,4 @@
-import { Bell, Check, ExternalLink } from "lucide-react";
+import { Bell, Check, ExternalLink, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 
 export function NotificationDropdown() {
-  const { notifications, loading, unreadCount, markAsRead, markAllAsRead } = useDashboardNotifications();
+  const { notifications, loading, unreadCount, markAsRead, markAllAsRead, dismissNotification, dismissAllNotifications } = useDashboardNotifications();
   const navigate = useNavigate();
 
   const getNotificationIcon = (type: string) => {
@@ -39,6 +39,11 @@ export function NotificationDropdown() {
     if (notification.action_url) {
       navigate(notification.action_url);
     }
+  };
+
+  const handleDismiss = (e: React.MouseEvent, notificationId: string) => {
+    e.stopPropagation();
+    dismissNotification(notificationId);
   };
 
   if (loading) {
@@ -68,17 +73,30 @@ export function NotificationDropdown() {
       <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Notifications</span>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={markAllAsRead}
-              className="h-auto p-1 text-xs"
-            >
-              <Check className="h-3 w-3 mr-1" />
-              Mark all read
-            </Button>
-          )}
+          <div className="flex gap-1">
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={markAllAsRead}
+                className="h-auto p-1 text-xs"
+              >
+                <Check className="h-3 w-3 mr-1" />
+                Mark all read
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={dismissAllNotifications}
+                className="h-auto p-1 text-xs text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Clear all
+              </Button>
+            )}
+          </div>
         </DropdownMenuLabel>
         
         <DropdownMenuSeparator />
@@ -117,9 +135,19 @@ export function NotificationDropdown() {
                       {notification.message}
                     </div>
                   </div>
-                  {notification.action_url && (
-                    <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                  )}
+                  <div className="flex items-center gap-1">
+                    {notification.action_url && (
+                      <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => handleDismiss(e, notification.id)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}

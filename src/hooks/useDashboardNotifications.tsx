@@ -129,6 +129,41 @@ export function useDashboardNotifications() {
     }
   };
 
+  const dismissNotification = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setNotifications(prev => 
+        prev.filter(n => n.id !== notificationId)
+      );
+    } catch (error) {
+      console.error('Error dismissing notification:', error);
+    }
+  };
+
+  const dismissAllNotifications = async () => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setNotifications([]);
+    } catch (error) {
+      console.error('Error dismissing all notifications:', error);
+    }
+  };
+
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return { 
@@ -138,6 +173,8 @@ export function useDashboardNotifications() {
     refetch: fetchNotifications, 
     markAsRead,
     markAllAsRead,
+    dismissNotification,
+    dismissAllNotifications,
     generateNotifications
   };
 }

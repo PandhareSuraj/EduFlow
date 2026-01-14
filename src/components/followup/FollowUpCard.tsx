@@ -1,4 +1,4 @@
-import { Phone, MessageCircle, Calendar, AlertCircle, IndianRupee } from 'lucide-react';
+import { Phone, MessageCircle, Calendar, AlertCircle, IndianRupee, X } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,9 +10,10 @@ interface FollowUpCardProps {
   onUpdate: (followUp: UnifiedFollowUp) => void;
   onCall: (phone: string) => void;
   onWhatsApp: (phone: string, name: string) => void;
+  onDiscard?: (followUp: UnifiedFollowUp) => void;
 }
 
-export const FollowUpCard = ({ followUp, onUpdate, onCall, onWhatsApp }: FollowUpCardProps) => {
+export const FollowUpCard = ({ followUp, onUpdate, onCall, onWhatsApp, onDiscard }: FollowUpCardProps) => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'urgent': return 'destructive';
@@ -140,6 +141,17 @@ export const FollowUpCard = ({ followUp, onUpdate, onCall, onWhatsApp }: FollowU
         >
           Update
         </Button>
+        {onDiscard && followUp.status !== 'cancelled' && followUp.status !== 'completed' && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => onDiscard(followUp)}
+            title="Discard follow-up"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </Card>
   );
