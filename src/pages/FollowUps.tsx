@@ -6,12 +6,24 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFollowUps } from '@/hooks/useFollowUps';
+import { useFollowUpActions } from '@/hooks/useFollowUpActions';
 import { FollowUpCard } from '@/components/followup/FollowUpCard';
 import { UnifiedFollowUpDialog } from '@/components/followup/UnifiedFollowUpDialog';
 import { CreateFollowUpDialog } from '@/components/followup/CreateFollowUpDialog';
+import { DiscardFollowUpDialog } from '@/components/followup/DiscardFollowUpDialog';
 import { UnifiedFollowUp } from '@/types/followup';
-import { Plus, Search, TrendingUp, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Plus, Search, TrendingUp, Clock, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const FollowUps = () => {
   const [statusFilter, setStatusFilter] = useState('all');
@@ -19,10 +31,14 @@ const FollowUps = () => {
   const [selectedFollowUp, setSelectedFollowUp] = useState<UnifiedFollowUp | null>(null);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+  const [bulkDiscardDialogOpen, setBulkDiscardDialogOpen] = useState(false);
+  const [overdueToDiscard, setOverdueToDiscard] = useState<UnifiedFollowUp[]>([]);
 
   const { followUps, loading, stats, groups, refetch } = useFollowUps(
     statusFilter === 'all' ? undefined : statusFilter
   );
+  const { discardFollowUp, discardMultipleFollowUps, updating } = useFollowUpActions();
 
   const handleCall = (phone: string) => {
     window.location.href = `tel:${phone}`;
@@ -37,6 +53,35 @@ const FollowUps = () => {
   const handleUpdate = (followUp: UnifiedFollowUp) => {
     setSelectedFollowUp(followUp);
     setUpdateDialogOpen(true);
+  };
+
+  const handleDiscard = (followUp: UnifiedFollowUp) => {
+    setSelectedFollowUp(followUp);
+    setDiscardDialogOpen(true);
+  };
+
+  const confirmDiscard = async () => {
+    if (!selectedFollowUp) return;
+    const success = await discardFollowUp(selectedFollowUp);
+    if (success) {
+      setDiscardDialogOpen(false);
+      setSelectedFollowUp(null);
+      refetch();
+    }
+  };
+
+  const handleBulkDiscard = (overdueItems: UnifiedFollowUp[]) => {
+    setOverdueToDiscard(overdueItems);
+    setBulkDiscardDialogOpen(true);
+  };
+
+  const confirmBulkDiscard = async () => {
+    const success = await discardMultipleFollowUps(overdueToDiscard);
+    if (success) {
+      setBulkDiscardDialogOpen(false);
+      setOverdueToDiscard([]);
+      refetch();
+    }
   };
 
   const filteredFollowUps = followUps.filter((f) =>
@@ -160,7 +205,21 @@ const FollowUps = () => {
             </TabsList>
 
             {groups.map((group) => (
-              <TabsContent key={group.label} value={group.label} className="mt-3">
+              <TabsContent key={group.label} value={group.label} className="mt-3 space-y-3">
+                {/* Bulk discard button for Overdue tab */}
+                {group.label === 'Overdue' && group.count > 0 && (
+                  <div className="flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleBulkDiscard(group.items)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Discard All Overdue ({group.count})
+                    </Button>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {group.items
                     .filter((f) =>
@@ -175,6 +234,7 @@ const FollowUps = () => {
                         onUpdate={handleUpdate}
                         onCall={handleCall}
                         onWhatsApp={handleWhatsApp}
+                        onDiscard={handleDiscard}
                       />
                     ))}
                 </div>
@@ -203,6 +263,37 @@ const FollowUps = () => {
           setCreateDialogOpen(false);
         }}
       />
+
+      <DiscardFollowUpDialog
+        open={discardDialogOpen}
+        onOpenChange={setDiscardDialogOpen}
+        followUp={selectedFollowUp}
+        onConfirm={confirmDiscard}
+        loading={updating}
+      />
+
+      {/* Bulk Discard Dialog */}
+      <AlertDialog open={bulkDiscardDialogOpen} onOpenChange={setBulkDiscardDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard All Overdue Follow-ups</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to discard {overdueToDiscard.length} overdue follow-ups? 
+              This will mark all of them as cancelled.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updating}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmBulkDiscard}
+              disabled={updating}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {updating ? 'Discarding...' : `Discard ${overdueToDiscard.length} Follow-ups`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };

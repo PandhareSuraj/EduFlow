@@ -165,10 +165,129 @@ export const useFollowUpActions = () => {
     }
   };
 
+  const discardFollowUp = async (followUp: UnifiedFollowUp) => {
+    if (!currentCollege) return false;
+
+    try {
+      setUpdating(true);
+
+      let error: any = null;
+
+      if (followUp.type === 'enquiry') {
+        const { error: err } = await supabase
+          .from('enquiries')
+          .update({
+            status: 'not_interested',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', followUp.id);
+        error = err;
+      } else if (followUp.type === 'fee_payment') {
+        const { error: err } = await supabase
+          .from('student_fees')
+          .update({
+            follow_up_status: 'cancelled',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', followUp.id);
+        error = err;
+      } else if (followUp.type === 'custom') {
+        const { error: err } = await supabase
+          .from('custom_followups')
+          .update({
+            status: 'cancelled',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', followUp.id);
+        error = err;
+      }
+
+      if (error) throw error;
+
+      // Log to history
+      await supabase.from('follow_up_history').insert([{
+        followup_type: followUp.type,
+        reference_id: followUp.id,
+        student_id: followUp.studentId,
+        contact_name: followUp.contactName,
+        contact_phone: followUp.contactPhone,
+        contact_email: followUp.contactEmail,
+        previous_status: followUp.status,
+        new_status: followUp.type === 'enquiry' ? 'not_interested' : 'cancelled',
+        action_taken: 'discarded',
+        college_id: currentCollege.id,
+      }]);
+
+      toast.success('Follow-up discarded successfully');
+      return true;
+    } catch (error: any) {
+      console.error('Error discarding follow-up:', error);
+      toast.error(error.message || 'Failed to discard follow-up');
+      return false;
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const discardMultipleFollowUps = async (followUps: UnifiedFollowUp[]) => {
+    if (!currentCollege) return false;
+
+    try {
+      setUpdating(true);
+
+      // Group by type for batch operations
+      const enquiryIds = followUps.filter(f => f.type === 'enquiry').map(f => f.id);
+      const feeIds = followUps.filter(f => f.type === 'fee_payment').map(f => f.id);
+      const customIds = followUps.filter(f => f.type === 'custom').map(f => f.id);
+
+      const promises = [];
+
+      if (enquiryIds.length > 0) {
+        promises.push(
+          supabase
+            .from('enquiries')
+            .update({ status: 'not_interested', updated_at: new Date().toISOString() })
+            .in('id', enquiryIds)
+        );
+      }
+
+      if (feeIds.length > 0) {
+        promises.push(
+          supabase
+            .from('student_fees')
+            .update({ follow_up_status: 'cancelled', updated_at: new Date().toISOString() })
+            .in('id', feeIds)
+        );
+      }
+
+      if (customIds.length > 0) {
+        promises.push(
+          supabase
+            .from('custom_followups')
+            .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+            .in('id', customIds)
+        );
+      }
+
+      await Promise.all(promises);
+
+      toast.success(`${followUps.length} follow-ups discarded successfully`);
+      return true;
+    } catch (error: any) {
+      console.error('Error discarding follow-ups:', error);
+      toast.error(error.message || 'Failed to discard follow-ups');
+      return false;
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return {
     updating,
     updateFollowUp,
     createCustomFollowUp,
     deleteCustomFollowUp,
+    discardFollowUp,
+    discardMultipleFollowUps,
   };
 };
