@@ -54,9 +54,11 @@ export function AppSidebar() {
       return [
         { name: "CRM Dashboard", href: "/dashboard", icon: BarChart3 },
         { name: "College Portfolio", href: "/colleges", icon: Building2 },
+        { name: "AMC Plans", href: "/amc-plans", icon: CreditCard },
+        { name: "Subscriptions", href: "/subscriptions", icon: IndianRupee },
+        { name: "AMC Revenue", href: "/amc-revenue", icon: IndianRupee },
         { name: "Performance Monitor", href: "/college-performance", icon: TrendingUp },
         { name: "Multi-College Users", href: "/multi-college-users", icon: Users },
-        { name: "AMC Revenue", href: "/amc-revenue", icon: IndianRupee },
         { name: "System Analytics", href: "/system-analytics", icon: Activity },
         { name: "System Health", href: "/system-health", icon: Shield },
         { name: "Reports", href: "/reports", icon: FileText },
