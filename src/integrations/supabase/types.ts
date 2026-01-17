@@ -174,6 +174,66 @@ export type Database = {
         }
         Relationships: []
       }
+      amc_plans: {
+        Row: {
+          base_fee: number
+          billing_cycle: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          discount_percentage: number | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          max_students: number | null
+          max_users: number | null
+          name: string
+          per_student_fee: number
+          per_user_fee: number
+          sort_order: number | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          base_fee?: number
+          billing_cycle?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          discount_percentage?: number | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_students?: number | null
+          max_users?: number | null
+          name: string
+          per_student_fee?: number
+          per_user_fee?: number
+          sort_order?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          base_fee?: number
+          billing_cycle?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          discount_percentage?: number | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_students?: number | null
+          max_users?: number | null
+          name?: string
+          per_student_fee?: number
+          per_user_fee?: number
+          sort_order?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       attendance_records: {
         Row: {
           college_id: string | null
@@ -653,6 +713,84 @@ export type Database = {
           },
         ]
       }
+      college_subscriptions: {
+        Row: {
+          auto_renew: boolean | null
+          college_id: string
+          created_at: string | null
+          created_by: string | null
+          custom_base_fee: number | null
+          custom_per_student: number | null
+          custom_per_user: number | null
+          discount_percentage: number | null
+          discount_reason: string | null
+          end_date: string
+          id: string
+          notes: string | null
+          plan_id: string | null
+          renewal_reminder_sent: boolean | null
+          start_date: string
+          status: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          college_id: string
+          created_at?: string | null
+          created_by?: string | null
+          custom_base_fee?: number | null
+          custom_per_student?: number | null
+          custom_per_user?: number | null
+          discount_percentage?: number | null
+          discount_reason?: string | null
+          end_date: string
+          id?: string
+          notes?: string | null
+          plan_id?: string | null
+          renewal_reminder_sent?: boolean | null
+          start_date: string
+          status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          auto_renew?: boolean | null
+          college_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          custom_base_fee?: number | null
+          custom_per_student?: number | null
+          custom_per_user?: number | null
+          discount_percentage?: number | null
+          discount_reason?: string | null
+          end_date?: string
+          id?: string
+          notes?: string | null
+          plan_id?: string | null
+          renewal_reminder_sent?: boolean | null
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "college_subscriptions_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: true
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "college_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "amc_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       colleges: {
         Row: {
           address: string | null
@@ -664,10 +802,13 @@ export type Database = {
           id_card_template_id: string | null
           logo_url: string | null
           name: string
+          onboarding_completed: boolean | null
           phone: string | null
           signature_title: string | null
           signature_url: string | null
           status: string
+          subscription_status: string | null
+          trial_ends_at: string | null
           updated_at: string
           website: string | null
         }
@@ -681,10 +822,13 @@ export type Database = {
           id_card_template_id?: string | null
           logo_url?: string | null
           name: string
+          onboarding_completed?: boolean | null
           phone?: string | null
           signature_title?: string | null
           signature_url?: string | null
           status?: string
+          subscription_status?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           website?: string | null
         }
@@ -698,10 +842,13 @@ export type Database = {
           id_card_template_id?: string | null
           logo_url?: string | null
           name?: string
+          onboarding_completed?: boolean | null
           phone?: string | null
           signature_title?: string | null
           signature_url?: string | null
           status?: string
+          subscription_status?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           website?: string | null
         }
@@ -4500,6 +4647,83 @@ export type Database = {
             columns: ["college_id"]
             isOneToOne: false
             referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_renewals: {
+        Row: {
+          amount_paid: number | null
+          college_id: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          new_end_date: string | null
+          new_plan_id: string | null
+          notes: string | null
+          payment_reference: string | null
+          previous_end_date: string | null
+          previous_plan_id: string | null
+          renewal_type: string | null
+          subscription_id: string | null
+        }
+        Insert: {
+          amount_paid?: number | null
+          college_id: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          new_end_date?: string | null
+          new_plan_id?: string | null
+          notes?: string | null
+          payment_reference?: string | null
+          previous_end_date?: string | null
+          previous_plan_id?: string | null
+          renewal_type?: string | null
+          subscription_id?: string | null
+        }
+        Update: {
+          amount_paid?: number | null
+          college_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          new_end_date?: string | null
+          new_plan_id?: string | null
+          notes?: string | null
+          payment_reference?: string | null
+          previous_end_date?: string | null
+          previous_plan_id?: string | null
+          renewal_type?: string | null
+          subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_renewals_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_renewals_new_plan_id_fkey"
+            columns: ["new_plan_id"]
+            isOneToOne: false
+            referencedRelation: "amc_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_renewals_previous_plan_id_fkey"
+            columns: ["previous_plan_id"]
+            isOneToOne: false
+            referencedRelation: "amc_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_renewals_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "college_subscriptions"
             referencedColumns: ["id"]
           },
         ]

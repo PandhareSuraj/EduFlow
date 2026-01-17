@@ -28,6 +28,8 @@ import SystemHealthMonitoring from "./pages/SystemHealthMonitoring";
 import AuditTrail from "./pages/AuditTrail";
 import UserManagement from "./pages/UserManagement";
 import AMCRevenue from "./pages/AMCRevenue";
+import AMCPlans from "./pages/AMCPlans";
+import Subscriptions from "./pages/Subscriptions";
 import SystemAnalytics from "./pages/SystemAnalytics";
 import Auth from "./pages/Auth";
 import Index from "./pages/Index";
@@ -180,6 +182,20 @@ const App = () => (
                 <ProtectedRoute requiredRole="super_admin">
                   <Layout>
                     <AMCRevenue />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/amc-plans" element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <Layout>
+                    <AMCPlans />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/subscriptions" element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <Layout>
+                    <Subscriptions />
                   </Layout>
                 </ProtectedRoute>
               } />
