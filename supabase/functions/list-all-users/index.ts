@@ -57,15 +57,33 @@ serve(async (req) => {
 
     console.log('Fetching all users with auth admin API...');
 
-    // Fetch all auth users using admin API
-    const { data: authData, error: authListError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (authListError) {
-      console.error('Error listing auth users:', authListError);
-      throw new Error(authListError.message);
+    // Fetch all auth users using admin API with pagination
+    let allAuthUsers: any[] = [];
+    let page = 1;
+    const perPage = 1000; // Max allowed per page
+
+    while (true) {
+      const { data: authData, error: authListError } = await supabaseAdmin.auth.admin.listUsers({
+        page: page,
+        perPage: perPage
+      });
+      
+      if (authListError) {
+        console.error('Error listing auth users:', authListError);
+        throw new Error(authListError.message);
+      }
+      
+      allAuthUsers = [...allAuthUsers, ...authData.users];
+      
+      // If we got fewer than perPage, we've reached the end
+      if (authData.users.length < perPage) {
+        break;
+      }
+      
+      page++;
     }
 
-    console.log(`Found ${authData.users.length} auth users`);
+    console.log(`Found ${allAuthUsers.length} total auth users`);
 
     // Fetch user roles
     const { data: rolesData, error: rolesError } = await supabaseAdmin
@@ -89,7 +107,7 @@ serve(async (req) => {
 
     // Create lookup maps
     const collegeMap = new Map(collegesData?.map(c => [c.id, c.name]) || []);
-    const authUserMap = new Map(authData.users.map(u => [u.id, u]));
+    const authUserMap = new Map(allAuthUsers.map(u => [u.id, u]));
 
     // Combine data
     const users = (rolesData || []).map(role => {
