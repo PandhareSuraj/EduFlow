@@ -808,6 +808,7 @@ export type Database = {
           signature_url: string | null
           status: string
           subscription_status: string | null
+          theme_config: Json | null
           trial_ends_at: string | null
           updated_at: string
           website: string | null
@@ -828,6 +829,7 @@ export type Database = {
           signature_url?: string | null
           status?: string
           subscription_status?: string | null
+          theme_config?: Json | null
           trial_ends_at?: string | null
           updated_at?: string
           website?: string | null
@@ -848,6 +850,7 @@ export type Database = {
           signature_url?: string | null
           status?: string
           subscription_status?: string | null
+          theme_config?: Json | null
           trial_ends_at?: string | null
           updated_at?: string
           website?: string | null
@@ -4839,6 +4842,54 @@ export type Database = {
           id?: string
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      theme_presets: {
+        Row: {
+          accent_color: string
+          code: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          name: string
+          primary_color: string
+          secondary_color: string
+          sidebar_background: string
+          sidebar_text: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          accent_color: string
+          code: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name: string
+          primary_color: string
+          secondary_color: string
+          sidebar_background: string
+          sidebar_text: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          accent_color?: string
+          code?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          primary_color?: string
+          secondary_color?: string
+          sidebar_background?: string
+          sidebar_text?: string
+          sort_order?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }

@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Settings as SettingsIcon, User, Bell, Shield, Database as DatabaseIcon, Mail, Globe, Users, Edit, Trash2, Upload, Loader2 } from "lucide-react";
+import { Settings as SettingsIcon, User, Bell, Shield, Database as DatabaseIcon, Mail, Globe, Users, Edit, Trash2, Upload, Loader2, Palette } from "lucide-react";
 import { DatabaseManagementDialog } from '@/components/database/DatabaseManagementDialog';
 import { RoleGuard } from '@/components/permissions/RoleGuard';
 import { DepartmentManagement } from '@/components/forms/DepartmentManagement';
@@ -18,6 +18,7 @@ import { SMSSettings } from '@/components/settings/SMSSettings';
 import { AMCSettings } from '@/components/settings/AMCSettings';
 import { PersonalGoogleDriveSettings } from '@/components/settings/PersonalGoogleDriveSettings';
 import { VideoManagement } from '@/components/videos/VideoManagement';
+import { BrandingThemeSettings } from '@/components/settings/BrandingThemeSettings';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { useCollegeSettings } from '@/hooks/useCollegeSettings';
@@ -289,8 +290,12 @@ export default function Settings() {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-12">
+        <TabsList className="flex flex-wrap gap-1 h-auto p-1">
           <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="branding">
+            <Palette className="h-4 w-4 mr-1" />
+            Branding
+          </TabsTrigger>
           <TabsTrigger value="id-cards">ID Cards</TabsTrigger>
           {userRole === 'super_admin' && <TabsTrigger value="sms">SMS</TabsTrigger>}
           {userRole === 'super_admin' && <TabsTrigger value="amc">AMC</TabsTrigger>}
@@ -304,6 +309,11 @@ export default function Settings() {
           {userRole === 'super_admin' && <TabsTrigger value="videos">Tutorial Videos</TabsTrigger>}
           <TabsTrigger value="database">Database</TabsTrigger>
         </TabsList>
+
+        {/* Branding & Theme Settings */}
+        <TabsContent value="branding">
+          <BrandingThemeSettings />
+        </TabsContent>
 
         {/* General Settings */}
         <TabsContent value="general" className="space-y-6">

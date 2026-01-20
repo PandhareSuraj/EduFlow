@@ -3,6 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
+export interface ThemeConfig {
+  preset: string;
+  primary_color: string;
+  secondary_color: string;
+  accent_color: string;
+  sidebar_background: string;
+  sidebar_text: string;
+}
+
 interface CollegeInfo {
   id: string;
   name: string;
@@ -15,6 +24,8 @@ interface CollegeInfo {
   signature_url?: string;
   signature_title?: string;
   id_card_template_id?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  theme_config?: any;
 }
 
 interface CollegeContextType {
