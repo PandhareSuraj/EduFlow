@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CollegeProvider } from "@/contexts/CollegeContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Layout } from "@/components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
@@ -52,8 +53,9 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <CollegeProvider>
-          <Toaster />
-          <Sonner />
+          <ThemeProvider>
+            <Toaster />
+            <Sonner />
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
@@ -312,6 +314,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          </ThemeProvider>
         </CollegeProvider>
       </AuthProvider>
     </TooltipProvider>
