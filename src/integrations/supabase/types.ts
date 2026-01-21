@@ -5282,6 +5282,7 @@ export type Database = {
         | "assistant"
         | "super_admin"
         | "student"
+        | "auditor"
       fee_structure_status: "draft" | "published" | "archived"
       promotion_status:
         | "preview"
@@ -5425,6 +5426,7 @@ export const Constants = {
         "assistant",
         "super_admin",
         "student",
+        "auditor",
       ],
       fee_structure_status: ["draft", "published", "archived"],
       promotion_status: [
