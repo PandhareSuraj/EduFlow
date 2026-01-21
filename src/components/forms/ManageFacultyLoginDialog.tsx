@@ -63,7 +63,7 @@ export function ManageFacultyLoginDialog({ faculty, trigger, onSuccess }: Manage
         .single();
 
       if (error) throw error;
-      setUserRole(data.role);
+      setUserRole(data.role as typeof userRole);
     } catch (error: any) {
       console.error('Error fetching user role:', error);
     }
@@ -76,7 +76,7 @@ export function ManageFacultyLoginDialog({ faculty, trigger, onSuccess }: Manage
     try {
       const { error } = await supabase
         .from('user_roles')
-        .update({ role: userRole })
+        .update({ role: userRole as any })
         .eq('user_id', faculty.user_id);
 
       if (error) throw error;
