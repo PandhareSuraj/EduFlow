@@ -188,6 +188,8 @@ export function AddFacultyDialog({ trigger, onSuccess }: AddFacultyDialogProps) 
                   <SelectItem value="Associate Professor">Associate Professor</SelectItem>
                   <SelectItem value="Assistant Professor">Assistant Professor</SelectItem>
                   <SelectItem value="Lecturer">Lecturer</SelectItem>
+                  <SelectItem value="Accountant">Accountant</SelectItem>
+                  <SelectItem value="Auditor">Auditor</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -485,7 +485,7 @@ export default function Fees() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <PermissionWrapper permission="FEES_COLLECT">
+                        <PermissionWrapper permission="FEES_EDIT">
                           <EditStudentFeeDialog
                             feeRecord={record}
                             onSuccess={fetchFeeRecords}

@@ -32,6 +32,7 @@ import { EnhancedQuickActions } from "@/components/dashboard/EnhancedQuickAction
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
 import { FacultyDashboard } from "@/components/dashboard/FacultyDashboard";
 import { AccountantDashboard } from "@/components/dashboard/AccountantDashboard";
+import { AuditorDashboard } from "@/components/dashboard/AuditorDashboard";
 import { LibrarianDashboard } from "@/components/dashboard/LibrarianDashboard";
 import { VideoTutorialButton } from "@/components/videos/VideoTutorialButton";
 import StudentDashboard from './StudentDashboard';
@@ -336,8 +337,9 @@ export default function Dashboard() {
           {userRole === 'admin' && <AdminDashboard />}
           {userRole === 'teacher' && <FacultyDashboard />}
           {userRole === 'accountant' && <AccountantDashboard />}
+          {userRole === 'auditor' && <AuditorDashboard />}
           {userRole === 'librarian' && <LibrarianDashboard />}
-          {!['admin', 'teacher', 'accountant', 'librarian'].includes(userRole) && <RecentActivity />}
+          {!['admin', 'teacher', 'accountant', 'auditor', 'librarian'].includes(userRole) && <RecentActivity />}
         </div>
       </div>
 

@@ -145,6 +145,13 @@ export function AppSidebar() {
         { name: "Follow-ups", href: "/followups", icon: PhoneCall },
         { name: "Reports", href: "/reports", icon: BarChart3 }
       ];
+    } else if (userRole === 'auditor') {
+      return [
+        { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
+        { name: "Students", href: "/students", icon: Users },
+        { name: "Fees", href: "/fees", icon: CreditCard },
+        { name: "Reports", href: "/reports", icon: BarChart3 }
+      ];
     } else {
       return [
         { name: "Dashboard", href: "/dashboard", icon: BarChart3 }
@@ -171,6 +178,7 @@ export function AppSidebar() {
       case 'clerk': return 'Clerk Portal';
       case 'librarian': return 'Library Portal';
       case 'accountant': return 'Accounts Portal';
+      case 'auditor': return 'Audit Portal';
       default: return collegeName || 'College Management';
     }
   };
@@ -184,6 +192,7 @@ export function AppSidebar() {
       case 'clerk': return 'Administrative Tasks';
       case 'librarian': return 'Library Management';
       case 'accountant': return 'Financial Management';
+      case 'auditor': return 'Financial Review';
       default: return 'ERP System';
     }
   };

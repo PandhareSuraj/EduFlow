@@ -42,7 +42,7 @@ interface ManageFacultyLoginDialogProps {
 export function ManageFacultyLoginDialog({ faculty, trigger, onSuccess }: ManageFacultyLoginDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [userRole, setUserRole] = useState<"admin" | "teacher" | "clerk" | "librarian" | "accountant" | "assistant" | "super_admin" | "student">("teacher");
+  const [userRole, setUserRole] = useState<"admin" | "teacher" | "clerk" | "librarian" | "accountant" | "auditor" | "assistant" | "super_admin" | "student">("teacher");
   const [newPassword, setNewPassword] = useState("");
   const { toast } = useToast();
 
@@ -228,7 +228,7 @@ export function ManageFacultyLoginDialog({ faculty, trigger, onSuccess }: Manage
           <div className="space-y-4">
             <div>
               <Label htmlFor="role">Current Role</Label>
-              <Select value={userRole} onValueChange={(value) => setUserRole(value as "admin" | "teacher" | "clerk" | "librarian" | "accountant" | "assistant" | "super_admin" | "student")}>
+              <Select value={userRole} onValueChange={(value) => setUserRole(value as "admin" | "teacher" | "clerk" | "librarian" | "accountant" | "auditor" | "assistant" | "super_admin" | "student")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
@@ -237,6 +237,7 @@ export function ManageFacultyLoginDialog({ faculty, trigger, onSuccess }: Manage
                   <SelectItem value="clerk">Clerk</SelectItem>
                   <SelectItem value="librarian">Librarian</SelectItem>
                   <SelectItem value="accountant">Accountant</SelectItem>
+                  <SelectItem value="auditor">Auditor (View Only)</SelectItem>
                   <SelectItem value="assistant">Assistant</SelectItem>
                 </SelectContent>
               </Select>
