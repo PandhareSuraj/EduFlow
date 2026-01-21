@@ -187,6 +187,7 @@ export function CreateFacultyLoginDialog({ faculty, trigger, onSuccess }: Create
                   <SelectItem value="clerk">Clerk</SelectItem>
                   <SelectItem value="librarian">Librarian</SelectItem>
                   <SelectItem value="accountant">Accountant</SelectItem>
+                  <SelectItem value="auditor">Auditor (View Only)</SelectItem>
                   <SelectItem value="assistant">Assistant</SelectItem>
                 </SelectContent>
               </Select>

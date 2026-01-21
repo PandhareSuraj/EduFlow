@@ -51,10 +51,11 @@ export function RoleGuard({
 // Permission system for different features
 export const PERMISSIONS = {
   // Student Management
-  STUDENTS_VIEW: ['admin', 'teacher', 'clerk', 'assistant'],
+  STUDENTS_VIEW: ['admin', 'teacher', 'clerk', 'assistant', 'accountant', 'auditor'],
   STUDENTS_CREATE: ['admin', 'clerk'],
   STUDENTS_EDIT: ['admin', 'clerk'],
   STUDENTS_DELETE: ['admin'],
+  STUDENTS_FINANCIAL_VIEW: ['admin', 'accountant', 'auditor'],
 
   // Course Management  
   COURSES_VIEW: ['admin', 'teacher', 'clerk'],
@@ -63,9 +64,15 @@ export const PERMISSIONS = {
   COURSES_DELETE: ['admin'],
 
   // Fee Management
-  FEES_VIEW: ['admin', 'accountant', 'clerk'],
+  FEES_VIEW: ['admin', 'accountant', 'clerk', 'auditor'],
   FEES_COLLECT: ['admin', 'accountant', 'clerk'],
   FEES_STRUCTURE: ['admin', 'accountant'],
+  FEES_EDIT: ['admin', 'accountant'],
+
+  // Payment Management
+  PAYMENTS_VIEW: ['admin', 'accountant', 'auditor'],
+  PAYMENTS_CREATE: ['admin', 'accountant', 'clerk'],
+  PAYMENTS_DELETE: ['admin', 'accountant'],
 
   // Attendance Management
   ATTENDANCE_VIEW: ['admin', 'teacher', 'clerk'],
@@ -87,8 +94,8 @@ export const PERMISSIONS = {
   RESULTS_EDIT: ['admin', 'teacher'],
 
   // Reports
-  REPORTS_VIEW: ['admin', 'teacher', 'accountant'],
-  REPORTS_FINANCIAL: ['admin', 'accountant'],
+  REPORTS_VIEW: ['admin', 'teacher', 'accountant', 'auditor'],
+  REPORTS_FINANCIAL: ['admin', 'accountant', 'auditor'],
   REPORTS_ACADEMIC: ['admin', 'teacher'],
 
   // Faculty Management
