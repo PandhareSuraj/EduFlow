@@ -1,6 +1,6 @@
 {
-  "name": "EduERP Platform - Multi-College Management System",
-  "short_name": "EduERP",
+  "name": "EduFlow - Smart Education Management Platform",
+  "short_name": "EduFlow",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -22,5 +22,5 @@
     }
   ],
   "categories": ["education", "productivity"],
-  "description": "Comprehensive ERP platform for educational institutions. Manage multiple colleges, students, faculty, and operations from one unified system."
+  "description": "EduFlow is a comprehensive education management platform. Manage students, faculty, academics, finances, and operations seamlessly."
 }

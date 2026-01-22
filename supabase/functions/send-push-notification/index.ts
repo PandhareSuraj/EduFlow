@@ -65,7 +65,7 @@ serve(async (req) => {
     
     // Configure with VAPID keys
     webPush.setVapidDetails(
-      'mailto:admin@eduerp.com',
+      'mailto:admin@eduflow.mywebz.in',
       Deno.env.get('VAPID_PUBLIC_KEY') ?? '',
       Deno.env.get('VAPID_PRIVATE_KEY') ?? ''
     );

@@ -6,9 +6,10 @@ import {
   GraduationCap, Users, BookOpen, TrendingUp, LogIn, 
   CheckCircle2, BarChart3, Shield, Zap, Clock, Globe,
   Calendar, DollarSign, FileText, Award, Building2, Bus,
-  Heart, UserCheck, ArrowRight, Sparkles, Play
+  Heart, UserCheck, ArrowRight, Sparkles, Play, Map
 } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
+import eduflowLogo from '@/assets/eduflow-logo.png';
 
 export default function Index() {
   const { user, loading } = useAuth();
@@ -68,14 +69,13 @@ export default function Index() {
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-primary to-secondary rounded-lg">
-              <GraduationCap className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              EduERP Platform
-            </span>
+            <img src={eduflowLogo} alt="EduFlow" className="h-10 w-auto" />
           </div>
           <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate('/product-tour')} className="hidden sm:flex">
+              <Map className="mr-2 h-4 w-4" />
+              Product Tour
+            </Button>
             <Button variant="ghost" onClick={() => navigate('/auth')} className="hidden sm:flex">
               Features
             </Button>
@@ -93,7 +93,7 @@ export default function Index() {
           <div className="space-y-8 animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Complete College Management Solution</span>
+              <span className="text-sm font-medium text-primary">Complete Education Management Solution</span>
             </div>
             
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
@@ -105,7 +105,7 @@ export default function Index() {
             </h1>
             
             <p className="text-xl text-muted-foreground leading-relaxed">
-              Powerful ERP system designed for educational institutions of all types. 
+              EduFlow is a powerful education management platform designed for institutions of all types. 
               Manage students, faculty, academics, finances, and operations seamlessly.
             </p>
 
@@ -121,7 +121,7 @@ export default function Index() {
               <Button 
                 size="lg" 
                 variant="outline"
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/product-tour')}
                 className="border-2 hover:bg-primary/5 group"
               >
                 <Play className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
@@ -324,7 +324,7 @@ export default function Index() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16 space-y-4">
             <h2 className="text-3xl md:text-5xl font-bold">
-              Why Institutions Choose EduERP
+              Why Institutions Choose EduFlow
             </h2>
             <p className="text-xl text-muted-foreground">
               Experience the difference with our advanced features
@@ -362,7 +362,7 @@ export default function Index() {
               Ready to Transform Your Institution?
             </h2>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Join hundreds of institutions already using EduERP to streamline their operations
+              Join hundreds of institutions already using EduFlow to streamline their operations
             </p>
             <div className="flex flex-wrap gap-4 justify-center pt-6">
               <Button 
@@ -376,10 +376,10 @@ export default function Index() {
               <Button 
                 size="lg" 
                 variant="outline"
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/product-tour')}
                 className="border-2 border-white text-white hover:bg-white/20 bg-white/10"
               >
-                Schedule a Demo
+                Take Product Tour
               </Button>
             </div>
           </CardContent>
@@ -392,20 +392,17 @@ export default function Index() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-gradient-to-br from-primary to-secondary rounded-lg">
-                  <GraduationCap className="h-5 w-5 text-white" />
-                </div>
-                <span className="font-bold">EduERP</span>
+                <img src={eduflowLogo} alt="EduFlow" className="h-8 w-auto" />
               </div>
               <p className="text-sm text-muted-foreground">
-                Complete college management solution for modern educational institutions.
+                Complete education management solution for modern educational institutions.
               </p>
             </div>
 
             <div>
               <h4 className="font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="hover:text-primary cursor-pointer transition-colors">Features</li>
+                <li className="hover:text-primary cursor-pointer transition-colors" onClick={() => navigate('/product-tour')}>Product Tour</li>
                 <li className="hover:text-primary cursor-pointer transition-colors">Pricing</li>
                 <li className="hover:text-primary cursor-pointer transition-colors">Security</li>
                 <li className="hover:text-primary cursor-pointer transition-colors">Roadmap</li>
@@ -434,7 +431,7 @@ export default function Index() {
           </div>
 
           <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>© 2025 EduERP Platform. Empowering Educational Institutions Worldwide. Built at myweb (<a href="https://www.mywebz.in" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline transition-colors">www.mywebz.in</a>)</p>
+            <p>© 2025 EduFlow Platform. Empowering Educational Institutions Worldwide. Built at myweb (<a href="https://www.mywebz.in" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline transition-colors">www.mywebz.in</a>)</p>
             <div className="flex gap-4">
               <span className="hover:text-primary cursor-pointer transition-colors">Twitter</span>
               <span className="hover:text-primary cursor-pointer transition-colors">LinkedIn</span>
