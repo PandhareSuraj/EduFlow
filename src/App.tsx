@@ -45,6 +45,7 @@ import Events from "./pages/Events";
 import Placements from "./pages/Placements";
 import Grievances from "./pages/Grievances";
 import StudentPromotion from "./pages/StudentPromotion";
+import ProductTourPage from "./pages/ProductTourPage";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/welcome" element={<Index />} />
+              <Route path="/product-tour" element={<ProductTourPage />} />
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={
                 <ProtectedRoute>

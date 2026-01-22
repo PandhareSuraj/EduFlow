@@ -6,12 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, GraduationCap, Users } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { createDemoUsers } from '@/utils/createDemoUsers';
 import { supabase } from '@/integrations/supabase/client';
 import { ThreeStepSignup } from '@/components/auth/ThreeStepSignup';
+import eduflowLogo from '@/assets/eduflow-logo.png';
+
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -74,6 +76,7 @@ export default function Auth() {
       navigate('/');
     }
   }, [user, navigate]);
+  
   const [loginForm, setLoginForm] = useState({
     email: '',
     password: ''
@@ -85,6 +88,7 @@ export default function Auth() {
     fullName: '',
     phone: ''
   });
+  
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -114,6 +118,7 @@ export default function Auth() {
       setIsLoading(false);
     }
   };
+  
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -162,6 +167,7 @@ export default function Auth() {
       setIsLoading(false);
     }
   };
+  
   const handleDemoLogin = (email: string, password: string) => {
     setLoginForm({
       email,
@@ -169,6 +175,7 @@ export default function Auth() {
     });
     setError('');
   };
+  
   const handleCreateDemoUsers = async () => {
     setIsLoading(true);
     try {
@@ -187,6 +194,7 @@ export default function Auth() {
       setIsLoading(false);
     }
   };
+  
   const handleFinalizeSuperAdmin = async () => {
     setIsLoading(true);
     try {
@@ -221,16 +229,16 @@ export default function Auth() {
       setIsLoading(false);
     }
   };
-  return <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <GraduationCap className="h-8 w-8 text-primary" />
-            </div>
+            <img src={eduflowLogo} alt="EduFlow" className="h-12 w-auto" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">EduERP Platform</h1>
-          <p className="text-muted-foreground">Educational Management System</p>
+          <h1 className="text-2xl font-bold text-foreground">EduFlow Platform</h1>
+          <p className="text-muted-foreground">Smart Education Management System</p>
         </div>
 
         <Card className="shadow-elegant">
@@ -314,8 +322,9 @@ export default function Auth() {
 
         <div className="text-center mt-6 space-y-3">
           
-          <p className="text-sm text-muted-foreground">© 2025 EduERP Platform. Empowering Educational Institutions Worldwide. Built at myweb (<a href="https://www.mywebz.in" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline transition-colors">www.mywebz.in</a>)</p>
+          <p className="text-sm text-muted-foreground">© 2025 EduFlow Platform. Empowering Educational Institutions Worldwide. Built at myweb (<a href="https://www.mywebz.in" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline transition-colors">www.mywebz.in</a>)</p>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 }

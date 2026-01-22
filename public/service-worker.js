@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kkpatil-erp-v1';
+const CACHE_NAME = 'eduflow-v1';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -87,7 +87,7 @@ self.addEventListener('push', (event) => {
   };
   
   event.waitUntil(
-    self.registration.showNotification(data.title || 'EduERP Notification', options)
+    self.registration.showNotification(data.title || 'EduFlow Notification', options)
   );
 });
 
