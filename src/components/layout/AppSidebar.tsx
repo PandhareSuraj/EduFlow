@@ -150,7 +150,8 @@ export function AppSidebar() {
         { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
         { name: "Students", href: "/students", icon: Users },
         { name: "Fees", href: "/fees", icon: CreditCard },
-        { name: "Reports", href: "/reports", icon: BarChart3 }
+        { name: "Reports", href: "/reports", icon: BarChart3 },
+        { name: "Audit Trail", href: "/audit-trail", icon: Database }
       ];
     } else {
       return [

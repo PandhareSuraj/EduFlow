@@ -41,8 +41,11 @@ export function AuditTrailViewer({ onClose }: AuditTrailViewerProps) {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
 
-  // Only allow access for admins and super_admins
-  if (!userRole || !['admin', 'super_admin'].includes(userRole)) {
+  // Allow access for admins, super_admins, and auditors
+  const isAuditor = userRole === 'auditor';
+  const hasAccess = userRole && ['admin', 'super_admin', 'auditor'].includes(userRole);
+  
+  if (!hasAccess) {
     return (
       <Card>
         <CardHeader>
@@ -52,11 +55,14 @@ export function AuditTrailViewer({ onClose }: AuditTrailViewerProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Only administrators can view audit trails.</p>
+          <p>Only administrators and auditors can view audit trails.</p>
         </CardContent>
       </Card>
     );
   }
+  
+  // Define which tables auditors can view (financial tables only)
+  const auditorAllowedTables = ['fee_payments', 'student_fees', 'fee_structures', 'fee_installments'];
 
   const fetchAuditLogs = async () => {
     try {
@@ -68,8 +74,13 @@ export function AuditTrailViewer({ onClose }: AuditTrailViewerProps) {
         .limit(100);
 
       // Explicitly filter by college for non-super_admin users
-      if (userRole === 'admin' && college?.id) {
+      if (userRole !== 'super_admin' && college?.id) {
         query = query.eq('college_id', college.id);
+      }
+      
+      // Auditors can only see financial tables
+      if (isAuditor) {
+        query = query.in('table_name', auditorAllowedTables);
       }
 
       if (tableFilter && tableFilter !== 'all') {
@@ -200,14 +211,21 @@ export function AuditTrailViewer({ onClose }: AuditTrailViewerProps) {
                 <SelectValue placeholder="All tables" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All tables</SelectItem>
-                <SelectItem value="students">Students</SelectItem>
-                <SelectItem value="faculty">Faculty</SelectItem>
-                <SelectItem value="courses">Courses</SelectItem>
+                <SelectItem value="all">{isAuditor ? 'All Financial Tables' : 'All tables'}</SelectItem>
+                {!isAuditor && (
+                  <>
+                    <SelectItem value="students">Students</SelectItem>
+                    <SelectItem value="faculty">Faculty</SelectItem>
+                    <SelectItem value="courses">Courses</SelectItem>
+                    <SelectItem value="attendance_records">Attendance</SelectItem>
+                    <SelectItem value="exams">Exams</SelectItem>
+                    <SelectItem value="results">Results</SelectItem>
+                  </>
+                )}
                 <SelectItem value="fee_payments">Fee Payments</SelectItem>
-                <SelectItem value="attendance_records">Attendance</SelectItem>
-                <SelectItem value="exams">Exams</SelectItem>
-                <SelectItem value="results">Results</SelectItem>
+                <SelectItem value="student_fees">Student Fees</SelectItem>
+                <SelectItem value="fee_structures">Fee Structures</SelectItem>
+                <SelectItem value="fee_installments">Fee Installments</SelectItem>
               </SelectContent>
             </Select>
           </div>
