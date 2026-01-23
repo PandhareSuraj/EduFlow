@@ -72,7 +72,7 @@ export default function Index() {
             <img 
               src={eduflowLogo} 
               alt="EduFlow" 
-              className="h-14 md:h-16 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-105 transition-transform duration-300" 
+              className="h-16 md:h-20 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-110 hover:drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300 cursor-pointer" 
             />
           </div>
           <div className="flex items-center gap-4">
