@@ -84,7 +84,7 @@ export function Header() {
           {!isMobile && (
             <div className="flex items-center space-x-3">
               {logoUrl ? (
-                <img src={logoUrl} alt={`${collegeName} Logo`} className="h-8 w-8 object-contain" />
+                <img src={logoUrl} alt={`${collegeName} Logo`} className="h-10 w-10 object-contain" />
               ) : (
                 <School className="h-8 w-8 text-primary" />
               )}

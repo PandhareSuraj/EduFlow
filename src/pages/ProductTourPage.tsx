@@ -25,7 +25,7 @@ export default function ProductTourPage() {
               Back to Home
             </Button>
           </div>
-          <img src={eduflowLogo} alt="EduFlow" className="h-8 w-auto" />
+          <img src={eduflowLogo} alt="EduFlow" className="h-12 md:h-14 w-auto" />
           <Button onClick={() => navigate('/auth')} className="bg-gradient-to-r from-primary to-secondary hover:opacity-90">
             <LogIn className="mr-2 h-4 w-4" />
             Sign In

@@ -235,7 +235,7 @@ export default function Auth() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <img src={eduflowLogo} alt="EduFlow" className="h-12 w-auto" />
+            <img src={eduflowLogo} alt="EduFlow" className="h-20 md:h-24 w-auto" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">EduFlow Platform</h1>
           <p className="text-muted-foreground">Smart Education Management System</p>
