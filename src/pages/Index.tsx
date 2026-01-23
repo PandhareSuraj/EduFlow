@@ -69,7 +69,7 @@ export default function Index() {
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <img src={eduflowLogo} alt="EduFlow" className="h-10 w-auto" />
+            <img src={eduflowLogo} alt="EduFlow" className="h-14 md:h-16 w-auto" />
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => navigate('/product-tour')} className="hidden sm:flex">
