@@ -7,6 +7,14 @@ import {
   CheckCircle2, ArrowRight
 } from 'lucide-react';
 
+// Import screenshots
+import dashboardPreview from '@/assets/screenshots/dashboard-preview.png';
+import studentsPreview from '@/assets/screenshots/students-preview.png';
+import academicsPreview from '@/assets/screenshots/academics-preview.png';
+import financePreview from '@/assets/screenshots/finance-preview.png';
+import libraryPreview from '@/assets/screenshots/library-preview.png';
+import eventsPreview from '@/assets/screenshots/events-preview.png';
+
 const screenshots = [
   {
     id: 'dashboard',
@@ -20,7 +28,8 @@ const screenshots = [
       'Today\'s schedule',
       'Quick action buttons'
     ],
-    color: 'from-purple-500 to-purple-600'
+    color: 'from-purple-500 to-purple-600',
+    screenshot: dashboardPreview
   },
   {
     id: 'students',
@@ -34,7 +43,8 @@ const screenshots = [
       'Academic history',
       'Parent portal access'
     ],
-    color: 'from-blue-500 to-blue-600'
+    color: 'from-blue-500 to-blue-600',
+    screenshot: studentsPreview
   },
   {
     id: 'academics',
@@ -48,7 +58,8 @@ const screenshots = [
       'Exam scheduling',
       'Auto grade calculation'
     ],
-    color: 'from-green-500 to-green-600'
+    color: 'from-green-500 to-green-600',
+    screenshot: academicsPreview
   },
   {
     id: 'finance',
@@ -62,7 +73,8 @@ const screenshots = [
       'Installment plans',
       'GST compliance'
     ],
-    color: 'from-amber-500 to-amber-600'
+    color: 'from-amber-500 to-amber-600',
+    screenshot: financePreview
   },
   {
     id: 'library',
@@ -76,7 +88,8 @@ const screenshots = [
       'Fine management',
       'Low stock alerts'
     ],
-    color: 'from-teal-500 to-teal-600'
+    color: 'from-teal-500 to-teal-600',
+    screenshot: libraryPreview
   },
   {
     id: 'events',
@@ -90,7 +103,8 @@ const screenshots = [
       'Certificate generation',
       'Photo galleries'
     ],
-    color: 'from-pink-500 to-pink-600'
+    color: 'from-pink-500 to-pink-600',
+    screenshot: eventsPreview
   }
 ];
 
@@ -156,8 +170,8 @@ export function ScreenshotShowcase() {
                   </Button>
                 </div>
 
-                {/* Screenshot Mockup */}
-                <div className="lg:col-span-3 bg-card p-4 lg:p-8">
+                {/* Screenshot Display */}
+                <div className="lg:col-span-3 bg-card p-4 lg:p-6">
                   <div className="rounded-xl border shadow-lg overflow-hidden bg-background">
                     {/* Browser Chrome */}
                     <div className="bg-muted p-3 flex items-center gap-3">
@@ -173,57 +187,27 @@ export function ScreenshotShowcase() {
                       </div>
                     </div>
                     
-                    {/* Mock Interface */}
-                    <div className="p-6 space-y-4 min-h-[400px] animate-fade-in">
-                      {/* Header Bar */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${activeScreen.color}`} />
-                          <div>
-                            <div className="h-4 w-32 bg-foreground/10 rounded" />
-                            <div className="h-3 w-20 bg-foreground/5 rounded mt-1" />
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <div className="h-8 w-20 bg-primary/20 rounded-lg" />
-                          <div className="h-8 w-8 bg-muted rounded-lg" />
-                        </div>
-                      </div>
-
-                      {/* Stats Row */}
-                      <div className="grid grid-cols-4 gap-3">
-                        {[1, 2, 3, 4].map((i) => (
-                          <div key={i} className="p-4 rounded-xl bg-muted/50">
-                            <div className="h-3 w-12 bg-foreground/10 rounded mb-2" />
-                            <div className="h-6 w-16 bg-primary/20 rounded" />
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Main Content */}
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-2 h-48 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl p-4">
-                          <div className="h-3 w-24 bg-foreground/10 rounded mb-4" />
-                          <div className="space-y-2">
-                            {[1, 2, 3, 4].map((i) => (
-                              <div key={i} className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-muted" />
-                                <div className="flex-1 h-3 bg-foreground/5 rounded" />
-                                <div className="w-16 h-6 bg-primary/10 rounded" />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="h-48 bg-muted/30 rounded-xl p-4">
-                          <div className="h-3 w-16 bg-foreground/10 rounded mb-4" />
-                          <div className="space-y-3">
-                            {[1, 2, 3].map((i) => (
-                              <div key={i} className="h-8 bg-foreground/5 rounded-lg" />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                    {/* Real Screenshot */}
+                    <div className="relative overflow-hidden">
+                      <img 
+                        src={activeScreen.screenshot} 
+                        alt={`${activeScreen.title} - EduFlow Screenshot`}
+                        className="w-full h-auto object-cover animate-fade-in"
+                        key={activeScreen.id}
+                      />
+                      
+                      {/* Gradient overlay for polish */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/20 via-transparent to-transparent pointer-events-none" />
                     </div>
+                  </div>
+                  
+                  {/* Feature highlights below screenshot */}
+                  <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                    {activeScreen.features.slice(0, 3).map((feature, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {feature}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
               </div>
