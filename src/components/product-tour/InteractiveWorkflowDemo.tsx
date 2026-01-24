@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -74,17 +74,54 @@ const workflowSteps = [
 export function InteractiveWorkflowDemo() {
   const [activeStep, setActiveStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [autoPlayProgress, setAutoPlayProgress] = useState(0);
 
   const currentStep = workflowSteps[activeStep];
   const progress = ((activeStep + 1) / workflowSteps.length) * 100;
 
-  const nextStep = () => {
-    setActiveStep((prev) => (prev + 1) % workflowSteps.length);
+  // Auto-play functionality with useEffect
+  useEffect(() => {
+    if (!isPlaying) {
+      setAutoPlayProgress(0);
+      return;
+    }
+
+    // Progress bar animation
+    const progressInterval = setInterval(() => {
+      setAutoPlayProgress(prev => {
+        if (prev >= 100) return 0;
+        return prev + 2; // 50 steps over 3 seconds
+      });
+    }, 60);
+
+    // Step transition every 3 seconds
+    const stepInterval = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setActiveStep((prev) => (prev + 1) % workflowSteps.length);
+        setIsTransitioning(false);
+        setAutoPlayProgress(0);
+      }, 200);
+    }, 3000);
+
+    return () => {
+      clearInterval(progressInterval);
+      clearInterval(stepInterval);
+    };
+  }, [isPlaying]);
+
+  const changeStep = (newStep: number) => {
+    setIsTransitioning(true);
+    setIsPlaying(false);
+    setTimeout(() => {
+      setActiveStep(newStep);
+      setIsTransitioning(false);
+    }, 200);
   };
 
-  const prevStep = () => {
-    setActiveStep((prev) => (prev - 1 + workflowSteps.length) % workflowSteps.length);
-  };
+  const nextStep = () => changeStep((activeStep + 1) % workflowSteps.length);
+  const prevStep = () => changeStep((activeStep - 1 + workflowSteps.length) % workflowSteps.length);
 
   return (
     <section className="py-20 bg-muted/30">
@@ -127,14 +164,26 @@ export function InteractiveWorkflowDemo() {
         </div>
 
         {/* Main Content */}
-        <Card className="max-w-5xl mx-auto overflow-hidden border-0 shadow-glow">
+        <Card className="max-w-5xl mx-auto overflow-hidden border-0 shadow-glow relative">
+          {/* Auto-play progress bar */}
+          {isPlaying && (
+            <div className="absolute top-0 left-0 right-0 h-1 bg-muted z-10">
+              <div 
+                className="h-full bg-primary transition-all duration-100 ease-linear"
+                style={{ width: `${autoPlayProgress}%` }}
+              />
+            </div>
+          )}
+          
           <div className={`h-2 bg-gradient-to-r ${currentStep.color}`} />
-          <CardContent className="p-8">
+          <CardContent className={`p-8 transition-all duration-300 ${
+            isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+          }`}>
             <div className="grid lg:grid-cols-2 gap-8">
               {/* Left: Workflow Visualization */}
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                  <div className={`p-4 rounded-2xl bg-gradient-to-br ${currentStep.color}`}>
+                  <div className={`p-4 rounded-2xl bg-gradient-to-br ${currentStep.color} transition-all duration-500`}>
                     <currentStep.icon className="h-8 w-8 text-white" />
                   </div>
                   <div>
@@ -145,24 +194,25 @@ export function InteractiveWorkflowDemo() {
 
                 <p className="text-lg">{currentStep.description}</p>
 
-                {/* Stages */}
+                {/* Stages with staggered animation */}
                 <div className="space-y-4">
                   {currentStep.stages.map((stage, index) => (
                     <div
                       key={index}
-                      className={`flex items-start gap-4 p-4 rounded-xl transition-all ${
+                      className={`flex items-start gap-4 p-4 rounded-xl transition-all duration-300 animate-fade-in ${
                         stage.status === 'active'
-                          ? 'bg-primary/10 border-2 border-primary'
+                          ? 'bg-primary/10 border-2 border-primary shadow-lg'
                           : stage.status === 'complete'
                           ? 'bg-muted'
                           : 'bg-muted/50 opacity-60'
                       }`}
+                      style={{ animationDelay: `${index * 100}ms` }}
                     >
-                      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
                         stage.status === 'complete'
                           ? 'bg-green-500 text-white'
                           : stage.status === 'active'
-                          ? 'bg-primary text-primary-foreground animate-pulse'
+                          ? 'bg-primary text-primary-foreground animate-pulse ring-4 ring-primary/30'
                           : 'bg-muted-foreground/30 text-muted-foreground'
                       }`}>
                         {stage.status === 'complete' ? (

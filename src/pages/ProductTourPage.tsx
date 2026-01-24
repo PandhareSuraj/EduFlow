@@ -1,14 +1,18 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  ArrowRight, Play, Calendar, LogIn, ArrowLeft, 
-  Sparkles, CheckCircle2
-} from 'lucide-react';
+import { ArrowRight, Calendar, LogIn, ArrowLeft, CheckCircle2 } from 'lucide-react';
+
+// Import all product tour components
+import { HeroSection3D } from '@/components/product-tour/HeroSection3D';
+import { TrustLogos } from '@/components/product-tour/TrustLogos';
+import { ProblemSolutionSection } from '@/components/product-tour/ProblemSolutionSection';
+import { ScreenshotShowcase } from '@/components/product-tour/ScreenshotShowcase';
+import { AnimatedInfographics } from '@/components/product-tour/AnimatedInfographics';
 import { InteractiveWorkflowDemo } from '@/components/product-tour/InteractiveWorkflowDemo';
 import { FeatureExplorer } from '@/components/product-tour/FeatureExplorer';
 import { ROICalculator } from '@/components/product-tour/ROICalculator';
+import { TestimonialCarousel } from '@/components/product-tour/TestimonialCarousel';
 import eduflowLogo from '@/assets/eduflow-logo.png';
 
 export default function ProductTourPage() {
@@ -37,85 +41,39 @@ export default function ProductTourPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 md:py-32">
-        {/* Background Elements */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse delay-1000" />
-        </div>
+      {/* 1. Hero Section with 3D Elements */}
+      <HeroSection3D />
 
-        <div className="container mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-6">
-            <Sparkles className="h-3 w-3 mr-1" />
-            Interactive Product Tour
-          </Badge>
-          
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
-            Experience{" "}
-            <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-              EduFlow
-            </span>
-            {" "}in Action
-          </h1>
-          
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10">
-            Take a guided tour through our powerful education management platform. 
-            See how EduFlow transforms institutional operations with intelligent automation.
-          </p>
+      {/* 2. Trust Logos Banner */}
+      <TrustLogos />
 
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-elegant group"
-              onClick={() => document.getElementById('workflow-demo')?.scrollIntoView({ behavior: 'smooth' })}
-            >
-              <Play className="mr-2 h-5 w-5" />
-              Start Interactive Demo
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              onClick={() => navigate('/auth')}
-              className="border-2 group"
-            >
-              <Calendar className="mr-2 h-5 w-5" />
-              Schedule Live Demo
-            </Button>
-          </div>
+      {/* 3. Problem vs Solution */}
+      <ProblemSolutionSection />
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 max-w-4xl mx-auto">
-            {[
-              { value: '15min', label: 'Tour Duration' },
-              { value: '9+', label: 'Modules Covered' },
-              { value: '50+', label: 'Features Showcased' },
-              { value: '100%', label: 'Free Access' }
-            ].map((stat, i) => (
-              <div key={i} className="text-center">
-                <div className="text-3xl font-bold text-primary">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* 4. Screenshot Showcase */}
+      <ScreenshotShowcase />
 
-      {/* Interactive Workflow Demo */}
+      {/* 5. How It Works - Animated Timeline */}
+      <AnimatedInfographics />
+
+      {/* 6. Interactive Workflow Demo */}
       <div id="workflow-demo">
         <InteractiveWorkflowDemo />
       </div>
 
-      {/* Feature Explorer */}
+      {/* 7. Feature Explorer */}
       <FeatureExplorer />
 
-      {/* ROI Calculator */}
+      {/* 8. ROI Calculator */}
       <ROICalculator />
 
-      {/* Final CTA Section */}
+      {/* 9. Testimonials */}
+      <TestimonialCarousel />
+
+      {/* 10. Final CTA Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <Card className="bg-gradient-to-br from-primary via-secondary to-accent text-white border-0 shadow-glow max-w-5xl mx-auto">
+          <Card className="bg-gradient-to-br from-primary via-secondary to-accent text-white border-0 shadow-glow max-w-5xl mx-auto overflow-hidden">
             <CardContent className="p-12 md:p-16">
               <div className="grid md:grid-cols-2 gap-8 items-center">
                 <div>

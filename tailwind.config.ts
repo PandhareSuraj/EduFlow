@@ -134,6 +134,47 @@ export default {
 					'50%': {
 						boxShadow: '0 0 30px hsl(var(--primary) / 0.5)'
 					}
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0px)' },
+					'50%': { transform: 'translateY(-20px)' }
+				},
+				'float-slow': {
+					'0%, 100%': { transform: 'translateY(0px) rotate(-2deg)' },
+					'50%': { transform: 'translateY(-15px) rotate(2deg)' }
+				},
+				'float-delayed': {
+					'0%, 100%': { transform: 'translateY(-10px)' },
+					'50%': { transform: 'translateY(10px)' }
+				},
+				'scroll-x': {
+					'0%': { transform: 'translateX(0)' },
+					'100%': { transform: 'translateX(-50%)' }
+				},
+				'grow-width': {
+					'0%': { width: '0%' },
+					'100%': { width: '100%' }
+				},
+				'pop-in': {
+					'0%': { transform: 'scale(0)', opacity: '0' },
+					'80%': { transform: 'scale(1.1)' },
+					'100%': { transform: 'scale(1)', opacity: '1' }
+				},
+				'draw-line': {
+					'0%': { strokeDashoffset: '1000' },
+					'100%': { strokeDashoffset: '0' }
+				},
+				'shimmer': {
+					'0%': { backgroundPosition: '-200% 0' },
+					'100%': { backgroundPosition: '200% 0' }
+				},
+				'count-up': {
+					'0%': { opacity: '0', transform: 'translateY(20px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
+				},
+				'slide-up-fade': {
+					'0%': { opacity: '0', transform: 'translateY(30px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
 				}
 			},
 			animation: {
@@ -142,7 +183,16 @@ export default {
 				'fade-in': 'fade-in 0.3s ease-out',
 				'scale-in': 'scale-in 0.2s ease-out',
 				'slide-in': 'slide-in 0.3s ease-out',
-				'pulse-glow': 'pulse-glow 2s ease-in-out infinite'
+				'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+				'float': 'float 6s ease-in-out infinite',
+				'float-slow': 'float-slow 8s ease-in-out infinite',
+				'float-delayed': 'float-delayed 7s ease-in-out infinite',
+				'scroll-x': 'scroll-x 30s linear infinite',
+				'grow-width': 'grow-width 3s linear',
+				'pop-in': 'pop-in 0.5s ease-out forwards',
+				'shimmer': 'shimmer 2s linear infinite',
+				'count-up': 'count-up 0.6s ease-out forwards',
+				'slide-up-fade': 'slide-up-fade 0.5s ease-out forwards'
 			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
