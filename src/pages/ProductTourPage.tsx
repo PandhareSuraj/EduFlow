@@ -10,6 +10,7 @@ import { ProblemSolutionSection } from '@/components/product-tour/ProblemSolutio
 import { ScreenshotShowcase } from '@/components/product-tour/ScreenshotShowcase';
 import { AnimatedInfographics } from '@/components/product-tour/AnimatedInfographics';
 import { InteractiveWorkflowDemo } from '@/components/product-tour/InteractiveWorkflowDemo';
+import { VideoWalkthrough } from '@/components/product-tour/VideoWalkthrough';
 import { FeatureExplorer } from '@/components/product-tour/FeatureExplorer';
 import { ROICalculator } from '@/components/product-tour/ROICalculator';
 import { TestimonialCarousel } from '@/components/product-tour/TestimonialCarousel';
@@ -52,6 +53,11 @@ export default function ProductTourPage() {
 
       {/* 4. Screenshot Showcase */}
       <ScreenshotShowcase />
+
+      {/* 5. Video Walkthrough */}
+      <VideoWalkthrough />
+
+      {/* 6. How It Works - Animated Timeline */}
 
       {/* 5. How It Works - Animated Timeline */}
       <AnimatedInfographics />
