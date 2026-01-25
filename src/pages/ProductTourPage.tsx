@@ -14,6 +14,7 @@ import { VideoWalkthrough } from '@/components/product-tour/VideoWalkthrough';
 import { FeatureExplorer } from '@/components/product-tour/FeatureExplorer';
 import { ROICalculator } from '@/components/product-tour/ROICalculator';
 import { TestimonialCarousel } from '@/components/product-tour/TestimonialCarousel';
+import { FAQSection } from '@/components/product-tour/FAQSection';
 import eduflowLogo from '@/assets/eduflow-logo.png';
 
 export default function ProductTourPage() {
@@ -76,7 +77,10 @@ export default function ProductTourPage() {
       {/* 9. Testimonials */}
       <TestimonialCarousel />
 
-      {/* 10. Final CTA Section */}
+      {/* 10. FAQ Section */}
+      <FAQSection />
+
+      {/* 11. Final CTA Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <Card className="bg-gradient-to-br from-primary via-secondary to-accent text-white border-0 shadow-glow max-w-5xl mx-auto overflow-hidden">
