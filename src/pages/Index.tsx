@@ -10,6 +10,14 @@ import {
 } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 import eduflowLogo from '@/assets/eduflow-logo.png';
+import { 
+  IntegrationLogos, 
+  HowItWorks, 
+  TestimonialsSection, 
+  PricingPreview, 
+  MobileShowcase, 
+  SecurityBadges 
+} from '@/components/landing';
 
 export default function Index() {
   const { user, loading } = useAuth();
@@ -92,7 +100,7 @@ export default function Index() {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 md:py-32">
+      <section className="container mx-auto px-4 py-16 md:py-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8 animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
@@ -186,6 +194,9 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {/* Integration Partners */}
+      <IntegrationLogos />
 
       {/* Core Features */}
       <section className="container mx-auto px-4 py-20 bg-muted/30">
@@ -287,6 +298,9 @@ export default function Index() {
         </div>
       </section>
 
+      {/* How It Works */}
+      <HowItWorks />
+
       {/* Institution Types */}
       <section className="container mx-auto px-4 py-20">
         <div className="text-center mb-16 space-y-4">
@@ -323,6 +337,9 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Testimonials */}
+      <TestimonialsSection />
+
       {/* Why Choose Us */}
       <section className="container mx-auto px-4 py-20 bg-muted/30">
         <div className="max-w-5xl mx-auto">
@@ -357,6 +374,15 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {/* Pricing Preview */}
+      <PricingPreview />
+
+      {/* Mobile Showcase */}
+      <MobileShowcase />
+
+      {/* Security Badges */}
+      <SecurityBadges />
 
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-20">
