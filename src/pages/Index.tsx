@@ -16,7 +16,8 @@ import {
   TestimonialsSection, 
   PricingPreview, 
   MobileShowcase, 
-  SecurityBadges 
+  SecurityBadges,
+  AwardsRecognition 
 } from '@/components/landing';
 
 export default function Index() {
@@ -339,6 +340,9 @@ export default function Index() {
 
       {/* Testimonials */}
       <TestimonialsSection />
+
+      {/* Awards & Recognition */}
+      <AwardsRecognition />
 
       {/* Why Choose Us */}
       <section className="container mx-auto px-4 py-20 bg-muted/30">
