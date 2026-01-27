@@ -27,6 +27,14 @@ export default function Index() {
   const [statsCount, setStatsCount] = useState({ colleges: 0, students: 0, faculty: 0, uptime: 0 });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    setMobileMenuOpen(false);
+  };
+
   useEffect(() => {
     if (!loading && user) {
       navigate('/dashboard');
@@ -87,13 +95,19 @@ export default function Index() {
             />
           </div>
           {/* Desktop Navigation */}
-          <div className="hidden sm:flex items-center gap-2 md:gap-4">
+          <div className="hidden sm:flex items-center gap-1 md:gap-2">
+            <Button variant="ghost" onClick={() => scrollToSection('features')} className="text-sm">
+              Features
+            </Button>
+            <Button variant="ghost" onClick={() => scrollToSection('pricing')} className="text-sm">
+              Pricing
+            </Button>
+            <Button variant="ghost" onClick={() => scrollToSection('testimonials')} className="text-sm">
+              Testimonials
+            </Button>
             <Button variant="ghost" onClick={() => navigate('/product-tour')} className="text-sm">
               <Map className="mr-1.5 h-3.5 w-3.5" />
               Product Tour
-            </Button>
-            <Button variant="ghost" onClick={() => navigate('/auth')} className="text-sm">
-              Features
             </Button>
             <Button onClick={() => navigate('/auth')} className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-sm">
               <LogIn className="mr-1.5 h-3.5 w-3.5" />
@@ -118,19 +132,35 @@ export default function Index() {
                 />
                 <Button 
                   variant="ghost" 
+                  onClick={() => scrollToSection('features')} 
+                  className="justify-start text-base"
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Features
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => scrollToSection('pricing')} 
+                  className="justify-start text-base"
+                >
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Pricing
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => scrollToSection('testimonials')} 
+                  className="justify-start text-base"
+                >
+                  <Award className="mr-2 h-4 w-4" />
+                  Testimonials
+                </Button>
+                <Button 
+                  variant="ghost" 
                   onClick={() => { navigate('/product-tour'); setMobileMenuOpen(false); }} 
                   className="justify-start text-base"
                 >
                   <Map className="mr-2 h-4 w-4" />
                   Product Tour
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => { navigate('/auth'); setMobileMenuOpen(false); }} 
-                  className="justify-start text-base"
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Features
                 </Button>
                 <div className="border-t my-2" />
                 <Button 
@@ -246,7 +276,7 @@ export default function Index() {
       <IntegrationLogos />
 
       {/* Core Features */}
-      <section className="container mx-auto px-4 py-20 bg-muted/30">
+      <section id="features" className="container mx-auto px-4 py-20 bg-muted/30 scroll-mt-20">
         <div className="text-center mb-16 space-y-4">
           <h2 className="text-3xl md:text-5xl font-bold">
             Everything Your Institution Needs
@@ -385,7 +415,9 @@ export default function Index() {
       </section>
 
       {/* Testimonials */}
-      <TestimonialsSection />
+      <section id="testimonials" className="scroll-mt-20">
+        <TestimonialsSection />
+      </section>
 
       {/* Awards & Recognition */}
       <AwardsRecognition />
@@ -426,7 +458,9 @@ export default function Index() {
       </section>
 
       {/* Pricing Preview */}
-      <PricingPreview />
+      <section id="pricing" className="scroll-mt-20">
+        <PricingPreview />
+      </section>
 
       {/* Mobile Showcase */}
       <MobileShowcase />
