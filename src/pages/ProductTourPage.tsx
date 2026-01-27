@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,8 +18,117 @@ import { TestimonialCarousel } from '@/components/product-tour/TestimonialCarous
 import { FAQSection } from '@/components/product-tour/FAQSection';
 import eduflowLogo from '@/assets/eduflow-logo.png';
 
+// SEO metadata for the Product Tour page
+const PAGE_META = {
+  title: 'Product Tour - EduFlow | See How It Works',
+  description: 'Explore EduFlow\'s comprehensive education management platform. Interactive demos, feature walkthroughs, and ROI calculator to see how we can transform your institution.',
+  url: 'https://www.eduflow.mywebz.in/product-tour',
+  image: 'https://storage.googleapis.com/gpt-engineer-file-uploads/lAaVSYx4RVVmxIS64ld97TLZWug1/social-images/social-1760781174571-clg crm.JPG',
+};
+
 export default function ProductTourPage() {
   const navigate = useNavigate();
+
+  // Set up meta tags and JSON-LD structured data
+  useEffect(() => {
+    // Update document title
+    const originalTitle = document.title;
+    document.title = PAGE_META.title;
+
+    // Create and append meta tags
+    const metaTags: HTMLMetaElement[] = [];
+    const createMeta = (property: string, content: string, isName = false) => {
+      const meta = document.createElement('meta');
+      if (isName) {
+        meta.name = property;
+      } else {
+        meta.setAttribute('property', property);
+      }
+      meta.content = content;
+      document.head.appendChild(meta);
+      metaTags.push(meta);
+    };
+
+    // Open Graph tags
+    createMeta('og:title', PAGE_META.title);
+    createMeta('og:description', PAGE_META.description);
+    createMeta('og:url', PAGE_META.url);
+    createMeta('og:image', PAGE_META.image);
+    createMeta('og:type', 'website');
+    createMeta('og:site_name', 'EduFlow');
+
+    // Twitter Card tags
+    createMeta('twitter:card', 'summary_large_image', true);
+    createMeta('twitter:title', PAGE_META.title, true);
+    createMeta('twitter:description', PAGE_META.description, true);
+    createMeta('twitter:image', PAGE_META.image, true);
+
+    // Update meta description
+    let descriptionMeta = document.querySelector('meta[name="description"]') as HTMLMetaElement;
+    const originalDescription = descriptionMeta?.content;
+    if (descriptionMeta) {
+      descriptionMeta.content = PAGE_META.description;
+    }
+
+    // Create JSON-LD structured data
+    const jsonLd = document.createElement('script');
+    jsonLd.type = 'application/ld+json';
+    jsonLd.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: PAGE_META.title,
+      description: PAGE_META.description,
+      url: PAGE_META.url,
+      image: PAGE_META.image,
+      publisher: {
+        '@type': 'Organization',
+        name: 'EduFlow',
+        logo: {
+          '@type': 'ImageObject',
+          url: 'https://www.eduflow.mywebz.in/icons/icon-512x512.png'
+        }
+      },
+      mainEntity: {
+        '@type': 'SoftwareApplication',
+        name: 'EduFlow',
+        applicationCategory: 'Education Management Software',
+        operatingSystem: 'Web-based',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'INR',
+          description: 'Free trial available'
+        },
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: '4.8',
+          ratingCount: '500',
+          bestRating: '5'
+        },
+        featureList: [
+          'Student Management',
+          'Faculty Management',
+          'Academic Planning',
+          'Fee Collection',
+          'Library Management',
+          'Hostel Management',
+          'Transport Management',
+          'Exam Management'
+        ]
+      }
+    });
+    document.head.appendChild(jsonLd);
+
+    // Cleanup on unmount
+    return () => {
+      document.title = originalTitle;
+      metaTags.forEach(meta => meta.remove());
+      jsonLd.remove();
+      if (descriptionMeta && originalDescription) {
+        descriptionMeta.content = originalDescription;
+      }
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
