@@ -76,24 +76,24 @@ export default function Index() {
 
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-5 flex justify-between items-center">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <img 
               src={eduflowLogo} 
               alt="EduFlow" 
-              className="h-14 md:h-24 lg:h-28 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(59,130,246,0.6)] transition-all duration-300 cursor-pointer" 
+              className="h-10 md:h-12 lg:h-14 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(59,130,246,0.6)] transition-all duration-300 cursor-pointer" 
             />
           </div>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/product-tour')} className="hidden sm:flex">
-              <Map className="mr-2 h-4 w-4" />
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button variant="ghost" onClick={() => navigate('/product-tour')} className="hidden sm:flex text-sm">
+              <Map className="mr-1.5 h-3.5 w-3.5" />
               Product Tour
             </Button>
-            <Button variant="ghost" onClick={() => navigate('/auth')} className="hidden sm:flex">
+            <Button variant="ghost" onClick={() => navigate('/auth')} className="hidden sm:flex text-sm">
               Features
             </Button>
-            <Button onClick={() => navigate('/auth')} className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity">
-              <LogIn className="mr-2 h-4 w-4" />
+            <Button onClick={() => navigate('/auth')} className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-sm">
+              <LogIn className="mr-1.5 h-3.5 w-3.5" />
               Sign In
             </Button>
           </div>
