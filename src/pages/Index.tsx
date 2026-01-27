@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
   GraduationCap, Users, BookOpen, TrendingUp, LogIn, 
   CheckCircle2, BarChart3, Shield, Zap, Clock, Globe,
   Calendar, DollarSign, FileText, Award, Building2, Bus,
-  Heart, UserCheck, ArrowRight, Sparkles, Play, Map
+  Heart, UserCheck, ArrowRight, Sparkles, Play, Map, Menu
 } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 import eduflowLogo from '@/assets/eduflow-logo.png';
@@ -24,6 +25,7 @@ export default function Index() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [statsCount, setStatsCount] = useState({ colleges: 0, students: 0, faculty: 0, uptime: 0 });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
@@ -84,12 +86,13 @@ export default function Index() {
               className="h-10 md:h-12 lg:h-14 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(59,130,246,0.6)] transition-all duration-300 cursor-pointer" 
             />
           </div>
-          <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="ghost" onClick={() => navigate('/product-tour')} className="hidden sm:flex text-sm">
+          {/* Desktop Navigation */}
+          <div className="hidden sm:flex items-center gap-2 md:gap-4">
+            <Button variant="ghost" onClick={() => navigate('/product-tour')} className="text-sm">
               <Map className="mr-1.5 h-3.5 w-3.5" />
               Product Tour
             </Button>
-            <Button variant="ghost" onClick={() => navigate('/auth')} className="hidden sm:flex text-sm">
+            <Button variant="ghost" onClick={() => navigate('/auth')} className="text-sm">
               Features
             </Button>
             <Button onClick={() => navigate('/auth')} className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-sm">
@@ -97,6 +100,49 @@ export default function Index() {
               Sign In
             </Button>
           </div>
+
+          {/* Mobile Hamburger Menu */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild className="sm:hidden">
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[280px] bg-background">
+              <div className="flex flex-col gap-4 mt-8">
+                <img 
+                  src={eduflowLogo} 
+                  alt="EduFlow" 
+                  className="h-10 w-auto mb-4" 
+                />
+                <Button 
+                  variant="ghost" 
+                  onClick={() => { navigate('/product-tour'); setMobileMenuOpen(false); }} 
+                  className="justify-start text-base"
+                >
+                  <Map className="mr-2 h-4 w-4" />
+                  Product Tour
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => { navigate('/auth'); setMobileMenuOpen(false); }} 
+                  className="justify-start text-base"
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Features
+                </Button>
+                <div className="border-t my-2" />
+                <Button 
+                  onClick={() => { navigate('/auth'); setMobileMenuOpen(false); }} 
+                  className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
+                >
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Sign In
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
 
