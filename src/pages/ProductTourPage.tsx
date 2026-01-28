@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Calendar, LogIn, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Calendar, LogIn, ArrowLeft, CheckCircle2, CalendarPlus } from 'lucide-react';
 
 // Import all product tour components
 import { HeroSection3D } from '@/components/product-tour/HeroSection3D';
@@ -17,6 +17,7 @@ import { ROICalculator } from '@/components/product-tour/ROICalculator';
 import { TestimonialCarousel } from '@/components/product-tour/TestimonialCarousel';
 import { FAQSection } from '@/components/product-tour/FAQSection';
 import eduflowLogo from '@/assets/eduflow-logo.png';
+import { FloatingContactButton, InquiryFormDialog } from '@/components/lead-generation';
 
 // SEO metadata for the Product Tour page
 const PAGE_META = {
@@ -146,10 +147,18 @@ export default function ProductTourPage() {
             alt="EduFlow" 
             className="h-16 md:h-20 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-110 hover:drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300 cursor-pointer" 
           />
-          <Button onClick={() => navigate('/auth')} className="bg-gradient-to-r from-primary to-secondary hover:opacity-90">
-            <LogIn className="mr-2 h-4 w-4" />
-            Sign In
-          </Button>
+          <div className="flex items-center gap-2">
+            <InquiryFormDialog title="Book a Demo" description="Schedule a personalized demo with our team to see EduFlow in action.">
+              <Button variant="outline" className="border-primary/50 hover:bg-primary/5">
+                <CalendarPlus className="mr-2 h-4 w-4" />
+                Book Demo
+              </Button>
+            </InquiryFormDialog>
+            <Button onClick={() => navigate('/auth')} className="bg-gradient-to-r from-primary to-secondary hover:opacity-90">
+              <LogIn className="mr-2 h-4 w-4" />
+              Sign In
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -257,6 +266,9 @@ export default function ProductTourPage() {
           </Button>
         </div>
       </footer>
+
+      {/* Floating Contact Button */}
+      <FloatingContactButton />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { HelpCircle, MessageCircle } from 'lucide-react';
+import { InquiryFormDialog } from '@/components/lead-generation';
 
 const faqs = [
   {
@@ -98,7 +99,9 @@ export function FAQSection() {
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Everything you need to know about EduFlow. Can't find what you're looking for?{' '}
-            <Button variant="link" className="p-0 h-auto text-lg">Contact our team</Button>
+            <InquiryFormDialog title="Contact Our Team" description="Have a question that's not answered here? Reach out and we'll help you.">
+              <Button variant="link" className="p-0 h-auto text-lg">Contact our team</Button>
+            </InquiryFormDialog>
           </p>
         </div>
 
@@ -140,9 +143,11 @@ export function FAQSection() {
               <p className="font-medium">Still have questions?</p>
               <p className="text-sm text-muted-foreground">Our team is here to help</p>
             </div>
-            <Button className="ml-4">
-              Contact Support
-            </Button>
+            <InquiryFormDialog title="Contact Support" description="Our support team is ready to help you with any questions.">
+              <Button className="ml-4">
+                Contact Support
+              </Button>
+            </InquiryFormDialog>
           </div>
         </div>
       </div>

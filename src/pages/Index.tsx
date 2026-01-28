@@ -7,7 +7,7 @@ import {
   GraduationCap, Users, BookOpen, TrendingUp, LogIn, 
   CheckCircle2, BarChart3, Shield, Zap, Clock, Globe,
   Calendar, DollarSign, FileText, Award, Building2, Bus,
-  Heart, UserCheck, ArrowRight, Sparkles, Play, Map, Menu
+  Heart, UserCheck, ArrowRight, Sparkles, Play, Map, Menu, CalendarPlus
 } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 import eduflowLogo from '@/assets/eduflow-logo.png';
@@ -20,6 +20,7 @@ import {
   SecurityBadges,
   AwardsRecognition 
 } from '@/components/landing';
+import { FloatingContactButton, InquiryFormDialog } from '@/components/lead-generation';
 
 export default function Index() {
   const { user, loading } = useAuth();
@@ -94,7 +95,6 @@ export default function Index() {
               className="h-10 md:h-12 lg:h-14 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(59,130,246,0.6)] transition-all duration-300 cursor-pointer" 
             />
           </div>
-          {/* Desktop Navigation */}
           <div className="hidden sm:flex items-center gap-1 md:gap-2">
             <Button variant="ghost" onClick={() => scrollToSection('features')} className="text-sm">
               Features
@@ -109,6 +109,12 @@ export default function Index() {
               <Map className="mr-1.5 h-3.5 w-3.5" />
               Product Tour
             </Button>
+            <InquiryFormDialog title="Book a Demo" description="Schedule a personalized demo with our team to see EduFlow in action.">
+              <Button variant="outline" className="text-sm border-primary/50 hover:bg-primary/5">
+                <CalendarPlus className="mr-1.5 h-3.5 w-3.5" />
+                Book Demo
+              </Button>
+            </InquiryFormDialog>
             <Button onClick={() => navigate('/auth')} className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-sm">
               <LogIn className="mr-1.5 h-3.5 w-3.5" />
               Sign In
@@ -162,6 +168,15 @@ export default function Index() {
                   <Map className="mr-2 h-4 w-4" />
                   Product Tour
                 </Button>
+                <InquiryFormDialog title="Book a Demo" description="Schedule a personalized demo with our team to see EduFlow in action.">
+                  <Button 
+                    variant="outline" 
+                    className="justify-start text-base border-primary/50"
+                  >
+                    <CalendarPlus className="mr-2 h-4 w-4" />
+                    Book Demo
+                  </Button>
+                </InquiryFormDialog>
                 <div className="border-t my-2" />
                 <Button 
                   onClick={() => { navigate('/auth'); setMobileMenuOpen(false); }} 
@@ -555,6 +570,9 @@ export default function Index() {
           </div>
         </div>
       </footer>
+
+      {/* Floating Contact Button */}
+      <FloatingContactButton />
     </div>
   );
 }

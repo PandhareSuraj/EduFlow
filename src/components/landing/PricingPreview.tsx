@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Sparkles, Building2, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { InquiryFormDialog } from "@/components/lead-generation";
 
 const plans = [
   {
@@ -121,17 +122,28 @@ export function PricingPreview() {
                 ))}
               </ul>
 
-              <Button 
-                onClick={() => navigate('/auth')}
-                className={`w-full ${
-                  plan.popular 
-                    ? "bg-gradient-to-r from-primary to-secondary hover:opacity-90" 
-                    : ""
-                }`}
-                variant={plan.popular ? "default" : "outline"}
-              >
-                {plan.cta}
-              </Button>
+              {plan.name === "Enterprise" ? (
+                <InquiryFormDialog title="Contact Sales" description="Let's discuss how EduFlow can be customized for your institution's unique needs.">
+                  <Button 
+                    className="w-full"
+                    variant="outline"
+                  >
+                    {plan.cta}
+                  </Button>
+                </InquiryFormDialog>
+              ) : (
+                <Button 
+                  onClick={() => navigate('/auth')}
+                  className={`w-full ${
+                    plan.popular 
+                      ? "bg-gradient-to-r from-primary to-secondary hover:opacity-90" 
+                      : ""
+                  }`}
+                  variant={plan.popular ? "default" : "outline"}
+                >
+                  {plan.cta}
+                </Button>
+              )}
             </CardContent>
           </Card>
         ))}
