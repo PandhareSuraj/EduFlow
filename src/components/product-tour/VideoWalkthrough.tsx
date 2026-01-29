@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Play, CheckCircle2, Clock, Users, Award } from 'lucide-react';
-import { EDUFLOW_INTRO_VIDEO_ID } from '@/utils/youtubeUtils';
+import { EDUFLOW_INTRO_VIDEO_ID, getYouTubeThumbnailUrl } from '@/utils/youtubeUtils';
 
 export function VideoWalkthrough() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -50,42 +50,36 @@ export function VideoWalkthrough() {
                 {/* Video Container with 16:9 Aspect Ratio */}
                 <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-secondary/20">
                   {!isPlaying ? (
-                    /* Thumbnail with Play Button */
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      {/* Background Pattern */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10" />
+                    /* YouTube Thumbnail with Play Button */
+                    <div className="absolute inset-0 flex items-center justify-center group cursor-pointer" onClick={() => setIsPlaying(true)}>
+                      {/* YouTube Thumbnail */}
+                      <img
+                        src={getYouTubeThumbnailUrl(videoId)}
+                        alt="EduFlow Demo Video Thumbnail"
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                      />
                       
-                      {/* Mock Dashboard Preview */}
-                      <div className="absolute inset-4 bg-background/90 rounded-lg shadow-lg overflow-hidden">
-                        <div className="h-8 bg-muted flex items-center px-3 gap-2">
-                          <div className="flex gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
-                          </div>
-                          <div className="text-xs text-muted-foreground">EduFlow Demo</div>
-                        </div>
-                        <div className="p-4 grid grid-cols-3 gap-3">
-                          <div className="col-span-2 h-20 bg-primary/10 rounded animate-pulse" />
-                          <div className="h-20 bg-secondary/10 rounded animate-pulse" />
-                          <div className="h-16 bg-muted rounded animate-pulse" />
-                          <div className="h-16 bg-muted rounded animate-pulse" />
-                          <div className="h-16 bg-muted rounded animate-pulse" />
-                        </div>
-                      </div>
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
                       {/* Play Button Overlay */}
                       <Button
                         size="lg"
-                        onClick={() => setIsPlaying(true)}
-                        className="absolute z-10 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full w-20 h-20 shadow-glow group"
+                        className="absolute z-10 bg-primary/90 hover:bg-primary text-primary-foreground rounded-full w-20 h-20 shadow-glow group-hover:scale-110 transition-transform"
                       >
-                        <Play className="h-8 w-8 ml-1 group-hover:scale-110 transition-transform" fill="currentColor" />
+                        <Play className="h-8 w-8 ml-1" fill="currentColor" />
                       </Button>
 
                       {/* Duration Badge */}
-                      <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded text-sm font-medium">
+                      <div className="absolute bottom-4 right-4 bg-black/80 text-white px-3 py-1 rounded text-sm font-medium">
                         5:00
+                      </div>
+                      
+                      {/* Video Title Overlay */}
+                      <div className="absolute bottom-4 left-4 text-white">
+                        <p className="font-semibold text-lg drop-shadow-lg">EduFlow Platform Overview</p>
+                        <p className="text-sm text-white/80">See all features in action</p>
                       </div>
                     </div>
                   ) : (
