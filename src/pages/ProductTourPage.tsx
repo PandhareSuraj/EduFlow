@@ -133,6 +133,14 @@ export default function ProductTourPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Skip Link for keyboard navigation */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        Skip to main content
+      </a>
+
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -163,8 +171,10 @@ export default function ProductTourPage() {
         </div>
       </header>
 
-      {/* 1. Hero Section with 3D Elements */}
-      <HeroSection3D />
+      {/* Main Content */}
+      <main id="main-content">
+        {/* 1. Hero Section with 3D Elements */}
+        <HeroSection3D />
 
       {/* 2. Trust Logos Banner */}
       <TrustLogos />
@@ -254,6 +264,7 @@ export default function ProductTourPage() {
           </Card>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="border-t bg-muted/30 py-8">
