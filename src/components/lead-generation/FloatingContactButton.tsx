@@ -11,9 +11,10 @@ export function FloatingContactButton() {
       >
         <Button
           size="lg"
+          aria-label="Contact us - Open inquiry form"
           className="h-14 w-14 rounded-full bg-gradient-to-r from-primary to-secondary shadow-glow hover:shadow-elegant hover:scale-110 transition-all duration-300"
         >
-          <MessageCircle className="h-6 w-6" />
+          <MessageCircle className="h-6 w-6" aria-hidden="true" />
           <span className="sr-only">Contact Us</span>
         </Button>
       </InquiryFormDialog>

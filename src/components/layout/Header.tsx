@@ -84,7 +84,7 @@ export function Header() {
           {!isMobile && (
             <div className="flex items-center space-x-3">
               {logoUrl ? (
-                <img src={logoUrl} alt={`${collegeName} Logo`} className="h-10 w-10 object-contain" />
+                <img src={logoUrl} alt={`${collegeName} Logo`} loading="lazy" className="h-10 w-10 object-contain" />
               ) : (
                 <School className="h-8 w-8 text-primary" />
               )}
@@ -170,10 +170,10 @@ export function Header() {
         </div>
         
         <div className="flex items-center space-x-2 sm:space-x-4">
-          {isMobile && (
+{isMobile && (
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Search">
                   <Search className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>

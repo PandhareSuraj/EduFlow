@@ -300,6 +300,8 @@ export function ScreenshotShowcase() {
                       <img 
                         src={activeScreen.screenshot} 
                         alt={`${activeScreen.title} - EduFlow Screenshot`}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-auto object-cover animate-fade-in"
                         key={activeScreen.id}
                       />
