@@ -1,188 +1,143 @@
 
+# Add Intro Video & Replace YouTube Links
 
-# Lead Generation System Upgrade
+## Objective
+Integrate the EduFlow intro video (https://youtu.be/JUJ-AqucUlY, video ID: `JUJ-AqucUlY`) across the platform by replacing placeholder videos and adding new intro video touchpoints.
 
-## Overview
-This plan integrates an external Inquiry API across the entire EduFlow platform to centralize lead capture from multiple touchpoints. The system will send leads to a central Supabase function endpoint with automatic source tracking (identifying leads as coming from `eduflow_platform`).
+## Video ID Extraction
+- URL: `https://youtu.be/JUJ-AqucUlY`
+- Extracted Video ID: `JUJ-AqucUlY`
 
-## Architecture
-
-```text
-+---------------------------+      +---------------------------+
-|   Landing Pages           |      |   Shared Components       |
-|  - Index.tsx              |      |  - InquiryFormDialog      |
-|  - ProductTourPage.tsx    |  ->  |  - FloatingContactButton  |
-|  - FAQSection.tsx         |      |  - Navbar CTA Button      |
-+---------------------------+      +---------------------------+
-              |                                  |
-              v                                  v
-        +------------------------------------------+
-        |          API Helper (utils/api.ts)       |
-        |   - submitInquiry() function             |
-        |   - Zod validation                       |
-        |   - Error mapping                        |
-        +------------------------------------------+
-                          |
-                          v
-        +------------------------------------------+
-        |  External API Endpoint                   |
-        |  POST /submit-inquiry                    |
-        +------------------------------------------+
-```
-
-## Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/utils/inquiryApi.ts` | API helper with types, validation, and submission logic |
-| `src/components/lead-generation/InquiryFormDialog.tsx` | Reusable modal form component |
-| `src/components/lead-generation/FloatingContactButton.tsx` | Sticky FAB in bottom-right corner |
-| `src/components/lead-generation/index.ts` | Barrel export file |
+---
 
 ## Files to Modify
 
-| File | Changes |
-|------|---------|
-| `src/pages/Index.tsx` | Add "Book Demo" button to navbar + import FloatingContactButton |
-| `src/pages/ProductTourPage.tsx` | Add "Book Demo" button to header + import FloatingContactButton |
-| `src/components/product-tour/FAQSection.tsx` | Wire "Contact Support" button to open InquiryFormDialog |
-| `src/components/landing/PricingPreview.tsx` | Change Enterprise "Contact Sales" to open InquiryFormDialog |
-| `src/lib/validationSchemas.ts` | Add new inquiryFormSchema for the external API |
+| File | Change |
+|------|--------|
+| `src/components/product-tour/VideoWalkthrough.tsx` | Replace placeholder video ID with new intro video |
+| `src/utils/youtubeUtils.ts` | Add constant for default/intro video ID |
+| `src/pages/Index.tsx` | Add intro video modal triggered by "Watch Demo" button |
+| `src/components/product-tour/HeroSection3D.tsx` | Add video playback option to "Start Interactive Demo" |
 
 ---
 
-## Technical Details
+## Implementation Details
 
-### 1. API Helper (`src/utils/inquiryApi.ts`)
+### 1. Update YouTube Utils (`src/utils/youtubeUtils.ts`)
 
-**Type definitions:**
+Add a centralized constant for the default intro video:
+
 ```typescript
-export interface InquiryPayload {
-  contact_person: string;  // Required, 2-100 chars
-  phone: string;           // Required, 10-15 digits
-  source: string;          // Auto-set to "eduflow_platform"
-  email?: string;          // Optional, valid email
-  company_name?: string;   // Optional (institution name)
-  message?: string;        // Optional, max 2000 chars
-  priority: string;        // Default: "medium"
+// Default EduFlow intro video ID
+export const EDUFLOW_INTRO_VIDEO_ID = 'JUJ-AqucUlY';
+export const EDUFLOW_INTRO_VIDEO_URL = 'https://youtu.be/JUJ-AqucUlY';
+```
+
+This creates a single source of truth for the intro video across the platform.
+
+### 2. Replace Placeholder in VideoWalkthrough
+
+**File:** `src/components/product-tour/VideoWalkthrough.tsx`
+
+**Current (Line 11):**
+```typescript
+const videoId = 'dQw4w9WgXcQ'; // Placeholder - replace with actual demo video
+```
+
+**Updated:**
+```typescript
+import { EDUFLOW_INTRO_VIDEO_ID } from '@/utils/youtubeUtils';
+// ...
+const videoId = EDUFLOW_INTRO_VIDEO_ID;
+```
+
+### 3. Add Intro Video Modal to Landing Page
+
+**File:** `src/pages/Index.tsx`
+
+Create an inline video dialog component or use a reusable `IntroVideoDialog`:
+- Triggered by clicking "Watch Demo" button in hero section
+- Displays YouTube embed in a modal with 16:9 aspect ratio
+- Includes close button and accessible focus handling
+
+**Changes:**
+- Add state: `const [videoModalOpen, setVideoModalOpen] = useState(false);`
+- Modify "Watch Demo" button to open modal instead of navigating
+- Add Dialog component with iframe embed
+
+### 4. Enhance HeroSection3D with Video Option
+
+**File:** `src/components/product-tour/HeroSection3D.tsx`
+
+Add a secondary action or modify "Start Interactive Demo" to optionally show the intro video:
+- Keep existing scroll behavior as primary action
+- Add a "Watch Video" floating element or secondary button
+
+---
+
+## New Component: IntroVideoDialog
+
+Create a reusable dialog component for playing the intro video:
+
+**File:** `src/components/videos/IntroVideoDialog.tsx`
+
+```typescript
+interface IntroVideoDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export interface InquiryError {
-  field: string;
-  message: string;
+export function IntroVideoDialog({ open, onOpenChange }: IntroVideoDialogProps) {
+  // Uses EDUFLOW_INTRO_VIDEO_ID from youtubeUtils
+  // 16:9 aspect ratio iframe
+  // Accessible dialog with proper focus management
 }
 ```
 
-**Zod validation schema:**
-```typescript
-const inquirySchema = z.object({
-  contact_person: z.string().min(2).max(100),
-  phone: z.string().regex(/^\d{10,15}$/),
-  email: z.string().email().optional().or(z.literal('')),
-  company_name: z.string().optional(),
-  message: z.string().max(2000).optional(),
-});
+---
+
+## Summary of Changes
+
+```text
+src/
+├── utils/
+│   └── youtubeUtils.ts          # Add EDUFLOW_INTRO_VIDEO_ID constant
+├── components/
+│   ├── videos/
+│   │   └── IntroVideoDialog.tsx  # NEW: Reusable intro video modal
+│   └── product-tour/
+│       ├── VideoWalkthrough.tsx  # Replace placeholder video ID
+│       └── HeroSection3D.tsx     # Add video playback option
+└── pages/
+    └── Index.tsx                 # Add video modal for "Watch Demo"
 ```
 
-**Submit function:**
-- POST to `https://gcyrapukltxjohjfxgza.supabase.co/functions/v1/submit-inquiry`
-- Auto-set `source: "eduflow_platform"` and `priority: "medium"`
-- Return `{ success: true }` on 201
-- Parse 400 errors and map `details` array to field-specific errors
+---
 
-### 2. Inquiry Form Dialog (`src/components/lead-generation/InquiryFormDialog.tsx`)
+## Technical Considerations
 
-**Fields:**
-- Name (contact_person) - Required, with inline validation
-- Phone - Required, 10-15 digits, numeric input handling
-- Email - Optional, validates as email
-- Institution Name (company_name) - Optional
-- Message - Optional, max 2000 chars
+1. **Centralized Video ID**: Using a constant in `youtubeUtils.ts` makes future video updates easy (single point of change)
 
-**Features:**
-- Real-time validation with error messages under fields
-- Submit button disabled while `isSubmitting`
-- On 201 success: Show Sonner toast "Inquiry Received!", reset form, close dialog
-- On 400 error: Map API errors to inline field messages
+2. **Accessibility**: Video dialogs will include:
+   - Proper ARIA labels
+   - Focus trap within modal
+   - Keyboard escape to close
+   - Pause video on close
 
-### 3. Floating Contact Button (`src/components/lead-generation/FloatingContactButton.tsx`)
+3. **Performance**: YouTube iframes load only when dialog opens (lazy loading)
 
-- Fixed position: `bottom-6 right-6`
-- Icon: MessageCircle or Phone from lucide-react
-- Gradient background matching brand colors
-- Opens InquiryFormDialog on click
-- Only visible on public pages (Index, ProductTour)
+4. **Mobile Responsiveness**: Video maintains 16:9 aspect ratio with responsive container
 
-### 4. Navbar Integration
-
-**Index.tsx changes:**
-- Add "Book Demo" button between "Product Tour" and "Sign In" buttons
-- Desktop: Full button with CalendarPlus icon
-- Mobile: Add to hamburger menu Sheet content
-
-**ProductTourPage.tsx changes:**
-- Add "Book Demo" button to header (left of Sign In)
-
-### 5. Existing Component Updates
-
-**FAQSection.tsx:**
-- Import InquiryFormDialog
-- Wrap "Contact our team" link in DialogTrigger
-- Wrap "Contact Support" button in DialogTrigger
-
-**PricingPreview.tsx:**
-- Import InquiryFormDialog
-- Enterprise plan "Contact Sales" opens inquiry form instead of navigating
+5. **Future Database Integration**: The constant can serve as a fallback; admins can override via `tutorial_videos` table if needed
 
 ---
 
-## Implementation Sequence
+## Files Summary
 
-1. **Create API helper** (`src/utils/inquiryApi.ts`)
-   - Define types and Zod schema
-   - Implement `submitInquiry()` function
-   - Handle error mapping
-
-2. **Create InquiryFormDialog component**
-   - Build form with react-hook-form + zod
-   - Wire up to API helper
-   - Implement success/error handling
-
-3. **Create FloatingContactButton component**
-   - Fixed position styling
-   - Dialog trigger integration
-
-4. **Update landing pages**
-   - Add navbar CTA buttons
-   - Add FloatingContactButton to page layouts
-
-5. **Update existing CTAs**
-   - FAQSection contact buttons
-   - PricingPreview Enterprise plan button
-
----
-
-## Validation Rules Summary
-
-| Field | Type | Required | Validation |
-|-------|------|----------|------------|
-| contact_person | string | Yes | 2-100 characters |
-| phone | string | Yes | 10-15 digits only |
-| email | string | No | Valid email format |
-| company_name | string | No | No specific validation |
-| message | string | No | Max 2000 characters |
-| source | string | Auto | "eduflow_platform" (snake_case) |
-| priority | string | Auto | "medium" |
-
----
-
-## UI/UX Considerations
-
-- All forms use existing Tailwind theme colors
-- Consistent with Dialog/Sheet patterns already in use
-- Phone input strips non-numeric characters automatically
-- Submit button shows loading state ("Sending...")
-- Success toast uses Sonner for consistency
-- Error messages appear inline under respective fields
-- Forms reset on successful submission
-
+| Action | File |
+|--------|------|
+| Modify | `src/utils/youtubeUtils.ts` |
+| Create | `src/components/videos/IntroVideoDialog.tsx` |
+| Modify | `src/components/product-tour/VideoWalkthrough.tsx` |
+| Modify | `src/pages/Index.tsx` |
+| Modify | `src/components/product-tour/HeroSection3D.tsx` |
