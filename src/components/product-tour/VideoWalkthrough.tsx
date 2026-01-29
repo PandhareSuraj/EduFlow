@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Play, CheckCircle2, Clock, Users, Award } from 'lucide-react';
+import { EDUFLOW_INTRO_VIDEO_ID } from '@/utils/youtubeUtils';
 
 export function VideoWalkthrough() {
   const [isPlaying, setIsPlaying] = useState(false);
   
-  // Demo video - using a placeholder YouTube video ID
-  // Replace with actual EduFlow demo video when available
-  const videoId = 'dQw4w9WgXcQ'; // Placeholder - replace with actual demo video
+  // Using centralized EduFlow intro video ID
+  const videoId = EDUFLOW_INTRO_VIDEO_ID;
 
   const videoHighlights = [
     { icon: Clock, text: '5 minute overview', color: 'text-blue-500' },

@@ -21,12 +21,14 @@ import {
   AwardsRecognition 
 } from '@/components/landing';
 import { FloatingContactButton, InquiryFormDialog } from '@/components/lead-generation';
+import { IntroVideoDialog } from '@/components/videos/IntroVideoDialog';
 
 export default function Index() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [statsCount, setStatsCount] = useState({ colleges: 0, students: 0, faculty: 0, uptime: 0 });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -237,7 +239,7 @@ export default function Index() {
               <Button 
                 size="lg" 
                 variant="outline"
-                onClick={() => navigate('/product-tour')}
+                onClick={() => setVideoModalOpen(true)}
                 className="border-2 hover:bg-primary/5 group"
               >
                 <Play className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
@@ -586,6 +588,9 @@ export default function Index() {
 
       {/* Floating Contact Button */}
       <FloatingContactButton />
+
+      {/* Intro Video Modal */}
+      <IntroVideoDialog open={videoModalOpen} onOpenChange={setVideoModalOpen} />
     </div>
   );
 }
