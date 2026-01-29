@@ -144,7 +144,8 @@ export default function ProductTourPage() {
           </div>
           <img 
             src={eduflowLogo} 
-            alt="EduFlow" 
+            alt="EduFlow - Education Management Platform" 
+            loading="eager"
             className="h-16 md:h-20 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-110 hover:drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300 cursor-pointer" 
           />
           <div className="flex items-center gap-2">
@@ -258,7 +259,7 @@ export default function ProductTourPage() {
       <footer className="border-t bg-muted/30 py-8">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <img src={eduflowLogo} alt="EduFlow" className="h-6 w-auto" />
+            <img src={eduflowLogo} alt="EduFlow" loading="lazy" className="h-6 w-auto" />
           </div>
           <p>© 2025 EduFlow Platform. Built at myweb (<a href="https://www.mywebz.in" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.mywebz.in</a>)</p>
           <Button variant="ghost" size="sm" onClick={() => navigate('/')}>

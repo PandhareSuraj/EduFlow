@@ -91,7 +91,8 @@ export default function Index() {
           <div className="flex items-center gap-2">
             <img 
               src={eduflowLogo} 
-              alt="EduFlow" 
+              alt="EduFlow - Education Management Platform" 
+              loading="eager"
               className="h-10 md:h-12 lg:h-14 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(59,130,246,0.6)] transition-all duration-300 cursor-pointer" 
             />
           </div>
@@ -134,6 +135,7 @@ export default function Index() {
                 <img 
                   src={eduflowLogo} 
                   alt="EduFlow" 
+                  loading="lazy"
                   className="h-10 w-auto mb-4" 
                 />
                 <Button 
@@ -521,7 +523,7 @@ export default function Index() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <img src={eduflowLogo} alt="EduFlow" className="h-8 w-auto" />
+                <img src={eduflowLogo} alt="EduFlow" loading="lazy" className="h-8 w-auto" />
               </div>
               <p className="text-sm text-muted-foreground">
                 Complete education management solution for modern educational institutions.
