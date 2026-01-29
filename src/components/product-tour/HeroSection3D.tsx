@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, Calendar, Sparkles, Users, Building2, Award, Clock } from 'lucide-react';
+import { Play, Calendar, Sparkles, Users, Building2, Award, Clock, Video } from 'lucide-react';
 import { useState, useEffect } from 'react';
-
+import { IntroVideoDialog } from '@/components/videos/IntroVideoDialog';
 const stats = [
   { icon: Building2, value: 500, suffix: '+', label: 'Institutions' },
   { icon: Users, value: 50000, suffix: '+', label: 'Students Managed' },
@@ -51,7 +51,7 @@ function AnimatedCounter({ value, suffix, duration = 2000 }: { value: number; su
 
 export function HeroSection3D() {
   const navigate = useNavigate();
-
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
   return (
     <section className="relative overflow-hidden py-20 md:py-32 min-h-[90vh] flex items-center">
       {/* Animated Background */}
@@ -104,8 +104,17 @@ export function HeroSection3D() {
               <Button 
                 size="lg" 
                 variant="outline"
-                onClick={() => navigate('/auth')}
+                onClick={() => setVideoModalOpen(true)}
                 className="border-2 group"
+              >
+                <Video className="mr-2 h-5 w-5" />
+                Watch Video
+              </Button>
+              <Button 
+                size="lg" 
+                variant="ghost"
+                onClick={() => navigate('/auth')}
+                className="group"
               >
                 <Calendar className="mr-2 h-5 w-5" />
                 Schedule Live Demo
@@ -205,6 +214,9 @@ export function HeroSection3D() {
           ))}
         </div>
       </div>
+
+      {/* Intro Video Modal */}
+      <IntroVideoDialog open={videoModalOpen} onOpenChange={setVideoModalOpen} />
     </section>
   );
 }

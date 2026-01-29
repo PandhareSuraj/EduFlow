@@ -2,6 +2,10 @@
  * Utility functions for handling YouTube URLs and video IDs
  */
 
+// Default EduFlow intro video ID - single source of truth
+export const EDUFLOW_INTRO_VIDEO_ID = 'JUJ-AqucUlY';
+export const EDUFLOW_INTRO_VIDEO_URL = 'https://youtu.be/JUJ-AqucUlY';
+
 /**
  * Extracts YouTube video ID from various YouTube URL formats
  * Supports: youtube.com/watch?v=, youtu.be/, youtube.com/embed/
