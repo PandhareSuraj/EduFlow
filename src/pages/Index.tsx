@@ -78,6 +78,14 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
+      {/* Skip Link for keyboard navigation */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        Skip to main content
+      </a>
+
       {/* Animated Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
@@ -193,8 +201,10 @@ export default function Index() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
+      {/* Main Content */}
+      <main id="main-content">
+        {/* Hero Section */}
+        <section className="container mx-auto px-4 py-16 md:py-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8 animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
@@ -516,6 +526,7 @@ export default function Index() {
           </CardContent>
         </Card>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="border-t bg-muted/30 backdrop-blur-sm">
