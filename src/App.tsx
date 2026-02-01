@@ -8,6 +8,7 @@ import { CollegeProvider } from "@/contexts/CollegeContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Layout } from "@/components/layout/Layout";
+import { ErrorBoundary, OfflineIndicator } from "@/components/error";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import Courses from "./pages/Courses";
@@ -47,279 +48,302 @@ import Grievances from "./pages/Grievances";
 import StudentPromotion from "./pages/StudentPromotion";
 import ProductTourPage from "./pages/ProductTourPage";
 
-const queryClient = new QueryClient();
+// Configure QueryClient with retry logic and error handling
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx client errors
+        if (error && typeof error === 'object' && 'status' in error) {
+          const status = error.status as number;
+          if (status >= 400 && status < 500) {
+            return false;
+          }
+        }
+        return failureCount < 3;
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+    mutations: {
+      retry: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <CollegeProvider>
-          <ThemeProvider>
-            <Toaster />
-            <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/welcome" element={<Index />} />
-              <Route path="/product-tour" element={<ProductTourPage />} />
-              <Route path="/" element={<Index />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Dashboard />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/students" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Students />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/courses" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Courses />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/faculty" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Faculty />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/fees" element={
-                <ProtectedRoute allowedRoles={['admin', 'accountant', 'clerk']}>
-                  <Layout>
-                    <Fees />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/followups" element={
-                <ProtectedRoute allowedRoles={['admin', 'accountant', 'clerk', 'teacher']}>
-                  <Layout>
-                    <FollowUps />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/enquiries" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Enquiries />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/attendance" element={
-                <ProtectedRoute allowedRoles={['admin', 'teacher']}>
-                  <Layout>
-                    <Attendance />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/exams" element={
-                <ProtectedRoute allowedRoles={['admin', 'teacher', 'clerk']}>
-                  <Layout>
-                    <Exams />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/library" element={
-                <ProtectedRoute allowedRoles={['admin', 'teacher', 'librarian', 'student']}>
-                  <Layout>
-                    <Library />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/id-cards" element={
-                <ProtectedRoute allowedRoles={['admin', 'clerk']}>
-                  <Layout>
-                    <IDCards />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/inventory" element={
-                <ProtectedRoute allowedRoles={['admin', 'clerk', 'librarian']}>
-                  <Layout>
-                    <Inventory />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/reports" element={
-                <ProtectedRoute allowedRoles={['admin', 'teacher', 'accountant']}>
-                  <Layout>
-                    <Reports />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute requiredRole="admin">
-                  <Layout>
-                    <Settings />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/colleges" element={
-                <ProtectedRoute requiredRole="super_admin">
-                  <Layout>
-                    <CollegeManagement />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/user-management" element={
-                <ProtectedRoute requiredRole="super_admin">
-                  <Layout>
-                    <UserManagement />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/audit-trail" element={
-                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                  <Layout>
-                    <AuditTrail />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/amc-revenue" element={
-                <ProtectedRoute requiredRole="super_admin">
-                  <Layout>
-                    <AMCRevenue />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/amc-plans" element={
-                <ProtectedRoute requiredRole="super_admin">
-                  <Layout>
-                    <AMCPlans />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/subscriptions" element={
-                <ProtectedRoute requiredRole="super_admin">
-                  <Layout>
-                    <Subscriptions />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/system-analytics" element={
-                <ProtectedRoute requiredRole="super_admin">
-                  <Layout>
-                    <SystemAnalytics />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/college-performance" element={
-                <ProtectedRoute requiredRole="super_admin">
-                  <Layout>
-                    <CollegePerformance />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/multi-college-users" element={
-                <ProtectedRoute requiredRole="super_admin">
-                  <Layout>
-                    <MultiCollegeUserManagement />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/system-health" element={
-                <ProtectedRoute requiredRole="super_admin">
-                  <Layout>
-                    <SystemHealthMonitoring />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              
-              {/* Student Routes */}
-              <Route path="/student-profile" element={
-                <ProtectedRoute requiredRole="student">
-                  <Layout>
-                    <StudentProfile />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/student-course" element={
-                <ProtectedRoute requiredRole="student">
-                  <Layout>
-                    <StudentCourse />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/student-results" element={
-                <ProtectedRoute requiredRole="student">
-                  <Layout>
-                    <StudentResults />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/student-tests" element={
-                <ProtectedRoute requiredRole="student">
-                  <Layout>
-                    <StudentTests />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              
-              {/* Hostel and Transport Routes */}
-              <Route path="/hostel" element={
-                <ProtectedRoute allowedRoles={['admin', 'clerk']}>
-                  <Layout>
-                    <Hostel />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              <Route path="/transport" element={
-                <ProtectedRoute allowedRoles={['admin', 'clerk']}>
-                  <Layout>
-                    <Transport />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              
-              {/* Event Management Routes */}
-              <Route path="/events" element={
-                <ProtectedRoute allowedRoles={['super_admin', 'admin', 'teacher', 'clerk', 'student']}>
-                  <Layout>
-                    <Events />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              
-              {/* Placement Management Routes */}
-              <Route path="/placements" element={
-                <ProtectedRoute allowedRoles={['super_admin', 'admin', 'teacher', 'student']}>
-                  <Layout>
-                    <Placements />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              
-              {/* Grievance Management Routes */}
-              <Route path="/grievances" element={
-                <ProtectedRoute allowedRoles={['super_admin', 'admin', 'teacher', 'clerk', 'student']}>
-                  <Layout>
-                    <Grievances />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              
-              {/* Student Promotion Routes */}
-              <Route path="/student-promotion" element={
-                <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
-                  <StudentPromotion />
-                </ProtectedRoute>
-              } />
-              
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-          </ThemeProvider>
-        </CollegeProvider>
-      </AuthProvider>
-    </TooltipProvider>
+    <ErrorBoundary>
+      <TooltipProvider>
+        <AuthProvider>
+          <CollegeProvider>
+            <ThemeProvider>
+              <Toaster />
+              <Sonner />
+              <OfflineIndicator />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/welcome" element={<Index />} />
+                  <Route path="/product-tour" element={<ProductTourPage />} />
+                  <Route path="/" element={<Index />} />
+                  <Route path="/dashboard" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Dashboard />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/students" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Students />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/courses" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Courses />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/faculty" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Faculty />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/fees" element={
+                    <ProtectedRoute allowedRoles={['admin', 'accountant', 'clerk']}>
+                      <Layout>
+                        <Fees />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/followups" element={
+                    <ProtectedRoute allowedRoles={['admin', 'accountant', 'clerk', 'teacher']}>
+                      <Layout>
+                        <FollowUps />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/enquiries" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Enquiries />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/attendance" element={
+                    <ProtectedRoute allowedRoles={['admin', 'teacher']}>
+                      <Layout>
+                        <Attendance />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/exams" element={
+                    <ProtectedRoute allowedRoles={['admin', 'teacher', 'clerk']}>
+                      <Layout>
+                        <Exams />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/library" element={
+                    <ProtectedRoute allowedRoles={['admin', 'teacher', 'librarian', 'student']}>
+                      <Layout>
+                        <Library />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/id-cards" element={
+                    <ProtectedRoute allowedRoles={['admin', 'clerk']}>
+                      <Layout>
+                        <IDCards />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/inventory" element={
+                    <ProtectedRoute allowedRoles={['admin', 'clerk', 'librarian']}>
+                      <Layout>
+                        <Inventory />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/reports" element={
+                    <ProtectedRoute allowedRoles={['admin', 'teacher', 'accountant']}>
+                      <Layout>
+                        <Reports />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/settings" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <Layout>
+                        <Settings />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/colleges" element={
+                    <ProtectedRoute requiredRole="super_admin">
+                      <Layout>
+                        <CollegeManagement />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/user-management" element={
+                    <ProtectedRoute requiredRole="super_admin">
+                      <Layout>
+                        <UserManagement />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/audit-trail" element={
+                    <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                      <Layout>
+                        <AuditTrail />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/amc-revenue" element={
+                    <ProtectedRoute requiredRole="super_admin">
+                      <Layout>
+                        <AMCRevenue />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/amc-plans" element={
+                    <ProtectedRoute requiredRole="super_admin">
+                      <Layout>
+                        <AMCPlans />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/subscriptions" element={
+                    <ProtectedRoute requiredRole="super_admin">
+                      <Layout>
+                        <Subscriptions />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/system-analytics" element={
+                    <ProtectedRoute requiredRole="super_admin">
+                      <Layout>
+                        <SystemAnalytics />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/college-performance" element={
+                    <ProtectedRoute requiredRole="super_admin">
+                      <Layout>
+                        <CollegePerformance />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/multi-college-users" element={
+                    <ProtectedRoute requiredRole="super_admin">
+                      <Layout>
+                        <MultiCollegeUserManagement />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/system-health" element={
+                    <ProtectedRoute requiredRole="super_admin">
+                      <Layout>
+                        <SystemHealthMonitoring />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Student Routes */}
+                  <Route path="/student-profile" element={
+                    <ProtectedRoute requiredRole="student">
+                      <Layout>
+                        <StudentProfile />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/student-course" element={
+                    <ProtectedRoute requiredRole="student">
+                      <Layout>
+                        <StudentCourse />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/student-results" element={
+                    <ProtectedRoute requiredRole="student">
+                      <Layout>
+                        <StudentResults />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/student-tests" element={
+                    <ProtectedRoute requiredRole="student">
+                      <Layout>
+                        <StudentTests />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Hostel and Transport Routes */}
+                  <Route path="/hostel" element={
+                    <ProtectedRoute allowedRoles={['admin', 'clerk']}>
+                      <Layout>
+                        <Hostel />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/transport" element={
+                    <ProtectedRoute allowedRoles={['admin', 'clerk']}>
+                      <Layout>
+                        <Transport />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Event Management Routes */}
+                  <Route path="/events" element={
+                    <ProtectedRoute allowedRoles={['super_admin', 'admin', 'teacher', 'clerk', 'student']}>
+                      <Layout>
+                        <Events />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Placement Management Routes */}
+                  <Route path="/placements" element={
+                    <ProtectedRoute allowedRoles={['super_admin', 'admin', 'teacher', 'student']}>
+                      <Layout>
+                        <Placements />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Grievance Management Routes */}
+                  <Route path="/grievances" element={
+                    <ProtectedRoute allowedRoles={['super_admin', 'admin', 'teacher', 'clerk', 'student']}>
+                      <Layout>
+                        <Grievances />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Student Promotion Routes */}
+                  <Route path="/student-promotion" element={
+                    <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                      <StudentPromotion />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </ThemeProvider>
+          </CollegeProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </ErrorBoundary>
   </QueryClientProvider>
 );
 

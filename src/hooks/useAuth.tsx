@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -20,6 +21,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const { toast } = useToast();
+  const intentionalSignOut = useRef(false);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -29,6 +32,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Handle session expiration (auto sign out not initiated by user)
+        if (event === 'SIGNED_OUT' && !intentionalSignOut.current) {
+          toast({
+            title: "Session Expired",
+            description: "Your session has expired. Please log in again.",
+            variant: "destructive",
+          });
+        }
+        
+        // Reset the intentional sign out flag
+        if (event === 'SIGNED_OUT') {
+          intentionalSignOut.current = false;
+        }
+        
+        // Handle token refresh events
+        if (event === 'TOKEN_REFRESHED') {
+          console.debug('Token refreshed successfully');
+        }
         
         // Defer role fetching to avoid callback blocking
         if (session?.user) {
@@ -55,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [toast]);
 
   const fetchUserRole = async (userId: string) => {
     try {
@@ -101,12 +123,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       console.log('Attempting to sign out...');
+      intentionalSignOut.current = true; // Mark as intentional
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Sign out error:', error);
         // Even if there's an error, clear local state
       }
       console.log('Sign out completed');
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
     } catch (error) {
       console.error('Sign out exception:', error);
     } finally {
