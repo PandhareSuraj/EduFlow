@@ -1,521 +1,682 @@
 
-
-# Perfect Mobile Experience Implementation
+# Data Export and Backup Functionality Implementation
 
 ## Overview
 
-This plan implements comprehensive mobile optimizations for the EduFlow application to ensure a flawless experience on 375px viewports (iPhone SE/mini) and larger mobile devices. It addresses touch targets, navigation, horizontal scrolling, font sizes, responsive tables, forms with proper keyboard types, and adds mobile-specific enhancements like bottom navigation and pull-to-refresh.
+This plan implements comprehensive data export and backup functionality across the EduFlow application, adding "Export to Excel" and "Export to PDF" buttons to key pages with date range filters, progress indicators, and print stylesheets for clean printing.
 
 ---
 
 ## Current State Analysis
 
-| Area | Current Status | Gap |
-|------|---------------|-----|
-| Mobile Hook | useIsMobile at 768px breakpoint | Working correctly |
-| Hamburger Menu | Implemented on Index.tsx landing | Missing in-app mobile nav |
-| Sidebar Mobile | Uses Sheet drawer on mobile | Works but needs touch area improvements |
-| Touch Targets | Buttons h-10 (40px), some h-9 (36px) | Need h-11 (44px) minimum for mobile |
-| Tables | overflow-auto wrapper exists | Not explicitly styled for mobile scroll |
-| Font Sizes | Default text-sm (14px) | Need 16px minimum for mobile inputs |
-| Bottom Navigation | Not implemented | Key actions not easily accessible |
-| Form Keyboards | Mostly missing inputMode | No tel/email/number keyboard hints |
-| Pull-to-Refresh | Not implemented | No native-feeling refresh on lists |
-| Dialog on Mobile | Centered modal | Should use Drawer for better UX |
+| Feature | Current Status | Gap |
+|---------|---------------|-----|
+| Excel Export | Exists in `reportGenerator.ts` | Not integrated into all pages |
+| PDF Export | Exists in `reportGenerator.ts` and `pdfGenerator.ts` | Not integrated into all pages |
+| Date Range Filters | Exists in `ReportFilters.tsx` | Not available on individual pages |
+| Export Progress | Not implemented | No visual feedback during export |
+| Print Stylesheet | Not implemented | No `@media print` styles |
+| CSV Export | Basic implementation on Students/Fees | Should be upgraded to Excel |
+| Fee Receipts PDF | Basic in `PaymentReceipt.tsx` | Uses basic window.print(), needs proper PDF |
+| Certificates | Uses `reportGenerator.ts` | Already implemented in Exams.tsx |
 
-### Key Files Requiring Changes
+### Existing Export Infrastructure
+- **`src/utils/reportGenerator.ts`**: Has `ReportGenerator.generatePDF()` and `ReportGenerator.generateExcel()` with predefined configs
+- **`src/utils/pdfGenerator.ts`**: ID card specific PDF generation
+- **xlsx library**: Already installed and used
+- **jspdf + jspdf-autotable**: Already installed and used
 
-**Core Components:**
-- `src/components/ui/button.tsx` - Touch target size adjustments
-- `src/components/ui/input.tsx` - Font size and inputMode support
-- `src/components/ui/table.tsx` - Mobile scroll enhancements
-- `src/components/ui/dialog.tsx` - Responsive modal/drawer hybrid
-- `src/components/layout/Layout.tsx` - Bottom nav integration
+---
 
-**New Components:**
-- `src/components/mobile/BottomNavigation.tsx` - Mobile tab bar
-- `src/components/mobile/PullToRefresh.tsx` - Pull-to-refresh wrapper
-- `src/components/mobile/MobileTableWrapper.tsx` - Horizontal scroll indicator
-- `src/components/mobile/ResponsiveDialog.tsx` - Dialog/Drawer hybrid
+## Files to Create/Modify
 
-**Pages to Update:**
-- All pages with tables (Students, Fees, Faculty, Library, etc.)
-- All pages with forms needing keyboard types
+| Action | File | Purpose |
+|--------|------|---------|
+| Create | `src/components/exports/ExportButton.tsx` | Unified export button with progress |
+| Create | `src/components/exports/DateRangeExportDialog.tsx` | Dialog with date range filter before export |
+| Create | `src/components/exports/ExportProgress.tsx` | Progress indicator component |
+| Create | `src/components/exports/pdfTemplates/StudentReportCard.tsx` | Student report card PDF template |
+| Create | `src/components/exports/pdfTemplates/FeeReceiptPDF.tsx` | Professional fee receipt PDF |
+| Create | `src/components/exports/pdfTemplates/CertificatePDF.tsx` | Enhanced certificate template |
+| Create | `src/components/exports/index.ts` | Barrel exports |
+| Modify | `src/utils/reportGenerator.ts` | Add new report configs and async support |
+| Modify | `src/index.css` | Add print stylesheet |
+| Modify | `src/pages/Students.tsx` | Replace CSV with Excel export |
+| Modify | `src/pages/Fees.tsx` | Replace CSV with Excel, add PDF receipts |
+| Modify | `src/pages/Attendance.tsx` | Add Excel export buttons |
+| Modify | `src/pages/Exams.tsx` | Enhance existing exports |
+| Modify | `src/components/forms/PaymentReceipt.tsx` | Use proper PDF generation |
 
 ---
 
 ## Implementation Details
 
-### 1. Enhanced Button Component with Touch Targets
+### 1. ExportButton Component
 
-Update button sizes to meet 44px minimum:
-
-```typescript
-// src/components/ui/button.tsx
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ...",
-  {
-    variants: {
-      size: {
-        default: "h-10 md:h-10 min-h-[44px] md:min-h-0 px-4 py-2",
-        sm: "h-9 md:h-9 min-h-[44px] md:min-h-0 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0",
-      },
-    },
-  }
-)
-```
-
-### 2. Input Component with Mobile Optimizations
-
-Ensure 16px font (prevents iOS zoom) and add inputMode support:
+A reusable export button with loading state and format selection:
 
 ```typescript
-// src/components/ui/input.tsx
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, inputMode, ...props }, ref) => {
-    // Auto-set inputMode based on type if not provided
-    const derivedInputMode = inputMode || 
-      (type === 'email' ? 'email' : 
-       type === 'tel' ? 'tel' : 
-       type === 'number' ? 'numeric' : 
-       type === 'url' ? 'url' : undefined);
-
-    return (
-      <input
-        type={type}
-        inputMode={derivedInputMode}
-        className={cn(
-          "flex h-10 md:h-10 min-h-[44px] md:min-h-0 w-full rounded-md border border-input bg-background px-3 py-2",
-          // 16px font on mobile to prevent zoom, 14px on desktop
-          "text-base md:text-sm",
-          "...",
-          className
-        )}
-        ref={ref}
-        {...props}
-      />
-    )
-  }
-)
-```
-
-### 3. Mobile-Optimized Table Component
-
-Add horizontal scroll indicators and mobile-friendly styling:
-
-```typescript
-// src/components/mobile/MobileTableWrapper.tsx
-interface MobileTableWrapperProps {
-  children: React.ReactNode;
-  showScrollHint?: boolean;
-}
-
-export function MobileTableWrapper({ children, showScrollHint = true }: MobileTableWrapperProps) {
-  const [canScrollRight, setCanScrollRight] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile();
-
-  useEffect(() => {
-    const checkScroll = () => {
-      if (scrollRef.current) {
-        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-        setCanScrollRight(scrollWidth > clientWidth && scrollLeft < scrollWidth - clientWidth - 5);
-      }
-    };
-    checkScroll();
-    // Add listener for scroll and resize
-  }, []);
-
-  return (
-    <div className="relative">
-      <div 
-        ref={scrollRef}
-        className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0"
-        onScroll={checkScroll}
-      >
-        {children}
-      </div>
-      {/* Scroll hint gradient */}
-      {isMobile && canScrollRight && showScrollHint && (
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
-      )}
-    </div>
-  );
-}
-```
-
-Update the base Table component:
-
-```typescript
-// src/components/ui/table.tsx
-const Table = React.forwardRef<HTMLTableElement, TableProps>(
-  ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-x-auto -webkit-overflow-scrolling-touch">
-      <table
-        ref={ref}
-        className={cn(
-          "w-full caption-bottom text-sm",
-          // Minimum width to ensure readability on mobile
-          "min-w-[600px] md:min-w-0",
-          className
-        )}
-        {...props}
-      />
-    </div>
-  )
-)
-```
-
-### 4. Bottom Navigation Component
-
-Create a persistent bottom nav for key actions on mobile:
-
-```typescript
-// src/components/mobile/BottomNavigation.tsx
-interface BottomNavItem {
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  href: string;
-  badge?: number;
-}
-
-export function BottomNavigation() {
-  const isMobile = useIsMobile();
-  const { userRole } = useAuth();
-  const location = useLocation();
-  
-  if (!isMobile) return null;
-  
-  const items = useMemo(() => {
-    // Return role-specific nav items
-    if (userRole === 'student') {
-      return [
-        { label: 'Home', icon: Home, href: '/dashboard' },
-        { label: 'Courses', icon: BookOpen, href: '/student-course' },
-        { label: 'Results', icon: FileText, href: '/student-results' },
-        { label: 'Tests', icon: ClipboardCheck, href: '/student-tests' },
-        { label: 'Profile', icon: User, href: '/student-profile' },
-      ];
-    }
-    // Admin and other roles
-    return [
-      { label: 'Home', icon: Home, href: '/dashboard' },
-      { label: 'Students', icon: Users, href: '/students' },
-      { label: 'Fees', icon: CreditCard, href: '/fees' },
-      { label: 'Courses', icon: BookOpen, href: '/courses' },
-      { label: 'More', icon: MoreHorizontal, href: '#more' }, // Opens sidebar
-    ];
-  }, [userRole]);
-
-  return (
-    <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border safe-area-inset-bottom"
-      role="navigation"
-      aria-label="Main navigation"
-    >
-      <div className="flex items-center justify-around h-16 pb-safe">
-        {items.map((item) => (
-          <NavLink
-            key={item.href}
-            to={item.href}
-            className={cn(
-              "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2",
-              "touch-manipulation active:scale-95 transition-transform",
-              isActive ? "text-primary" : "text-muted-foreground"
-            )}
-          >
-            <item.icon className="h-5 w-5" />
-            <span className="text-xs mt-1">{item.label}</span>
-          </NavLink>
-        ))}
-      </div>
-    </nav>
-  );
-}
-```
-
-### 5. Pull-to-Refresh Component
-
-Create a native-feeling pull-to-refresh for list pages:
-
-```typescript
-// src/components/mobile/PullToRefresh.tsx
-interface PullToRefreshProps {
-  children: React.ReactNode;
-  onRefresh: () => Promise<void>;
+// src/components/exports/ExportButton.tsx
+interface ExportButtonProps {
+  data: any[];
+  columns: ExportColumn[];
+  filename: string;
+  title: string;
+  formats?: ('excel' | 'pdf' | 'csv')[];
+  filters?: Record<string, any>;
+  summary?: ExportSummary;
+  onExportStart?: () => void;
+  onExportComplete?: () => void;
   disabled?: boolean;
 }
 
-export function PullToRefresh({ children, onRefresh, disabled }: PullToRefreshProps) {
-  const [isPulling, setIsPulling] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const startY = useRef(0);
-  const isMobile = useIsMobile();
-  
-  const threshold = 80;
+export function ExportButton({
+  data,
+  columns,
+  filename,
+  title,
+  formats = ['excel', 'pdf'],
+  filters,
+  summary,
+  onExportStart,
+  onExportComplete,
+  disabled
+}: ExportButtonProps) {
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportFormat, setExportFormat] = useState<string | null>(null);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (disabled || isRefreshing) return;
-    if (containerRef.current?.scrollTop === 0) {
-      startY.current = e.touches[0].clientY;
-      setIsPulling(true);
+  const handleExport = async (format: 'excel' | 'pdf' | 'csv') => {
+    setIsExporting(true);
+    setExportFormat(format);
+    onExportStart?.();
+
+    try {
+      const dateStr = format(new Date(), 'yyyy-MM-dd');
+      const safeFilename = `${filename}_${dateStr}`;
+
+      if (format === 'excel') {
+        await exportToExcel(data, columns, safeFilename, title, filters, summary);
+      } else if (format === 'pdf') {
+        await exportToPDF(data, columns, safeFilename, title, filters, summary);
+      } else {
+        await exportToCSV(data, columns, safeFilename);
+      }
+
+      toast({ title: "Export Successful", description: `${title} exported as ${format.toUpperCase()}` });
+    } catch (error) {
+      toast({ title: "Export Failed", description: "Please try again", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+      setExportFormat(null);
+      onExportComplete?.();
     }
   };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isPulling || disabled) return;
-    const currentY = e.touches[0].clientY;
-    const distance = Math.min(currentY - startY.current, 120);
-    if (distance > 0) {
-      setPullDistance(distance);
-    }
-  };
-
-  const handleTouchEnd = async () => {
-    if (!isPulling) return;
-    setIsPulling(false);
-    
-    if (pullDistance >= threshold) {
-      setIsRefreshing(true);
-      await onRefresh();
-      setIsRefreshing(false);
-    }
-    
-    setPullDistance(0);
-  };
-
-  if (!isMobile) return <>{children}</>;
 
   return (
-    <div
-      ref={containerRef}
-      className="relative overflow-y-auto h-full"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* Pull indicator */}
-      <div 
-        className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center transition-transform"
-        style={{ 
-          transform: `translateY(${pullDistance - 40}px)`,
-          opacity: pullDistance / threshold 
-        }}
-      >
-        {isRefreshing ? (
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        ) : (
-          <ArrowDown className={cn(
-            "h-6 w-6 transition-transform",
-            pullDistance >= threshold && "rotate-180"
-          )} />
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" disabled={disabled || isExporting || data.length === 0}>
+          {isExporting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        {formats.includes('excel') && (
+          <DropdownMenuItem onClick={() => handleExport('excel')}>
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Export to Excel (.xlsx)
+          </DropdownMenuItem>
         )}
-      </div>
-      
-      {/* Content with transform for pull effect */}
-      <div style={{ transform: `translateY(${pullDistance * 0.5}px)` }}>
-        {children}
-      </div>
-    </div>
+        {formats.includes('pdf') && (
+          <DropdownMenuItem onClick={() => handleExport('pdf')}>
+            <FileText className="mr-2 h-4 w-4" />
+            Export to PDF
+          </DropdownMenuItem>
+        )}
+        {formats.includes('csv') && (
+          <DropdownMenuItem onClick={() => handleExport('csv')}>
+            <FileDown className="mr-2 h-4 w-4" />
+            Export to CSV
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 ```
 
-### 6. Responsive Dialog Component
+### 2. DateRangeExportDialog Component
 
-Create a hybrid that uses Dialog on desktop and Drawer on mobile:
+Dialog with date range picker for filtering exports:
 
 ```typescript
-// src/components/mobile/ResponsiveDialog.tsx
-interface ResponsiveDialogProps {
+// src/components/exports/DateRangeExportDialog.tsx
+interface DateRangeExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  description?: string;
-  children: React.ReactNode;
-  className?: string;
+  onExport: (format: 'excel' | 'pdf', dateRange: { from: Date; to: Date }) => Promise<void>;
 }
 
-export function ResponsiveDialog({
+export function DateRangeExportDialog({
   open,
   onOpenChange,
   title,
-  description,
-  children,
-  className
-}: ResponsiveDialogProps) {
-  const isMobile = useIsMobile();
+  onExport
+}: DateRangeExportDialogProps) {
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
+    from: startOfMonth(new Date()),
+    to: new Date()
+  });
+  const [isExporting, setIsExporting] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  if (isMobile) {
-    return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className={cn("max-h-[85vh]", className)}>
-          <DrawerHeader>
-            <DrawerTitle>{title}</DrawerTitle>
-            {description && <DrawerDescription>{description}</DrawerDescription>}
-          </DrawerHeader>
-          <div className="overflow-y-auto px-4 pb-4">
-            {children}
-          </div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
+  const handleExport = async (format: 'excel' | 'pdf') => {
+    setIsExporting(true);
+    setProgress(0);
+    
+    // Simulate progress for UX
+    const progressInterval = setInterval(() => {
+      setProgress(prev => Math.min(prev + 10, 90));
+    }, 100);
+
+    try {
+      await onExport(format, dateRange);
+      setProgress(100);
+    } finally {
+      clearInterval(progressInterval);
+      setTimeout(() => {
+        setIsExporting(false);
+        setProgress(0);
+        onOpenChange(false);
+      }, 500);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={className}>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
+          <DialogTitle>Export {title}</DialogTitle>
+          <DialogDescription>
+            Select a date range and export format
+          </DialogDescription>
         </DialogHeader>
-        {children}
+        
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>From Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {format(dateRange.from, 'PPP')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent>
+                  <Calendar
+                    mode="single"
+                    selected={dateRange.from}
+                    onSelect={(date) => date && setDateRange(prev => ({ ...prev, from: date }))}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <Label>To Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {format(dateRange.to, 'PPP')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent>
+                  <Calendar
+                    mode="single"
+                    selected={dateRange.to}
+                    onSelect={(date) => date && setDateRange(prev => ({ ...prev, to: date }))}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {isExporting && (
+            <div className="space-y-2">
+              <Progress value={progress} />
+              <p className="text-sm text-muted-foreground text-center">
+                Generating export... {progress}%
+              </p>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isExporting}>
+            Cancel
+          </Button>
+          <Button onClick={() => handleExport('excel')} disabled={isExporting}>
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Export Excel
+          </Button>
+          <Button onClick={() => handleExport('pdf')} disabled={isExporting}>
+            <FileText className="mr-2 h-4 w-4" />
+            Export PDF
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 ```
 
-### 7. CSS Enhancements for Mobile
+### 3. Student Report Card PDF Template
 
-Add mobile-specific styles to index.css:
+Professional PDF template for individual student report cards:
+
+```typescript
+// src/components/exports/pdfTemplates/StudentReportCard.tsx
+export async function generateStudentReportCard(student: StudentData, results: ResultData[], college: CollegeData): Promise<void> {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  
+  // Header with college name
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text(college.name, pageWidth / 2, 20, { align: 'center' });
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(college.address, pageWidth / 2, 28, { align: 'center' });
+  
+  // Student Details Section
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('STUDENT REPORT CARD', pageWidth / 2, 45, { align: 'center' });
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  
+  // Student info table
+  const studentInfo = [
+    ['Student Name', student.name],
+    ['Student ID', student.student_id],
+    ['Course', student.course_name],
+    ['Semester', `Semester ${student.semester}`],
+    ['Academic Year', student.academic_year]
+  ];
+  
+  autoTable(doc, {
+    body: studentInfo,
+    startY: 55,
+    theme: 'plain',
+    styles: { fontSize: 10 },
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 40 },
+      1: { cellWidth: 60 }
+    }
+  });
+  
+  // Results Table
+  const resultsData = results.map((r, idx) => [
+    idx + 1,
+    r.exam_name,
+    r.subject_name || '-',
+    r.marks_obtained,
+    r.total_marks,
+    `${r.percentage.toFixed(1)}%`,
+    r.grade
+  ]);
+  
+  autoTable(doc, {
+    head: [['#', 'Examination', 'Subject', 'Marks', 'Total', 'Percentage', 'Grade']],
+    body: resultsData,
+    startY: doc.lastAutoTable.finalY + 15,
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [41, 128, 185] }
+  });
+  
+  // Summary
+  const avgPercentage = results.reduce((sum, r) => sum + r.percentage, 0) / results.length;
+  const overallGrade = getGradeFromPercentage(avgPercentage);
+  
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  const summaryY = doc.lastAutoTable.finalY + 15;
+  doc.text(`Overall Percentage: ${avgPercentage.toFixed(1)}%`, 14, summaryY);
+  doc.text(`Overall Grade: ${overallGrade}`, 14, summaryY + 8);
+  doc.text(`Result: ${avgPercentage >= 40 ? 'PASS' : 'FAIL'}`, 14, summaryY + 16);
+  
+  // Footer with signature
+  const footerY = doc.internal.pageSize.getHeight() - 30;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('_________________________', pageWidth - 60, footerY);
+  doc.text('Principal Signature', pageWidth - 55, footerY + 8);
+  doc.text(`Generated on: ${format(new Date(), 'PPP')}`, 14, footerY + 8);
+  
+  // Save
+  doc.save(`Report_Card_${student.student_id}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+}
+```
+
+### 4. Enhanced Fee Receipt PDF
+
+Proper jsPDF-based fee receipt generation:
+
+```typescript
+// src/components/exports/pdfTemplates/FeeReceiptPDF.tsx
+export async function generateFeeReceiptPDF(receipt: ReceiptData): Promise<void> {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  
+  // College Header
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text(receipt.college.name, pageWidth / 2, 20, { align: 'center' });
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(receipt.college.address, pageWidth / 2, 28, { align: 'center' });
+  doc.text(`Phone: ${receipt.college.phone} | Email: ${receipt.college.email}`, pageWidth / 2, 35, { align: 'center' });
+  
+  // Receipt Title
+  doc.setDrawColor(0);
+  doc.line(14, 42, pageWidth - 14, 42);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('PAYMENT RECEIPT', pageWidth / 2, 52, { align: 'center' });
+  doc.setFontSize(12);
+  doc.text(`Receipt No: ${receipt.receipt_number}`, pageWidth / 2, 60, { align: 'center' });
+  
+  // Student & Payment Details
+  const details = [
+    ['Student Name', receipt.student.name, 'Payment Date', format(new Date(receipt.payment_date), 'PPP')],
+    ['Student ID', receipt.student.student_id, 'Payment Method', receipt.payment_method.toUpperCase()],
+    ['Course', `${receipt.student.course.name} (${receipt.student.course.code})`, 'Transaction ID', receipt.transaction_id || 'N/A'],
+    ['Mobile', receipt.student.mobile_number, 'Cheque No.', receipt.cheque_number || 'N/A']
+  ];
+  
+  autoTable(doc, {
+    body: details,
+    startY: 70,
+    theme: 'plain',
+    styles: { fontSize: 10 },
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 35 },
+      1: { cellWidth: 55 },
+      2: { fontStyle: 'bold', cellWidth: 35 },
+      3: { cellWidth: 55 }
+    }
+  });
+  
+  // Amount Box
+  const amountY = doc.lastAutoTable.finalY + 15;
+  doc.setFillColor(240, 240, 240);
+  doc.roundedRect(14, amountY, pageWidth - 28, 30, 3, 3, 'F');
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Amount Paid:', 24, amountY + 12);
+  doc.setFontSize(20);
+  doc.text(`₹${receipt.amount.toLocaleString('en-IN')}`, 24, amountY + 24);
+  
+  // Amount in words
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'italic');
+  doc.text(`(${numberToWords(receipt.amount)} Rupees Only)`, pageWidth / 2, amountY + 40, { align: 'center' });
+  
+  // Signature
+  const sigY = amountY + 60;
+  if (receipt.college.signature_url) {
+    // Add signature image if available
+    try {
+      doc.addImage(receipt.college.signature_url, 'PNG', pageWidth - 70, sigY, 50, 20);
+    } catch (e) {
+      console.log('Could not add signature image');
+    }
+  }
+  doc.line(pageWidth - 80, sigY + 25, pageWidth - 20, sigY + 25);
+  doc.setFont('helvetica', 'normal');
+  doc.text(receipt.college.signature_title || 'Authorized Signature', pageWidth - 50, sigY + 32, { align: 'center' });
+  
+  // Footer
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'italic');
+  doc.text('This is a computer generated receipt.', pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+  
+  // Save
+  doc.save(`Fee_Receipt_${receipt.receipt_number}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+}
+```
+
+### 5. Print Stylesheet
+
+Add comprehensive print styles to index.css:
 
 ```css
-/* src/index.css - Mobile Enhancements */
+/* src/index.css - Print Stylesheet */
 
-/* Safe area insets for notched devices */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .safe-area-inset-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
-
-/* Prevent horizontal overflow on mobile */
-@media (max-width: 767px) {
-  html, body {
-    overflow-x: hidden;
-    width: 100%;
+@media print {
+  /* Hide non-printable elements */
+  .no-print,
+  .skip-link,
+  nav,
+  aside,
+  button:not(.print-button),
+  .sidebar,
+  [data-radix-popper-content-wrapper],
+  .fixed.bottom-0,
+  .toaster {
+    display: none !important;
   }
   
-  /* Add padding for bottom nav */
+  /* Reset backgrounds for printing */
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  /* Main content takes full width */
   main {
-    padding-bottom: 80px;
+    margin: 0 !important;
+    padding: 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
   
-  /* Improve touch scrolling */
-  .overflow-auto,
-  .overflow-x-auto,
-  .overflow-y-auto {
-    -webkit-overflow-scrolling: touch;
+  /* Card styling for print */
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
   
-  /* Larger tap targets for checkboxes and radios */
-  [role="checkbox"],
-  [role="radio"] {
-    min-height: 44px;
-    min-width: 44px;
+  /* Table styling for print */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
   }
   
-  /* Prevent text from being too small */
-  input, textarea, select {
-    font-size: 16px !important; /* Prevents iOS zoom */
+  th, td {
+    border: 1px solid #ddd !important;
+    padding: 8px !important;
+    font-size: 10pt !important;
   }
-}
-
-/* Touch manipulation for interactive elements */
-button, 
-a, 
-[role="button"],
-.touch-target {
-  touch-action: manipulation;
-}
-
-/* Active state feedback for touch */
-@media (hover: none) {
-  button:active,
-  a:active,
-  [role="button"]:active {
-    opacity: 0.7;
-  }
-}
-```
-
-### 8. Mobile Layout Adjustments
-
-Update Layout.tsx for bottom navigation:
-
-```typescript
-// src/components/layout/Layout.tsx
-export function Layout({ children }: LayoutProps) {
-  const isMobile = useIsMobile();
   
-  return (
-    <SidebarProvider>
-      <OnboardingProvider>
-        <a href="#main-content" className="skip-link">
-          Skip to main content
-        </a>
-        <div className="min-h-screen flex w-full bg-background">
-          <AppSidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <Header />
-            <main 
-              id="main-content" 
-              role="main"
-              aria-label="Main content"
-              className={cn(
-                "flex-1 overflow-y-auto p-3 sm:p-4 md:p-6",
-                isMobile && "pb-20" // Space for bottom nav
-              )}
-            >
-              {children}
-            </main>
-          </div>
-        </div>
-        {/* Bottom Navigation for Mobile */}
-        <BottomNavigation />
-        <WelcomeModal />
-        <ProductTour />
-      </OnboardingProvider>
-    </SidebarProvider>
-  );
+  th {
+    background-color: #f5f5f5 !important;
+    font-weight: bold !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  /* Badge styling for print */
+  .badge {
+    border: 1px solid currentColor !important;
+    background: transparent !important;
+  }
+  
+  /* Ensure links show URLs */
+  a[href]:after {
+    content: none !important;
+  }
+  
+  /* Page breaks */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+  
+  /* Receipt specific styles */
+  .receipt-container {
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  
+  /* Report card styles */
+  .report-card {
+    page-break-after: always;
+  }
+  
+  /* Chart hiding - charts don't print well */
+  .recharts-wrapper {
+    display: none !important;
+  }
+  
+  /* Print header/footer */
+  @page {
+    margin: 1cm;
+    size: A4;
+  }
+  
+  /* First page */
+  @page :first {
+    margin-top: 2cm;
+  }
 }
 ```
 
-### 9. Form Input Type Enhancements
+### 6. Enhanced ReportGenerator
 
-Add proper keyboard types to form fields:
+Add async support and new configurations:
 
-**Pattern for validated inputs:**
 ```typescript
-// Pattern: Add inputMode to inputs based on field type
-<Input
-  type="email"
-  inputMode="email"       // Shows email keyboard
-  autoComplete="email"    // Suggests saved emails
-  ...
-/>
+// src/utils/reportGenerator.ts - additions
 
-<Input
-  type="tel"
-  inputMode="tel"         // Shows phone keypad
-  autoComplete="tel"      // Suggests phone numbers
-  ...
-/>
+// Add async version with progress callback
+static async generateExcelAsync(
+  config: ReportConfig, 
+  onProgress?: (progress: number) => void
+): Promise<void> {
+  onProgress?.(10);
+  
+  const wb = XLSX.utils.book_new();
+  onProgress?.(30);
+  
+  // ... existing Excel generation logic ...
+  
+  onProgress?.(70);
+  
+  // Save the Excel file
+  const fileName = `${config.title.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+  
+  onProgress?.(100);
+}
 
-<Input
-  type="number"
-  inputMode="numeric"     // Shows number keyboard
-  pattern="[0-9]*"        // iOS number keyboard
-  ...
-/>
+// Add new report configurations
+export const ReportConfigs = {
+  // ... existing configs ...
+  
+  studentList: (data: any[], filters: any): ReportConfig => ({
+    title: 'Student List Export',
+    type: 'student',
+    data,
+    columns: [
+      { key: 'student_id', label: 'Student ID' },
+      { key: 'name', label: 'Name' },
+      { key: 'email', label: 'Email' },
+      { key: 'mobile_number', label: 'Mobile' },
+      { key: 'courses.name', label: 'Course' },
+      { key: 'courses.code', label: 'Course Code' },
+      { key: 'semester', label: 'Semester' },
+      { key: 'year', label: 'Year' },
+      { key: 'admission_date', label: 'Admission Date', formatter: (value) => value ? format(new Date(value), 'PPP') : '' },
+      { key: 'status', label: 'Status' }
+    ],
+    filters,
+    summary: {
+      totalRecords: data.length,
+      additionalInfo: {
+        'Active': data.filter(s => s.status === 'active').length,
+        'Graduated': data.filter(s => s.status === 'graduated').length,
+        'Inactive': data.filter(s => s.status === 'inactive').length
+      }
+    }
+  }),
+
+  attendanceRecords: (data: any[], filters: any): ReportConfig => ({
+    title: 'Attendance Records Export',
+    type: 'attendance',
+    data,
+    columns: [
+      { key: 'student_number', label: 'Student ID' },
+      { key: 'student_name', label: 'Student Name' },
+      { key: 'course_name', label: 'Course' },
+      { key: 'total_sessions', label: 'Total Sessions' },
+      { key: 'present_count', label: 'Present' },
+      { key: 'absent_count', label: 'Absent' },
+      { key: 'late_count', label: 'Late' },
+      { key: 'attendance_percentage', label: 'Attendance %', formatter: (value) => `${value}%` }
+    ],
+    filters,
+    summary: {
+      totalRecords: data.length,
+      additionalInfo: {
+        'Average Attendance': `${(data.reduce((sum, s) => sum + s.attendance_percentage, 0) / data.length || 0).toFixed(1)}%`,
+        'Low Attendance (<75%)': data.filter(s => s.attendance_percentage < 75).length
+      }
+    }
+  }),
+
+  feeCollectionReport: (data: any[], filters: any): ReportConfig => ({
+    title: 'Fee Collection Report',
+    type: 'financial',
+    data,
+    columns: [
+      { key: 'students.student_id', label: 'Student ID' },
+      { key: 'students.name', label: 'Student Name' },
+      { key: 'students.courses.code', label: 'Course' },
+      { key: 'total_amount', label: 'Total Fee', formatter: (value) => `₹${value?.toLocaleString() || 0}` },
+      { key: 'paid_amount', label: 'Paid', formatter: (value) => `₹${value?.toLocaleString() || 0}` },
+      { key: 'balance_amount', label: 'Balance', formatter: (value) => `₹${value?.toLocaleString() || 0}` },
+      { key: 'status', label: 'Status' },
+      { key: 'due_date', label: 'Due Date', formatter: (value) => value ? format(new Date(value), 'PPP') : '' }
+    ],
+    filters,
+    summary: {
+      totalRecords: data.length,
+      additionalInfo: {
+        'Total Fee': `₹${data.reduce((sum, r) => sum + (r.total_amount || 0), 0).toLocaleString()}`,
+        'Total Collected': `₹${data.reduce((sum, r) => sum + (r.paid_amount || 0), 0).toLocaleString()}`,
+        'Total Pending': `₹${data.reduce((sum, r) => sum + (r.balance_amount || 0), 0).toLocaleString()}`
+      }
+    }
+  })
+};
 ```
 
 ---
@@ -525,92 +686,107 @@ Add proper keyboard types to form fields:
 ```text
 src/
 ├── components/
-│   ├── mobile/
-│   │   ├── BottomNavigation.tsx       # NEW: Mobile tab bar
-│   │   ├── PullToRefresh.tsx          # NEW: Pull-to-refresh wrapper
-│   │   ├── MobileTableWrapper.tsx     # NEW: Scroll indicator
-│   │   ├── ResponsiveDialog.tsx       # NEW: Dialog/Drawer hybrid
-│   │   └── index.ts                   # NEW: Exports
-│   ├── ui/
-│   │   ├── button.tsx                 # Modified: Touch targets
-│   │   ├── input.tsx                  # Modified: Font size, inputMode
-│   │   └── table.tsx                  # Modified: Mobile scroll
-│   └── layout/
-│       └── Layout.tsx                 # Modified: Bottom nav integration
-├── index.css                          # Modified: Mobile styles
-└── hooks/
-    └── use-mobile.tsx                 # Existing (no changes)
+│   └── exports/
+│       ├── ExportButton.tsx           # NEW: Unified export button
+│       ├── DateRangeExportDialog.tsx  # NEW: Date range filter dialog
+│       ├── ExportProgress.tsx         # NEW: Progress indicator
+│       ├── pdfTemplates/
+│       │   ├── StudentReportCard.tsx  # NEW: Report card PDF
+│       │   ├── FeeReceiptPDF.tsx      # NEW: Receipt PDF
+│       │   └── CertificatePDF.tsx     # NEW: Certificate PDF
+│       └── index.ts                   # NEW: Barrel exports
+├── utils/
+│   └── reportGenerator.ts             # Modified: Add new configs
+├── pages/
+│   ├── Students.tsx                   # Modified: Add Excel export
+│   ├── Fees.tsx                       # Modified: Add Excel/PDF export
+│   ├── Attendance.tsx                 # Modified: Add export buttons
+│   └── Exams.tsx                      # Modified: Enhance exports
+└── index.css                          # Modified: Add print stylesheet
 ```
 
 ---
 
 ## Implementation Checklist
 
-### Phase 1: Core Mobile Infrastructure
-1. Create BottomNavigation component
-2. Create PullToRefresh component
-3. Create MobileTableWrapper component
-4. Create ResponsiveDialog component
-5. Create mobile/index.ts exports
+### Phase 1: Core Export Infrastructure
+1. Create ExportButton component with dropdown menu
+2. Create DateRangeExportDialog component
+3. Create ExportProgress component
+4. Create exports/index.ts barrel file
 
-### Phase 2: Component Updates
-6. Update button.tsx with touch target sizes
-7. Update input.tsx with mobile font size and inputMode
-8. Update table.tsx with mobile scroll styles
-9. Add mobile CSS to index.css
+### Phase 2: PDF Templates
+5. Create StudentReportCard PDF generator
+6. Create FeeReceiptPDF generator
+7. Create CertificatePDF generator (enhanced)
 
-### Phase 3: Layout Integration
-10. Update Layout.tsx with bottom nav
-11. Ensure proper padding for bottom nav
-12. Test sidebar drawer on mobile
+### Phase 3: ReportGenerator Enhancements
+8. Add async versions with progress callbacks
+9. Add new report configurations (studentList, attendanceRecords, feeCollectionReport)
+10. Add helper functions for number-to-words conversion
 
-### Phase 4: Page Updates
-13. Add MobileTableWrapper to Students page
-14. Add MobileTableWrapper to Fees page
-15. Add PullToRefresh to list pages
-16. Update form inputs with proper keyboard types
+### Phase 4: Page Integration
+11. Update Students.tsx - replace CSV with ExportButton
+12. Update Fees.tsx - add Excel export and PDF receipt button
+13. Update Attendance.tsx - add export buttons to student records tab
+14. Update Exams.tsx - enhance existing export functionality
 
-### Phase 5: Testing
-17. Test on 375px width viewport
-18. Verify touch targets are 44px minimum
-19. Test horizontal scroll on tables
-20. Verify forms use correct keyboards
-21. Test pull-to-refresh functionality
+### Phase 5: Print Stylesheet
+15. Add comprehensive @media print styles to index.css
+16. Add print-specific classes (.no-print, .print-only)
+17. Test print output on major pages
 
 ---
 
-## Mobile Touch Target Summary
+## Export Functionality by Page
 
-| Component | Current | Updated |
-|-----------|---------|---------|
-| Default Button | h-10 (40px) | min-h-[44px] |
-| Small Button | h-9 (36px) | min-h-[44px] |
-| Icon Button | h-10 w-10 | min-h-[44px] min-w-[44px] |
-| Input | h-10 | min-h-[44px] |
-| Bottom Nav Item | N/A | h-16 (64px) |
-| Checkbox/Radio | varies | min-h-[44px] min-w-[44px] |
+| Page | Excel Export | PDF Export | Individual PDF |
+|------|-------------|------------|----------------|
+| Students | Student list with filters | Student list report | Report card per student |
+| Fees | Fee collection with date range | Fee summary report | Receipt per payment |
+| Attendance | Attendance records | Attendance summary | - |
+| Exams/Results | Results with filters | Results summary | Marksheet, Certificate |
 
 ---
 
-## Keyboard Type Mapping
+## Filename Convention
 
-| Input Type | inputMode | autoComplete |
-|------------|-----------|--------------|
-| Email | email | email |
-| Phone | tel | tel |
-| Amount/Number | numeric | - |
-| Search | search | - |
-| URL | url | url |
-| Password | - | current-password |
+All exports will follow this naming pattern:
+```
+{type}_{identifier}_{YYYY-MM-DD}.{ext}
+```
+
+Examples:
+- `students_export_2026-02-01.xlsx`
+- `fee_collection_2026-01-01_to_2026-02-01.xlsx`
+- `attendance_records_2026-02-01.pdf`
+- `Fee_Receipt_RCP-2026-0001_2026-02-01.pdf`
+- `Report_Card_STU001_2026-02-01.pdf`
+- `Certificate_Achievement_STU001_2026-02-01.pdf`
 
 ---
 
-## Cross-Browser Testing Notes
+## Progress Indicator Behavior
 
-| Browser | Key Considerations |
-|---------|-------------------|
-| iOS Safari | 16px font to prevent zoom, safe-area-inset for notch |
-| Android Chrome | Standard touch targets, smooth scrolling |
-| Samsung Internet | Test overflow-scrolling |
-| Firefox Mobile | Test pull-to-refresh |
+1. **Quick exports (<100 records)**: Show button loading state only
+2. **Medium exports (100-500 records)**: Show inline progress bar
+3. **Large exports (>500 records)**: Show dialog with detailed progress
 
+Progress stages:
+- 0-20%: Preparing data
+- 20-50%: Generating document
+- 50-80%: Formatting and styling
+- 80-100%: Saving file
+
+---
+
+## Dependencies
+
+Already installed and available:
+- `xlsx` - Excel generation
+- `jspdf` - PDF generation
+- `jspdf-autotable` - PDF tables
+- `html2canvas` - HTML to image conversion
+- `date-fns` - Date formatting
+
+No new dependencies required.
