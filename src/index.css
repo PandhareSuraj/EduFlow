@@ -288,3 +288,121 @@ textarea {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
+
+/* ============================================
+   Print Stylesheet
+   ============================================ */
+
+@media print {
+  /* Hide non-printable elements */
+  .no-print,
+  .skip-link,
+  nav,
+  aside,
+  button:not(.print-button),
+  .sidebar,
+  [data-radix-popper-content-wrapper],
+  .fixed.bottom-0,
+  .toaster,
+  [data-sidebar],
+  header {
+    display: none !important;
+  }
+  
+  /* Reset backgrounds for printing */
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  /* Main content takes full width */
+  main {
+    margin: 0 !important;
+    padding: 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Card styling for print */
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  /* Table styling for print */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  
+  th, td {
+    border: 1px solid #ddd !important;
+    padding: 8px !important;
+    font-size: 10pt !important;
+  }
+  
+  th {
+    background-color: #f5f5f5 !important;
+    font-weight: bold !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  /* Badge styling for print */
+  .badge {
+    border: 1px solid currentColor !important;
+    background: transparent !important;
+  }
+  
+  /* Ensure links don't show URLs */
+  a[href]:after {
+    content: none !important;
+  }
+  
+  /* Page breaks */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+  
+  /* Receipt specific styles */
+  .receipt-container {
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  
+  /* Report card styles */
+  .report-card {
+    page-break-after: always;
+  }
+  
+  /* Chart hiding - charts don't print well */
+  .recharts-wrapper {
+    display: none !important;
+  }
+  
+  /* Print header/footer */
+  @page {
+    margin: 1cm;
+    size: A4;
+  }
+  
+  /* First page */
+  @page :first {
+    margin-top: 2cm;
+  }
+}
+
+/* Print-only elements */
+.print-only {
+  display: none !important;
+}
+
+@media print {
+  .print-only {
+    display: block !important;
+  }
+}

@@ -25,7 +25,6 @@ import {
   Users, 
   GraduationCap, 
   Calendar,
-  Download,
   Filter,
   Eye,
   Edit,
@@ -42,6 +41,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TableSkeleton } from "@/components/skeletons";
 import { useDebounce } from "@/hooks/useDebounce";
+import { ExportButton, ExportColumn } from "@/components/exports";
+import { format } from "date-fns";
 
 interface Student {
   id: number;
@@ -207,35 +208,37 @@ export default function Students() {
     }
   }, []);
 
-  const handleExportStudents = useCallback(() => {
-    const headers = [
-      "Student ID", "Name", "Email", "Mobile", "Course", 
-      "Semester", "Year", "Status", "Admission Date"
-    ];
-    
-    const csvContent = [
-      headers.join(","),
-      ...filteredStudents.map(student => [
-        student.student_id || 'N/A',
-        student.name || 'N/A',
-        student.email || 'N/A',
-        student.mobile_number || 'N/A',
-        student.courses?.code || 'N/A',
-        student.semester || 'N/A',
-        student.year || 'N/A',
-        student.status || 'N/A',
-        new Date(student.admission_date).toLocaleDateString('en-IN')
-      ].join(","))
-    ].join("\n");
+  // Export columns configuration
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { key: "student_id", label: "Student ID" },
+    { key: "name", label: "Name" },
+    { key: "email", label: "Email" },
+    { key: "mobile_number", label: "Mobile" },
+    { key: "courses.code", label: "Course Code" },
+    { key: "courses.name", label: "Course Name" },
+    { key: "semester", label: "Semester" },
+    { key: "year", label: "Year" },
+    { key: "status", label: "Status" },
+    { 
+      key: "admission_date", 
+      label: "Admission Date",
+      formatter: (value) => value ? format(new Date(value), "PPP") : ""
+    }
+  ], []);
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `students_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  }, [filteredStudents]);
+  const exportSummary = useMemo(() => ({
+    totalRecords: filteredStudents.length,
+    additionalInfo: {
+      "Active Students": students.filter(s => s.status === "active").length,
+      "Graduated Students": students.filter(s => s.status === "graduated").length,
+      "Inactive Students": students.filter(s => s.status === "inactive").length,
+    }
+  }), [filteredStudents.length, students]);
+
+  const exportFilters = useMemo(() => ({
+    "Search Term": searchTerm || "None",
+    "Status Filter": statusFilter === "all" ? "All" : statusFilter
+  }), [searchTerm, statusFilter]);
 
   if (loading) {
     return <TableSkeleton rows={8} columns={9} showStats={true} statsCount={4} />;
@@ -331,10 +334,15 @@ export default function Students() {
           </SelectContent>
         </Select>
         
-        <Button variant="outline" onClick={handleExportStudents}>
-          <Download className="mr-2 h-4 w-4" />
-          Export
-        </Button>
+        <ExportButton
+          data={filteredStudents}
+          columns={exportColumns}
+          filename="students_export"
+          title="Student List"
+          formats={["excel", "pdf", "csv"]}
+          filters={exportFilters}
+          summary={exportSummary}
+        />
       </div>
 
       {/* Students Table */}
