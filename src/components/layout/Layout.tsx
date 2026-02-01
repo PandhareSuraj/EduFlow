@@ -3,12 +3,17 @@ import { AppSidebar } from "./AppSidebar";
 import { Header } from "./Header";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { WelcomeModal, ProductTour } from "@/components/onboarding";
+import { BottomNavigation } from "@/components/mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
+  const isMobile = useIsMobile();
+  
   return (
     <SidebarProvider>
       <OnboardingProvider>
@@ -23,16 +28,22 @@ export function Layout({ children }: LayoutProps) {
           <AppSidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Header />
-<main 
+            <main 
               id="main-content" 
               role="main"
               aria-label="Main content"
-              className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6"
+              className={cn(
+                "flex-1 overflow-y-auto p-3 sm:p-4 md:p-6",
+                // Add bottom padding for mobile bottom navigation
+                isMobile && "pb-20"
+              )}
             >
               {children}
             </main>
           </div>
         </div>
+        {/* Mobile Bottom Navigation */}
+        <BottomNavigation />
         <WelcomeModal />
         <ProductTour />
       </OnboardingProvider>
