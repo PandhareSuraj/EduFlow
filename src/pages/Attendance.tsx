@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { AttendanceReportsContainer } from "@/components/attendance/AttendanceRe
 import { VideoTutorialButton } from "@/components/videos/VideoTutorialButton";
 import { useAttendanceData } from "@/hooks/useAttendanceData";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
+import { ExportButton, ExportColumn } from "@/components/exports";
 import { format } from "date-fns";
 
 export default function Attendance() {
@@ -37,6 +38,34 @@ export default function Attendance() {
     }
   };
 
+  // Export columns for student attendance
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { key: "student_number", label: "Student ID" },
+    { key: "student_name", label: "Student Name" },
+    { key: "course_name", label: "Course" },
+    { key: "total_sessions", label: "Total Sessions" },
+    { key: "present_count", label: "Present" },
+    { key: "absent_count", label: "Absent" },
+    { key: "late_count", label: "Late" },
+    { 
+      key: "attendance_percentage", 
+      label: "Attendance %",
+      formatter: (value) => `${value}%`
+    }
+  ], []);
+
+  const exportSummary = useMemo(() => ({
+    totalRecords: filteredStudents.length,
+    additionalInfo: {
+      "Average Attendance": `${(filteredStudents.reduce((sum, s) => sum + s.attendance_percentage, 0) / filteredStudents.length || 0).toFixed(1)}%`,
+      "Low Attendance (<75%)": filteredStudents.filter(s => s.attendance_percentage < 75).length,
+      "Good Attendance (≥90%)": filteredStudents.filter(s => s.attendance_percentage >= 90).length,
+    }
+  }), [filteredStudents]);
+
+  const exportFilters = useMemo(() => ({
+    "Search Term": searchTerm || "None",
+  }), [searchTerm]);
   return (
     <div className="p-4 sm:p-6 space-y-6">
       {/* Header */}
@@ -240,8 +269,8 @@ export default function Attendance() {
         <TabsContent value="students" className="space-y-6">
           <Card>
             <CardContent className="p-4">
-              <div className="flex gap-4">
-                <div className="relative flex-1">
+              <div className="flex flex-wrap gap-4">
+                <div className="relative flex-1 min-w-[200px]">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input 
                     placeholder="Search students, ID, or course..." 
@@ -250,6 +279,15 @@ export default function Attendance() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
+                <ExportButton
+                  data={filteredStudents}
+                  columns={exportColumns}
+                  filename="attendance_records"
+                  title="Student Attendance Report"
+                  formats={["excel", "pdf", "csv"]}
+                  filters={exportFilters}
+                  summary={exportSummary}
+                />
               </div>
             </CardContent>
           </Card>

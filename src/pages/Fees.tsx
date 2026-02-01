@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Plus, Search, Download, Eye, DollarSign, Users, Percent, Receipt, Calendar, Clock, Settings, Calculator, FileText, Filter, Loader2, TrendingUp, CreditCard, Pencil } from "lucide-react";
+import { Plus, Search, Eye, DollarSign, Users, Receipt, Calendar, Clock, Settings, Calculator, FileText, Filter, Loader2, TrendingUp, Pencil, CreditCard } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCollege } from "@/contexts/CollegeContext";
@@ -20,6 +20,8 @@ import { EditStudentFeeDialog } from "@/components/fees/EditStudentFeeDialog";
 import { VideoTutorialButton } from "@/components/videos/VideoTutorialButton";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { useDebounce } from "@/hooks/useDebounce";
+import { ExportButton, ExportColumn } from "@/components/exports";
+import { format } from "date-fns";
 
 interface StudentFeeData {
   id: string;
@@ -203,36 +205,50 @@ export default function Fees() {
     }
   }, []);
 
-  const handleExportRecords = () => {
-    const headers = [
-      "Student ID", "Name", "Course", "Total Amount", "Paid Amount", 
-      "Balance", "Status", "Due Date", "Last Payment", "Contact"
-    ];
-    
-    const csvContent = [
-      headers.join(","),
-      ...filteredRecords.map(record => [
-        record.students?.student_id || 'N/A',
-        record.students?.name || 'N/A',
-        record.students?.courses?.code || 'N/A',
-        record.total_amount,
-        record.paid_amount,
-        record.balance_amount,
-        record.status,
-        record.due_date,
-        record.fee_payments?.[0]?.payment_date || 'No payments',
-        record.students?.mobile_number || 'N/A'
-      ].join(","))
-    ].join("\n");
+  // Export columns configuration
+  const exportColumns: ExportColumn[] = useMemo(() => [
+    { key: "students.student_id", label: "Student ID" },
+    { key: "students.name", label: "Student Name" },
+    { key: "students.courses.code", label: "Course" },
+    { key: "students.mobile_number", label: "Mobile" },
+    { 
+      key: "total_amount", 
+      label: "Total Fee",
+      formatter: (value) => `₹${(value || 0).toLocaleString("en-IN")}`
+    },
+    { 
+      key: "paid_amount", 
+      label: "Paid Amount",
+      formatter: (value) => `₹${(value || 0).toLocaleString("en-IN")}`
+    },
+    { 
+      key: "balance_amount", 
+      label: "Balance",
+      formatter: (value) => `₹${(value || 0).toLocaleString("en-IN")}`
+    },
+    { key: "status", label: "Status" },
+    { 
+      key: "due_date", 
+      label: "Due Date",
+      formatter: (value) => value ? format(new Date(value), "PPP") : "N/A"
+    }
+  ], []);
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `fee_records_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
+  const exportSummary = useMemo(() => ({
+    totalRecords: filteredRecords.length,
+    additionalInfo: {
+      "Total Fee": `₹${totalAmount.toLocaleString("en-IN")}`,
+      "Total Collected": `₹${totalCollection.toLocaleString("en-IN")}`,
+      "Total Pending": `₹${totalPending.toLocaleString("en-IN")}`,
+      "Collection Rate": `${collectionRate}%`,
+    }
+  }), [filteredRecords.length, totalAmount, totalCollection, totalPending, collectionRate]);
+
+  const exportFilters = useMemo(() => ({
+    "Search Term": searchTerm || "None",
+    "Status Filter": statusFilter === "all" ? "All" : statusFilter,
+    "Course Filter": courseFilter === "all" ? "All" : courseFilter
+  }), [searchTerm, statusFilter, courseFilter]);
 
   return (
     <div className="space-y-6">
@@ -384,10 +400,15 @@ export default function Fees() {
           </SelectContent>
         </Select>
         
-        <Button variant="outline" onClick={handleExportRecords}>
-          <Download className="mr-2 h-4 w-4" />
-          Export
-        </Button>
+        <ExportButton
+          data={filteredRecords}
+          columns={exportColumns}
+          filename="fee_records"
+          title="Fee Collection Report"
+          formats={["excel", "pdf", "csv"]}
+          filters={exportFilters}
+          summary={exportSummary}
+        />
       </div>
 
       {/* Fee Records Table */}

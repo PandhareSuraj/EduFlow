@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Download, Printer, Calendar, CreditCard, User, GraduationCap } from "lucide-react";
+import { generateFeeReceiptPDF } from "@/components/exports/pdfTemplates/FeeReceiptPDF";
 
 interface PaymentReceiptProps {
   receipt: {
@@ -44,80 +45,9 @@ export function PaymentReceipt({ receipt, onClose }: PaymentReceiptProps) {
     window.print();
   };
 
-  const handleDownload = () => {
-    // Generate PDF or download functionality would go here
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Payment Receipt - ${receipt.receipt_number}</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; }
-              .content { margin: 20px 0; }
-              .row { display: flex; justify-content: space-between; margin: 10px 0; }
-              .label { font-weight: bold; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>${receipt.college.name}</h1>
-              <p>${receipt.college.address}</p>
-              <p>Phone: ${receipt.college.phone} | Email: ${receipt.college.email}</p>
-            </div>
-            <div class="content">
-              <h2>Payment Receipt</h2>
-              <div class="row">
-                <span class="label">Receipt Number:</span>
-                <span>${receipt.receipt_number}</span>
-              </div>
-              <div class="row">
-                <span class="label">Student Name:</span>
-                <span>${receipt.student.name}</span>
-              </div>
-              <div class="row">
-                <span class="label">Student ID:</span>
-                <span>${receipt.student.student_id}</span>
-              </div>
-              <div class="row">
-                <span class="label">Course:</span>
-                <span>${receipt.student.course.name} (${receipt.student.course.code})</span>
-              </div>
-              <div class="row">
-                <span class="label">Amount Paid:</span>
-                <span>₹${receipt.amount.toLocaleString('en-IN')}</span>
-              </div>
-              <div class="row">
-                <span class="label">Payment Date:</span>
-                <span>${new Date(receipt.payment_date).toLocaleDateString('en-IN')}</span>
-              </div>
-              <div class="row">
-                <span class="label">Payment Method:</span>
-                <span>${receipt.payment_method.toUpperCase()}</span>
-              </div>
-              ${receipt.transaction_id ? `<div class="row"><span class="label">Transaction ID:</span><span>${receipt.transaction_id}</span></div>` : ''}
-              ${receipt.cheque_number ? `<div class="row"><span class="label">Cheque Number:</span><span>${receipt.cheque_number}</span></div>` : ''}
-              ${receipt.bank_name ? `<div class="row"><span class="label">Bank Name:</span><span>${receipt.bank_name}</span></div>` : ''}
-              ${receipt.remarks ? `<div class="row"><span class="label">Remarks:</span><span>${receipt.remarks}</span></div>` : ''}
-            </div>
-            ${receipt.college.signature_url ? `
-              <div style="text-align: right; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc;">
-                <img src="${receipt.college.signature_url}" alt="Signature" style="width: 150px; height: 60px; object-fit: contain; margin-bottom: 8px;" />
-                <div style="border-top: 1px solid #000; width: 200px; margin-left: auto; padding-top: 5px; text-align: center;">
-                  <p style="margin: 0; font-weight: bold; font-size: 14px;">${receipt.college.signature_title || 'Authorized Signature'}</p>
-                  <p style="margin: 0; font-size: 12px; color: #666;">Date: ${new Date().toLocaleDateString('en-IN')}</p>
-                </div>
-              </div>
-            ` : ''}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    }
+  const handleDownload = async () => {
+    await generateFeeReceiptPDF(receipt);
   };
-
   const formatPaymentMethod = (method: string) => {
     switch (method.toLowerCase()) {
       case 'cash': return 'Cash';
