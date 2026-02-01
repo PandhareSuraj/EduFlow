@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { ReportGenerator, ReportConfigs } from "@/utils/reportGenerator";
 import { useToast } from "@/hooks/use-toast";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,18 +33,25 @@ export default function Inventory() {
   } = useInventoryData();
   const { toast } = useToast();
 
-  const filteredItems = items.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.item_code.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Debounce search for performance
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const getStockStatus = (item: any) => {
+  // Memoized filtered items
+  const filteredItems = useMemo(() => {
+    return items.filter(item =>
+      item.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      item.category.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      item.item_code.toLowerCase().includes(debouncedSearch.toLowerCase())
+    );
+  }, [items, debouncedSearch]);
+
+  // Memoized stock status getter
+  const getStockStatus = useCallback((item: any) => {
     if (item.current_stock === 0) return { status: 'Out of Stock', variant: 'destructive' as const };
     if (item.current_stock <= item.min_stock) return { status: 'Critical', variant: 'destructive' as const };
     if (item.current_stock <= item.min_stock * 1.5) return { status: 'Low Stock', variant: 'secondary' as const };
     return { status: 'In Stock', variant: 'default' as const };
-  };
+  }, []);
 
   const handleGenerateReport = async (reportType: 'stock' | 'lowStock' | 'usage' | 'supplier') => {
     try {

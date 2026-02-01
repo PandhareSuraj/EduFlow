@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,7 @@ import { LibraryStatsCard } from '@/components/library/LibraryStatsCard';
 import { LibraryMemberManagement } from '@/components/library/LibraryMemberManagement';
 import { useLibraryData } from '@/hooks/useLibraryData';
 import { format } from 'date-fns';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function Library() {
   const { userRole } = useAuth();
@@ -46,17 +47,26 @@ export default function Library() {
   const isLibrarian = userRole === 'librarian' || userRole === 'admin' || userRole === 'super_admin';
   const isStudent = userRole === 'student';
 
-  const filteredBooks = books?.filter(book => {
-    const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         book.isbn?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !selectedCategory || book.category_id === selectedCategory;
-    return matchesSearch && matchesCategory;
-  }) || [];
+  // Debounce search for performance
+  const debouncedSearch = useDebounce(searchTerm, 300);
 
-  const overdueIssues = bookIssues?.filter(issue => 
-    issue.status === 'issued' && new Date(issue.due_date) < new Date()
-  ) || [];
+  // Memoized filtered books
+  const filteredBooks = useMemo(() => {
+    return books?.filter(book => {
+      const matchesSearch = book.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                           book.author.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                           book.isbn?.toLowerCase().includes(debouncedSearch.toLowerCase());
+      const matchesCategory = !selectedCategory || book.category_id === selectedCategory;
+      return matchesSearch && matchesCategory;
+    }) || [];
+  }, [books, debouncedSearch, selectedCategory]);
+
+  // Memoized overdue issues
+  const overdueIssues = useMemo(() => {
+    return bookIssues?.filter(issue => 
+      issue.status === 'issued' && new Date(issue.due_date) < new Date()
+    ) || [];
+  }, [bookIssues]);
 
   if (loading) {
     return (

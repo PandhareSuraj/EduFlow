@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useDepartments } from "@/hooks/useDepartments";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface Faculty {
   id: string;
@@ -33,7 +34,6 @@ interface Faculty {
 export default function Faculty() {
   const { departments } = useDepartments();
   const [faculty, setFaculty] = useState<Faculty[]>([]);
-  const [filteredFaculty, setFilteredFaculty] = useState<Faculty[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
@@ -68,7 +68,6 @@ export default function Faculty() {
       }));
 
       setFaculty(facultyData);
-      setFilteredFaculty(facultyData);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -84,15 +83,19 @@ export default function Faculty() {
     fetchFaculty();
   }, []);
 
-  useEffect(() => {
+  // Debounce search for performance
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
+  // Memoized filtered faculty
+  const filteredFaculty = useMemo(() => {
     let filtered = faculty;
 
-    if (searchTerm) {
+    if (debouncedSearch) {
       filtered = filtered.filter(member =>
-        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.department.toLowerCase().includes(searchTerm.toLowerCase())
+        member.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        member.email.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        member.designation.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        member.department.toLowerCase().includes(debouncedSearch.toLowerCase())
       );
     }
 
@@ -104,10 +107,14 @@ export default function Faculty() {
       filtered = filtered.filter(member => member.status === statusFilter);
     }
 
-    setFilteredFaculty(filtered);
-  }, [faculty, searchTerm, departmentFilter, statusFilter]);
+    return filtered;
+  }, [faculty, debouncedSearch, departmentFilter, statusFilter]);
 
-  const statuses = [...new Set(faculty.map(member => member.status).filter(status => status && status.trim() !== ""))];
+  // Memoized unique statuses
+  const statuses = useMemo(() => 
+    [...new Set(faculty.map(member => member.status).filter(status => status && status.trim() !== ""))],
+    [faculty]
+  );
   
   return (
     <div className="p-6 space-y-6">
