@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAuth } from '@/hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +22,8 @@ import { format } from 'date-fns';
 import { useDebounce } from '@/hooks/useDebounce';
 
 export default function Library() {
+  usePageTitle("Library");
+  
   const { userRole } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');

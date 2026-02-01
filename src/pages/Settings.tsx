@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,8 @@ type UserWithRole = {
 };
 
 export default function Settings() {
+  usePageTitle("Settings");
+  
   const { toast } = useToast();
   const { userRole } = useAuth();
   const { collegeInfo, loading: collegeLoading, updateCollegeInfo, uploadSignature } = useCollegeSettings();

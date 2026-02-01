@@ -23,7 +23,12 @@ export function Layout({ children }: LayoutProps) {
           <AppSidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Header />
-            <main id="main-content" className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
+<main 
+              id="main-content" 
+              role="main"
+              aria-label="Main content"
+              className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6"
+            >
               {children}
             </main>
           </div>

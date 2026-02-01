@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 
 export default function Inventory() {
+  usePageTitle("Inventory");
+  
   const [searchQuery, setSearchQuery] = useState("");
   const {
     items,

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { CreditCard, Download, Search, Filter, Plus, Printer, Loader2, Upload, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,8 @@ interface Student {
 }
 
 export default function IDCards() {
+  usePageTitle("ID Cards");
+  
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");

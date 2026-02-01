@@ -15,6 +15,7 @@ import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CardGridSkeleton } from "@/components/skeletons";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface Course {
   id: number;
@@ -39,6 +40,8 @@ interface Course {
 }
 
 export default function Courses() {
+  usePageTitle("Courses");
+  
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -198,12 +201,13 @@ export default function Courses() {
         <CardContent className="p-4">
           <div className="flex gap-4 flex-wrap">
             <div className="relative flex-1 min-w-64">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" aria-hidden="true" />
               <Input 
                 placeholder="Search courses..." 
                 className="pl-10" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Search courses by name, code, or description"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>

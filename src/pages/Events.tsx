@@ -517,8 +517,9 @@ export default function Events() {
                               setPosterFile(null);
                               setPosterPreview(null);
                             }}
+                            aria-label="Remove poster image"
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         </div>
                       )}
