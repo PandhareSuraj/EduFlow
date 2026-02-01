@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { CreditCard, Download, Search, Filter, Plus, Printer, Loader2, Upload, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { uploadDocument } from "@/utils/documentUpload";
 import { useCollege } from "@/contexts/CollegeContext";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface Student {
   id: string;
@@ -115,20 +116,35 @@ export default function IDCards() {
     fetchStudents();
   }, []);
 
-  const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.course.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Debounce search for performance
+  const debouncedSearch = useDebounce(searchTerm, 300);
 
-  const getStatusColor = (status: string) => {
+  // Memoized filtered students
+  const filteredStudents = useMemo(() => {
+    return students.filter(student =>
+      student.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      student.id.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      student.course.toLowerCase().includes(debouncedSearch.toLowerCase())
+    );
+  }, [students, debouncedSearch]);
+
+  // Memoized status color getter
+  const getStatusColor = useCallback((status: string) => {
     switch (status) {
       case "Generated": return "bg-success text-success-foreground";
       case "Pending": return "bg-warning text-warning-foreground";
       case "Expired": return "bg-destructive text-destructive-foreground";
       default: return "bg-muted text-muted-foreground";
     }
-  };
+  }, []);
+
+  // Memoized stats
+  const stats = useMemo(() => ({
+    total: students.length,
+    generated: students.filter(s => s.idCardStatus === "Generated").length,
+    pending: students.filter(s => s.idCardStatus === "Pending").length,
+    expired: students.filter(s => new Date(s.validUpto) < new Date()).length
+  }), [students]);
 
   const handleGenerateCard = (student: any) => {
     setSelectedStudent(student);

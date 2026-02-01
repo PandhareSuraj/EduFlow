@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,7 @@ import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TableSkeleton } from "@/components/skeletons";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface Student {
   id: number;
@@ -159,28 +160,51 @@ export default function Students() {
     fetchStudents();
   };
 
-  // Filter students based on search term and status
-  const filteredStudents = students.filter(student => {
-    const matchesSearch = 
-      student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.student_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.courses?.code?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || student.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  // Debounce search term for performance
+  const debouncedSearch = useDebounce(searchTerm, 300);
 
-  // Calculate stats
-  const totalStudents = students.length;
-  const activeStudents = students.filter(s => s.status === 'active').length;
-  const graduatedStudents = students.filter(s => s.status === 'graduated').length;
-  const pendingFeesCount = students.filter(s => 
-    s.student_fees?.some(fee => fee.balance_amount > 0)
-  ).length;
+  // Memoize filtered students
+  const filteredStudents = useMemo(() => {
+    return students.filter(student => {
+      const matchesSearch = 
+        student.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        student.student_id?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        student.email?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        student.courses?.code?.toLowerCase().includes(debouncedSearch.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || student.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [students, debouncedSearch, statusFilter]);
 
-  const handleExportStudents = () => {
+  // Memoize stats calculations
+  const stats = useMemo(() => ({
+    totalStudents: students.length,
+    activeStudents: students.filter(s => s.status === 'active').length,
+    graduatedStudents: students.filter(s => s.status === 'graduated').length,
+    pendingFeesCount: students.filter(s => 
+      s.student_fees?.some(fee => fee.balance_amount > 0)
+    ).length
+  }), [students]);
+
+  // Memoize status color getter
+  const getStatusColor = useCallback((status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      case 'graduated':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'dropped':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+    }
+  }, []);
+
+  const handleExportStudents = useCallback(() => {
     const headers = [
       "Student ID", "Name", "Email", "Mobile", "Course", 
       "Semester", "Year", "Status", "Admission Date"
@@ -208,26 +232,13 @@ export default function Students() {
     a.download = `students_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'inactive':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-      case 'graduated':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'dropped':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-    }
-  };
+  }, [filteredStudents]);
 
   if (loading) {
     return <TableSkeleton rows={8} columns={9} showStats={true} statsCount={4} />;
   }
+
+  const { totalStudents, activeStudents, graduatedStudents, pendingFeesCount } = stats;
 
   return (
     <div className="space-y-6">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +18,7 @@ import { FeeStructureDialog } from "@/components/forms/FeeStructureDialog";
 import { EditStudentFeeDialog } from "@/components/fees/EditStudentFeeDialog";
 import { VideoTutorialButton } from "@/components/videos/VideoTutorialButton";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface StudentFeeData {
   id: string;
@@ -147,34 +148,57 @@ export default function Fees() {
     }
   }, [college?.id, collegeLoading]);
 
-  // Filter records based on search term, status, and course
-  const filteredRecords = feeRecords.filter(record => {
-    // Improved search with better null handling
-    const studentName = record.students?.name || '';
-    const studentId = record.students?.student_id || '';
-    const courseCode = record.students?.courses?.code || '';
-    const courseName = record.students?.courses?.name || '';
-    
-    const matchesSearch = searchTerm === "" || 
-      studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      courseCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      courseName.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || record.status === statusFilter;
-    
-    const courseId = record.students?.courses?.id?.toString() || "";
-    const matchesCourse = courseFilter === "all" || courseId === courseFilter;
-    
-    return matchesSearch && matchesStatus && matchesCourse;
-  });
+  // Debounce search for performance
+  const debouncedSearch = useDebounce(searchTerm, 300);
 
-  // Calculate totals
-  const totalCollection = feeRecords.reduce((sum, record) => sum + record.paid_amount, 0);
-  const totalPending = feeRecords.reduce((sum, record) => sum + record.balance_amount, 0);
-  const totalAmount = feeRecords.reduce((sum, record) => sum + record.total_amount, 0);
-  const totalDiscounts = feeRecords.reduce((sum, record) => sum + (record.discount_amount || 0), 0);
-  const collectionRate = totalAmount > 0 ? ((totalCollection / totalAmount) * 100).toFixed(1) : 0;
+  // Memoized filtered records
+  const filteredRecords = useMemo(() => {
+    return feeRecords.filter(record => {
+      const studentName = record.students?.name || '';
+      const studentId = record.students?.student_id || '';
+      const courseCode = record.students?.courses?.code || '';
+      const courseName = record.students?.courses?.name || '';
+      
+      const matchesSearch = debouncedSearch === "" || 
+        studentName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        studentId.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        courseCode.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        courseName.toLowerCase().includes(debouncedSearch.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || record.status === statusFilter;
+      
+      const courseId = record.students?.courses?.id?.toString() || "";
+      const matchesCourse = courseFilter === "all" || courseId === courseFilter;
+      
+      return matchesSearch && matchesStatus && matchesCourse;
+    });
+  }, [feeRecords, debouncedSearch, statusFilter, courseFilter]);
+
+  // Memoized totals
+  const { totalCollection, totalPending, totalAmount, totalDiscounts, collectionRate } = useMemo(() => {
+    const totalCollection = feeRecords.reduce((sum, record) => sum + record.paid_amount, 0);
+    const totalPending = feeRecords.reduce((sum, record) => sum + record.balance_amount, 0);
+    const totalAmount = feeRecords.reduce((sum, record) => sum + record.total_amount, 0);
+    const totalDiscounts = feeRecords.reduce((sum, record) => sum + (record.discount_amount || 0), 0);
+    const collectionRate = totalAmount > 0 ? ((totalCollection / totalAmount) * 100).toFixed(1) : '0';
+    return { totalCollection, totalPending, totalAmount, totalDiscounts, collectionRate };
+  }, [feeRecords]);
+
+  // Memoized status color getter
+  const getStatusColor = useCallback((status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'partial':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'overdue':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+    }
+  }, []);
 
   const handleExportRecords = () => {
     const headers = [
@@ -205,21 +229,6 @@ export default function Fees() {
     a.download = `fee_records_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'partial':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'overdue':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-    }
   };
 
   return (
