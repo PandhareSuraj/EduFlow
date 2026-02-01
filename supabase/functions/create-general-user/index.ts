@@ -1,5 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { 
+  validateEmail, 
+  validatePassword, 
+  validateRole,
+  validateUUID,
+  validateAll,
+  createValidationErrorResponse
+} from "../_shared/validation.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,6 +31,31 @@ serve(async (req) => {
     const request: CreateGeneralUserRequest = await req.json();
     console.log('Creating general user:', { email: request.email, role: request.role, college_id: request.college_id });
 
+    // Server-side validation
+    const validations = [
+      { field: 'email', result: validateEmail(request.email) },
+      { field: 'role', result: validateRole(request.role) },
+    ];
+
+    // Validate password if provided
+    if (request.password) {
+      validations.push({ field: 'password', result: validatePassword(request.password) });
+    }
+
+    // Validate college_id if provided
+    if (request.college_id) {
+      validations.push({ field: 'college_id', result: validateUUID(request.college_id, 'College ID') });
+    }
+
+    const validationResult = validateAll(validations);
+
+    if (!validationResult.valid) {
+      return createValidationErrorResponse(validationResult.errors, corsHeaders);
+    }
+
+    // Sanitize email
+    const sanitizedEmail = request.email.toLowerCase().trim();
+
     // Initialize Supabase admin client
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -37,7 +70,7 @@ serve(async (req) => {
 
     // Check if user already exists
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const userExists = existingUsers?.users?.some(user => user.email === request.email);
+    const userExists = existingUsers?.users?.some(user => user.email === sanitizedEmail);
     
     if (userExists) {
       return new Response(
@@ -54,9 +87,9 @@ serve(async (req) => {
     // Generate password if not provided
     const password = request.password || generateRandomPassword();
 
-    // Create user in auth
+    // Create user in auth with sanitized email
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: request.email,
+      email: sanitizedEmail,
       password: password,
       email_confirm: true, // Auto-confirm email
       user_metadata: {

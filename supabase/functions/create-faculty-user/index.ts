@@ -1,5 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { 
+  validateEmail, 
+  validatePassword, 
+  validateRole,
+  validateUUID,
+  validateAll,
+  createValidationErrorResponse
+} from "../_shared/validation.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,6 +31,22 @@ serve(async (req) => {
   try {
     const { email, password, facultyId, role, collegeId }: CreateFacultyUserRequest = await req.json();
 
+    // Server-side validation
+    const validationResult = validateAll([
+      { field: 'email', result: validateEmail(email) },
+      { field: 'password', result: validatePassword(password) },
+      { field: 'role', result: validateRole(role) },
+      { field: 'facultyId', result: validateUUID(facultyId, 'Faculty ID') },
+      { field: 'collegeId', result: validateUUID(collegeId, 'College ID') },
+    ]);
+
+    if (!validationResult.valid) {
+      return createValidationErrorResponse(validationResult.errors, corsHeaders);
+    }
+
+    // Sanitize email
+    const sanitizedEmail = email.toLowerCase().trim();
+
     // Create admin client with service role key
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -35,9 +59,9 @@ serve(async (req) => {
       }
     );
 
-    // Create user with confirmed email
+    // Create user with confirmed email using sanitized data
     const { data: user, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: sanitizedEmail,
       password,
       email_confirm: true // This confirms the email automatically
     });

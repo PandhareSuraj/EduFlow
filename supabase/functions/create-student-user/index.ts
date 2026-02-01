@@ -1,5 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { 
+  validateEmail, 
+  validateName, 
+  validatePassword, 
+  validateRole,
+  validateAll,
+  createValidationErrorResponse,
+  sanitizeInput 
+} from "../_shared/validation.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,6 +31,33 @@ serve(async (req) => {
 
   try {
     const { email, password, role, full_name, student_id }: CreateStudentUserRequest = await req.json();
+
+    // Server-side validation
+    const validationResult = validateAll([
+      { field: 'email', result: validateEmail(email) },
+      { field: 'full_name', result: validateName(full_name) },
+      { field: 'password', result: validatePassword(password) },
+      { field: 'role', result: validateRole(role) },
+    ]);
+
+    if (!validationResult.valid) {
+      return createValidationErrorResponse(validationResult.errors, corsHeaders);
+    }
+
+    // Validate student_id
+    if (!student_id || typeof student_id !== 'number' || student_id <= 0) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid student ID'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Sanitize inputs
+    const sanitizedEmail = email.toLowerCase().trim();
+    const sanitizedName = sanitizeInput(full_name, 100);
 
     // Create admin client with service role key
     const supabaseAdmin = createClient(
@@ -49,12 +85,12 @@ serve(async (req) => {
       });
     }
 
-    // Create user account
+    // Create user account with sanitized data
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: sanitizedEmail,
       password,
       user_metadata: {
-        full_name,
+        full_name: sanitizedName,
         student_id,
         role
       },
