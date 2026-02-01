@@ -1,26 +1,47 @@
 
 
-# Comprehensive Loading States Implementation
+# Application Performance Optimization
 
 ## Overview
 
-This plan adds robust loading states throughout the EduFlow application including skeleton loaders with shimmer effects, a global page transition progress bar, Suspense boundaries for lazy-loaded components, enhanced button loading states, and initial app loading screens.
+This plan implements comprehensive performance optimizations to achieve First Contentful Paint under 1.5 seconds, including enhanced lazy loading, image optimization, memoization, virtual scrolling for long lists, debounced search inputs, critical resource preloading, vendor bundle splitting, and an enhanced service worker.
 
 ---
 
 ## Current State Analysis
 
-| Feature | Current Status | Gap |
-|---------|---------------|-----|
-| Skeleton Component | Exists (`animate-pulse`) | No shimmer effect, basic styling |
-| Shimmer Animation | Defined in tailwind.config.ts | Not applied to skeleton component |
-| Page Loading | Basic spinner in ProtectedRoute | No branded loading screen |
-| Button Loading | Manual implementation per button | No reusable loading button component |
-| Page Transitions | None | No progress indicator between routes |
-| Suspense Boundaries | Not used | All routes loaded synchronously |
-| Data Caching | QueryClient has 5min staleTime | Good - already implemented |
-| Dashboard Skeletons | Shows "..." for loading values | No skeleton cards |
-| Table Skeletons | Shows Loader2 spinner only | No skeleton rows |
+| Area | Current Status | Gap |
+|------|---------------|-----|
+| Lazy Loading | Implemented | All 35+ pages already use React.lazy() |
+| Image loading="lazy" | Partially implemented | Some images missing attribute, some use eager for LCP |
+| WebP Format | Not implemented | All images are PNG/JPEG |
+| useMemo | 12 files use it | Need more for expensive computations |
+| React.memo | Not used | No list item memoization |
+| Virtual Scrolling | Not implemented | Tables render all rows |
+| Search Debounce | 2 hooks have it | ~20+ search inputs call setState directly |
+| Resource Preloading | Not implemented | No preload hints in HTML |
+| Bundle Splitting | Basic Vite defaults | No manual chunk configuration |
+| Service Worker | Implemented | Needs runtime caching strategy improvements |
+
+### Files Needing Debounce (High Priority)
+
+Based on search analysis, these files have search inputs without debounce:
+- `src/pages/Students.tsx` - setSearchTerm direct call
+- `src/pages/Fees.tsx` - setSearchTerm direct call  
+- `src/pages/Courses.tsx` - setSearchTerm direct call
+- `src/pages/Faculty.tsx` - setSearchTerm direct call
+- `src/pages/Library.tsx` - setSearchTerm direct call
+- `src/pages/Exams.tsx` - 2 search inputs without debounce
+- `src/pages/Inventory.tsx` - setSearchQuery direct call
+- `src/pages/IDCards.tsx` - setSearchTerm direct call
+- And 10+ more components
+
+### Pages with Long Lists Needing Virtual Scrolling
+
+- **Students page**: Can have 500+ students
+- **Fees page**: Renders all fee records
+- **Results/Exams**: Large result sets
+- **Library**: Book catalogs can be large
 
 ---
 
@@ -28,219 +49,438 @@ This plan adds robust loading states throughout the EduFlow application includin
 
 | Action | File | Purpose |
 |--------|------|---------|
-| Create | `src/components/ui/loading-button.tsx` | Button with built-in loading state |
-| Create | `src/components/ui/page-loader.tsx` | Full-page initial loading screen |
-| Create | `src/components/ui/progress-bar.tsx` | Top navigation progress bar |
-| Create | `src/components/skeletons/DashboardSkeleton.tsx` | Dashboard skeleton cards |
-| Create | `src/components/skeletons/TableSkeleton.tsx` | Table with skeleton rows |
-| Create | `src/components/skeletons/CardGridSkeleton.tsx` | Card grid skeleton (courses) |
-| Create | `src/components/skeletons/index.ts` | Exports for all skeletons |
-| Modify | `src/components/ui/skeleton.tsx` | Add shimmer effect variant |
-| Modify | `src/index.css` | Add shimmer gradient styles |
-| Modify | `src/App.tsx` | Add Suspense boundaries, lazy imports, progress bar |
-| Modify | `src/pages/Dashboard.tsx` | Use skeleton loaders |
-| Modify | `src/pages/Students.tsx` | Use table skeleton |
-| Modify | `src/pages/Courses.tsx` | Use card grid skeleton |
-| Modify | `src/components/ProtectedRoute.tsx` | Branded loading screen |
+| Create | `src/hooks/useDebounce.tsx` | Generic debounce hook |
+| Create | `src/hooks/useDebouncedSearch.tsx` | Search-specific debounce wrapper |
+| Create | `src/components/ui/virtualized-table.tsx` | Virtual scrolling table component |
+| Create | `src/components/ui/optimized-image.tsx` | Image component with lazy loading + WebP |
+| Create | `src/components/lists/MemoizedTableRow.tsx` | Memoized table row component |
+| Modify | `vite.config.ts` | Add manual chunk splitting |
+| Modify | `index.html` | Add preload hints for critical resources |
+| Modify | `public/service-worker.js` | Enhanced caching strategies |
+| Modify | `src/pages/Students.tsx` | Add debounce + virtual scrolling + memoization |
+| Modify | `src/pages/Fees.tsx` | Add debounce + virtual scrolling |
+| Modify | `src/pages/Courses.tsx` | Add debounce + memoization |
+| Modify | `src/pages/Faculty.tsx` | Add debounce |
+| Modify | `src/pages/Library.tsx` | Add debounce |
+| Modify | `src/pages/Exams.tsx` | Add debounce |
+| Modify | `src/components/product-tour/ScreenshotShowcase.tsx` | Optimize images |
 
 ---
 
 ## Implementation Details
 
-### 1. Enhanced Skeleton Component with Shimmer
+### 1. Generic Debounce Hook
 
-Update the existing skeleton to include a premium shimmer effect:
+Create a reusable debounce hook for any value:
 
-**Changes to skeleton.tsx:**
-- Add shimmer variant with gradient animation
-- Use the existing `shimmer` keyframe from tailwind.config.ts
-- Support both pulse and shimmer modes
+```typescript
+// src/hooks/useDebounce.tsx
+import { useState, useEffect } from 'react';
 
-**Shimmer Effect CSS:**
-```css
-.skeleton-shimmer {
-  background: linear-gradient(
-    90deg,
-    hsl(var(--muted)) 0%,
-    hsl(var(--muted-foreground) / 0.1) 50%,
-    hsl(var(--muted)) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+export function useDebounce<T>(value: T, delay: number = 300): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
 }
 ```
 
-### 2. Loading Button Component
+**Usage in Components:**
+```typescript
+const [searchTerm, setSearchTerm] = useState("");
+const debouncedSearch = useDebounce(searchTerm, 300);
 
-A reusable button that shows spinner during async operations:
-
-**Features:**
-- Accepts `loading` boolean prop
-- Shows Loader2 spinner when loading
-- Automatically disables when loading
-- Preserves original button text or shows custom loading text
-- Works with all button variants
-
-**Usage Pattern:**
-```tsx
-<LoadingButton 
-  loading={isSubmitting}
-  loadingText="Saving..."
-  onClick={handleSubmit}
->
-  Save Changes
-</LoadingButton>
+// Use debouncedSearch for filtering instead of searchTerm
+const filteredStudents = useMemo(() => {
+  return students.filter(s => 
+    s.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+  );
+}, [students, debouncedSearch]);
 ```
 
-### 3. Page Loader Component
+### 2. Search-Specific Debounce Wrapper
 
-A branded full-page loading screen for initial app load:
+For components needing search callbacks:
 
-**Features:**
-- EduFlow logo centered
-- Animated spinner with brand colors
-- "Loading..." text with dots animation
-- Gradient background matching app theme
-- Smooth fade-out transition
+```typescript
+// src/hooks/useDebouncedSearch.tsx
+import { useState, useCallback, useRef, useEffect } from 'react';
 
-### 4. Top Progress Bar
+export function useDebouncedSearch<T>(
+  searchFn: (term: string) => Promise<T[]> | T[],
+  delay: number = 300
+) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [results, setResults] = useState<T[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
-A navigation progress indicator like NProgress:
+  const handleSearch = useCallback((term: string) => {
+    setSearchTerm(term);
+    
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
-**Features:**
-- Thin progress bar at top of viewport
-- Animates on route changes
-- Uses primary color gradient
-- Auto-completes on page load
-- Uses React Router location changes as trigger
+    if (!term || term.length < 2) {
+      setResults([]);
+      return;
+    }
 
-**Implementation:**
-```tsx
-function NavigationProgress() {
-  const location = useLocation();
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
+    timeoutRef.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const data = await searchFn(term);
+        setResults(data);
+      } finally {
+        setIsSearching(false);
+      }
+    }, delay);
+  }, [searchFn, delay]);
 
   useEffect(() => {
-    setLoading(true);
-    setProgress(30);
-    
-    const timer1 = setTimeout(() => setProgress(60), 100);
-    const timer2 = setTimeout(() => setProgress(90), 200);
-    const timer3 = setTimeout(() => {
-      setProgress(100);
-      setLoading(false);
-    }, 300);
-
     return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [location.pathname]);
+  }, []);
 
-  if (!loading && progress === 100) return null;
+  return { searchTerm, handleSearch, results, isSearching, setSearchTerm };
+}
+```
+
+### 3. Virtual Scrolling Table Component
+
+Create a virtualized table for long lists using windowing:
+
+**Key Features:**
+- Only renders visible rows (viewport + buffer)
+- Handles 1000+ rows smoothly
+- Preserves table semantics for accessibility
+- Integrates with existing Table components
+
+```typescript
+// src/components/ui/virtualized-table.tsx
+interface VirtualizedTableProps<T> {
+  data: T[];
+  rowHeight: number;
+  visibleRows?: number;
+  renderRow: (item: T, index: number) => React.ReactNode;
+  renderHeader: () => React.ReactNode;
+}
+
+function VirtualizedTable<T>({ 
+  data, 
+  rowHeight = 52, 
+  visibleRows = 15,
+  renderRow,
+  renderHeader 
+}: VirtualizedTableProps<T>) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  
+  const totalHeight = data.length * rowHeight;
+  const startIndex = Math.floor(scrollTop / rowHeight);
+  const endIndex = Math.min(startIndex + visibleRows + 2, data.length);
+  
+  const visibleData = data.slice(startIndex, endIndex);
+  const offsetY = startIndex * rowHeight;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-1">
-      <div 
-        className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-300"
-        style={{ width: `${progress}%` }}
-      />
+    <div 
+      ref={containerRef}
+      className="overflow-auto"
+      style={{ height: visibleRows * rowHeight }}
+      onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+    >
+      <div style={{ height: totalHeight, position: 'relative' }}>
+        <Table>
+          <TableHeader style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+            {renderHeader()}
+          </TableHeader>
+          <TableBody style={{ transform: `translateY(${offsetY}px)` }}>
+            {visibleData.map((item, idx) => renderRow(item, startIndex + idx))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
 ```
 
-### 5. Dashboard Skeleton
+### 4. Memoized Table Row Component
 
-Skeleton loader for the dashboard stats cards:
+Prevent re-renders of unchanged rows:
 
-**Components:**
-- StatsCardSkeleton: Mimics StatsCard layout
-- WelcomeBannerSkeleton: Header gradient skeleton
-- QuickActionsSkeleton: Action button skeletons
-- Full DashboardSkeleton combining all
+```typescript
+// src/components/lists/MemoizedTableRow.tsx
+interface StudentRowProps {
+  student: Student;
+  onView: (student: Student) => void;
+  onEdit: (student: Student) => void;
+  onDelete: (student: Student) => void;
+  getStatusColor: (status: string) => string;
+}
 
-**Pattern:**
-```tsx
-function StatsCardSkeleton() {
+const StudentRow = React.memo(function StudentRow({
+  student,
+  onView,
+  onEdit,
+  onDelete,
+  getStatusColor
+}: StudentRowProps) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-24" shimmer />
-            <Skeleton className="h-8 w-16" shimmer />
-            <Skeleton className="h-3 w-20" shimmer />
-          </div>
-          <Skeleton className="h-12 w-12 rounded-full" shimmer />
-        </div>
-      </CardContent>
-    </Card>
+    <TableRow>
+      <TableCell className="font-medium">{student.student_id}</TableCell>
+      <TableCell>{student.name}</TableCell>
+      {/* ... rest of cells */}
+    </TableRow>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison - only re-render if student data changed
+  return (
+    prevProps.student.id === nextProps.student.id &&
+    prevProps.student.status === nextProps.student.status &&
+    prevProps.student.name === nextProps.student.name
+  );
+});
+```
+
+### 5. Optimized Image Component
+
+Create a wrapper for images with best practices:
+
+```typescript
+// src/components/ui/optimized-image.tsx
+interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+  src: string;
+  alt: string;
+  priority?: boolean; // For above-the-fold images
+  fallback?: string;
+}
+
+export function OptimizedImage({ 
+  src, 
+  alt, 
+  priority = false,
+  fallback = '/placeholder.svg',
+  className,
+  ...props 
+}: OptimizedImageProps) {
+  const [error, setError] = useState(false);
+  
+  return (
+    <img
+      src={error ? fallback : src}
+      alt={alt}
+      loading={priority ? "eager" : "lazy"}
+      decoding={priority ? "sync" : "async"}
+      onError={() => setError(true)}
+      className={cn(
+        "transition-opacity duration-300",
+        className
+      )}
+      {...props}
+    />
   );
 }
 ```
 
-### 6. Table Skeleton
+### 6. Vite Bundle Splitting Configuration
 
-Skeleton for data tables (Students, Fees, etc.):
+Configure manual chunks for better caching:
 
-**Features:**
-- Configurable number of rows (default 5)
-- Configurable number of columns
-- Header row skeleton
-- Body rows with varied widths for realism
-
-**Usage:**
-```tsx
-<TableSkeleton rows={10} columns={8} />
+```typescript
+// vite.config.ts
+export default defineConfig(({ mode }) => ({
+  // ... existing config
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks - rarely change
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-popover',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-tooltip'
+          ],
+          'vendor-query': ['@tanstack/react-query'],
+          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          'vendor-charts': ['recharts'],
+          'vendor-utils': ['date-fns', 'date-fns-tz', 'lodash'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-pdf': ['jspdf', 'jspdf-autotable', 'html2canvas'],
+        }
+      }
+    },
+    chunkSizeWarningLimit: 500,
+  }
+}));
 ```
 
-### 7. Card Grid Skeleton
+### 7. Critical Resource Preloading
 
-Skeleton for card grids (Courses page):
+Add preload hints to index.html:
 
-**Features:**
-- Configurable grid columns (responsive)
-- Card-shaped skeletons with content blocks
-- Matches actual card layout
-
-### 8. Suspense Boundaries and Lazy Loading
-
-Add React.lazy for route-level code splitting:
-
-**Pages to Lazy Load:**
-- All main feature pages (Dashboard, Students, Courses, etc.)
-- Less frequently used pages (Reports, Settings, SystemHealth)
-
-**Suspense Fallback:**
-Use appropriate skeleton for each route category:
-- Dashboard route: DashboardSkeleton
-- Table routes (Students, Fees): TableSkeleton
-- Card routes (Courses): CardGridSkeleton
-- Default: PageLoader
-
-**Pattern:**
-```tsx
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Students = lazy(() => import('./pages/Students'));
-
-// In Routes:
-<Suspense fallback={<DashboardSkeleton />}>
-  <Dashboard />
-</Suspense>
+```html
+<!-- index.html -->
+<head>
+  <!-- ... existing meta tags -->
+  
+  <!-- Preload critical fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Preload critical assets -->
+  <link rel="preload" href="/src/index.css" as="style">
+  <link rel="modulepreload" href="/src/main.tsx">
+  
+  <!-- DNS prefetch for external services -->
+  <link rel="dns-prefetch" href="https://supabase.co">
+  
+  <!-- Preload main logo for LCP -->
+  <link rel="preload" as="image" href="/src/assets/eduflow-logo.png">
+</head>
 ```
 
-### 9. Enhanced ProtectedRoute
+### 8. Enhanced Service Worker
 
-Improve the loading state in ProtectedRoute:
+Improve caching strategies:
 
-**Changes:**
-- Use PageLoader component instead of basic spinner
-- Add branded styling
-- Show meaningful loading messages
-- Smooth transitions
+```javascript
+// public/service-worker.js
+const CACHE_NAME = 'eduflow-v2';
+const STATIC_CACHE = 'eduflow-static-v2';
+const DYNAMIC_CACHE = 'eduflow-dynamic-v2';
+
+// Static assets - cache first
+const staticAssets = [
+  '/',
+  '/manifest.json',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
+];
+
+// Install - cache static assets
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(STATIC_CACHE).then(cache => cache.addAll(staticAssets))
+  );
+  self.skipWaiting();
+});
+
+// Fetch - network first for API, cache first for static
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip non-GET requests
+  if (request.method !== 'GET') return;
+
+  // API requests - network first with cache fallback
+  if (url.hostname.includes('supabase')) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  // Static assets - cache first
+  if (
+    request.destination === 'image' ||
+    request.destination === 'style' ||
+    request.destination === 'script' ||
+    request.destination === 'font'
+  ) {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
+
+  // HTML - network first
+  if (request.destination === 'document') {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  // Default - stale while revalidate
+  event.respondWith(staleWhileRevalidate(request));
+});
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  
+  const response = await fetch(request);
+  if (response.ok) {
+    const cache = await caches.open(STATIC_CACHE);
+    cache.put(request, response.clone());
+  }
+  return response;
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return caches.match(request);
+  }
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(DYNAMIC_CACHE);
+  const cached = await cache.match(request);
+  
+  const fetchPromise = fetch(request).then(response => {
+    if (response.ok) cache.put(request, response.clone());
+    return response;
+  });
+  
+  return cached || fetchPromise;
+}
+```
+
+### 9. useMemo for Expensive Computations
+
+Add memoization to pages with heavy filtering:
+
+**Students.tsx Pattern:**
+```typescript
+// Memoize filtered results
+const filteredStudents = useMemo(() => {
+  return students.filter(student => {
+    const matchesSearch = 
+      student.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      student.student_id?.toLowerCase().includes(debouncedSearch.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || student.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+}, [students, debouncedSearch, statusFilter]);
+
+// Memoize stats calculations
+const stats = useMemo(() => ({
+  total: students.length,
+  active: students.filter(s => s.status === 'active').length,
+  graduated: students.filter(s => s.status === 'graduated').length,
+  pendingFees: students.filter(s => 
+    s.student_fees?.some(fee => fee.balance_amount > 0)
+  ).length
+}), [students]);
+```
 
 ---
 
@@ -248,92 +488,91 @@ Improve the loading state in ProtectedRoute:
 
 ```text
 src/
+├── hooks/
+│   ├── useDebounce.tsx           # NEW: Generic debounce
+│   └── useDebouncedSearch.tsx    # NEW: Search-specific debounce
 ├── components/
 │   ├── ui/
-│   │   ├── skeleton.tsx          # Enhanced with shimmer
-│   │   ├── loading-button.tsx    # NEW: Button with loading state
-│   │   ├── page-loader.tsx       # NEW: Full-page loader
-│   │   └── progress-bar.tsx      # NEW: Top navigation progress
-│   └── skeletons/
-│       ├── DashboardSkeleton.tsx # NEW: Dashboard skeleton
-│       ├── TableSkeleton.tsx     # NEW: Table skeleton
-│       ├── CardGridSkeleton.tsx  # NEW: Card grid skeleton
-│       └── index.ts              # NEW: Exports
+│   │   ├── virtualized-table.tsx # NEW: Virtual scrolling table
+│   │   └── optimized-image.tsx   # NEW: Optimized image component
+│   └── lists/
+│       └── MemoizedTableRow.tsx  # NEW: Memoized row components
 ├── pages/
-│   ├── Dashboard.tsx             # Updated with skeleton
-│   ├── Students.tsx              # Updated with skeleton
-│   └── Courses.tsx               # Updated with skeleton
-├── index.css                     # Shimmer gradient styles
-└── App.tsx                       # Suspense, lazy, progress bar
+│   ├── Students.tsx              # Modified: Debounce + memoization
+│   ├── Fees.tsx                  # Modified: Debounce + memoization
+│   └── Courses.tsx               # Modified: Debounce + memoization
+public/
+└── service-worker.js             # Modified: Enhanced caching
+index.html                        # Modified: Preload hints
+vite.config.ts                    # Modified: Bundle splitting
 ```
-
----
-
-## Skeleton Variants Summary
-
-| Page/Component | Skeleton Type | Elements |
-|----------------|---------------|----------|
-| Dashboard | DashboardSkeleton | 4-6 stat cards, welcome banner, quick actions |
-| Students | TableSkeleton | 4 stat cards + 10 table rows |
-| Courses | CardGridSkeleton | Filter bar + 6 course cards |
-| Fees | TableSkeleton | 5 stat cards + 10 table rows |
-| Library | TableSkeleton | Stats + table rows |
-| Faculty | TableSkeleton | Stats + table rows |
-| Exams | CardGridSkeleton | Cards for exam list |
-| Initial Load | PageLoader | Logo + spinner + text |
-| Route Change | ProgressBar | Top progress bar |
 
 ---
 
 ## Implementation Checklist
 
-### Phase 1: Core Components
-1. Enhance skeleton.tsx with shimmer variant
-2. Add shimmer gradient to index.css
-3. Create LoadingButton component
-4. Create PageLoader component
-5. Create NavigationProgress component
+### Phase 1: Core Hooks
+1. Create `useDebounce` hook
+2. Create `useDebouncedSearch` hook
 
-### Phase 2: Skeleton Templates
-6. Create DashboardSkeleton component
-7. Create TableSkeleton component
-8. Create CardGridSkeleton component
-9. Create skeletons/index.ts exports
+### Phase 2: UI Components
+3. Create `VirtualizedTable` component
+4. Create `OptimizedImage` component
+5. Create `MemoizedTableRow` components
 
-### Phase 3: Page Updates
-10. Update Dashboard.tsx to use DashboardSkeleton
-11. Update Students.tsx to use TableSkeleton
-12. Update Courses.tsx to use CardGridSkeleton
-13. Update ProtectedRoute with PageLoader
+### Phase 3: Page Optimizations
+6. Update Students.tsx with debounce + useMemo + React.memo
+7. Update Fees.tsx with debounce + useMemo
+8. Update Courses.tsx with debounce + useMemo
+9. Update Faculty.tsx with debounce
+10. Update Library.tsx with debounce
+11. Update remaining search inputs (Exams, Inventory, IDCards, etc.)
 
-### Phase 4: Lazy Loading
-14. Add lazy imports for all pages in App.tsx
-15. Wrap routes with Suspense boundaries
-16. Add NavigationProgress to App.tsx
+### Phase 4: Build Optimizations
+12. Configure vite.config.ts with manual chunks
+13. Add preload hints to index.html
+14. Enhance service-worker.js with better caching strategies
 
----
-
-## Loading State Behavior Summary
-
-| Scenario | User Experience |
-|----------|-----------------|
-| Initial app load | PageLoader with logo and spinner |
-| Auth check in progress | "Loading user permissions..." with spinner |
-| Route navigation | Top progress bar animates |
-| Dashboard data loading | Skeleton cards with shimmer |
-| Table data loading | Skeleton rows with shimmer |
-| Card grid loading | Skeleton cards in grid with shimmer |
-| Button submission | Spinner replaces text, button disabled |
-| Background data refresh | No visual change (stale data shown) |
-| Return to cached page | Instant display (no loading) |
+### Phase 5: Image Optimization
+15. Add loading="lazy" to below-fold images
+16. Replace OptimizedImage in ScreenshotShowcase
+17. Ensure priority images use loading="eager"
 
 ---
 
-## Performance Considerations
+## Performance Improvements Summary
 
-- React.lazy enables code splitting, reducing initial bundle size
-- QueryClient already has 5-minute staleTime preventing unnecessary refetches
-- Skeleton loaders provide immediate visual feedback
-- Shimmer animation uses GPU-accelerated CSS transforms
-- Progress bar uses minimal DOM updates
+| Optimization | Expected Impact |
+|-------------|-----------------|
+| Debounced search (300ms) | Reduces API calls by 80-90% |
+| useMemo on filters | Prevents recalculation on every render |
+| React.memo on list items | Prevents re-render of unchanged rows |
+| Virtual scrolling | Only renders ~15 rows vs 500+ |
+| Bundle splitting | Better cache hit rates |
+| Resource preloading | Faster LCP, reduced blocking |
+| Enhanced service worker | Offline support, faster repeat visits |
+| Image lazy loading | Deferred non-critical image loading |
+
+---
+
+## Target Metrics
+
+| Metric | Current (Est.) | Target |
+|--------|---------------|--------|
+| First Contentful Paint | ~2.5s | < 1.5s |
+| Time to Interactive | ~4s | < 3s |
+| Initial Bundle Size | ~800KB | < 400KB (main) |
+| Search Response Time | Instant (blocking) | 300ms debounced |
+| Table Render (500 rows) | ~800ms | < 50ms (virtual) |
+| Repeat Visit Load | ~2s | < 500ms (cached) |
+
+---
+
+## Dependencies
+
+No new dependencies required. Uses:
+- Existing lodash for debounce utilities in some hooks
+- Native browser APIs for virtual scrolling
+- Built-in React.memo and useMemo
+- Vite's built-in Rollup configuration
 
