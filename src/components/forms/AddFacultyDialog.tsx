@@ -16,7 +16,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { ValidatedInput } from "@/components/ui/validated-input";
-import { ValidationHelpers } from "@/lib/validationSchemas";
+import { ValidationHelpers, FormSchemas } from "@/lib/validationSchemas";
+import { sanitizeFormData } from "@/lib/sanitize";
+import { useRateLimit } from "@/hooks/useRateLimit";
 
 interface AddFacultyDialogProps {
   trigger?: React.ReactNode;
@@ -31,6 +33,8 @@ export function AddFacultyDialog({ trigger, onSuccess }: AddFacultyDialogProps) 
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { userRole } = useAuth();
+  const { checkRateLimit, isLimited } = useRateLimit({ cooldownMs: 2000 });
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   const [formData, setFormData] = useState({
     name: "",
@@ -48,14 +52,32 @@ export function AddFacultyDialog({ trigger, onSuccess }: AddFacultyDialogProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !formData.phone || !formData.designation || !formData.department) {
+    // Rate limit check
+    if (!checkRateLimit()) {
+      return;
+    }
+
+    // Validate with Zod schema
+    const validationResult = FormSchemas.addFaculty.safeParse(formData);
+    
+    if (!validationResult.success) {
+      const errors: Record<string, string> = {};
+      validationResult.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          errors[err.path[0] as string] = err.message;
+        }
+      });
+      setValidationErrors(errors);
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields.",
+        description: "Please fix the errors in the form.",
         variant: "destructive",
       });
       return;
     }
+
+    // Clear validation errors
+    setValidationErrors({});
 
     setLoading(true);
     try {
@@ -72,23 +94,35 @@ export function AddFacultyDialog({ trigger, onSuccess }: AddFacultyDialogProps) 
         return;
       }
 
-      const { error } = await supabase
+      // Sanitize form data before database insertion
+      const sanitizedData = sanitizeFormData(formData, {
+        name: 'name',
+        email: 'email',
+        phone: 'phone',
+        experience: 'text',
+        qualification: 'text',
+        subjects: 'text',
+        address: 'multiline',
+      });
+
+      const { error: insertError } = await supabase
         .from('faculty')
         .insert({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
+          name: sanitizedData.name,
+          email: sanitizedData.email,
+          phone: sanitizedData.phone,
           designation: formData.designation,
           department: formData.department,
-          experience: formData.experience || null,
-          qualification: formData.qualification || null,
-          subjects: formData.subjects ? formData.subjects.split(',').map(s => s.trim()) : [],
-          address: formData.address || null,
+          experience: sanitizedData.experience || null,
+          qualification: sanitizedData.qualification || null,
+          subjects: sanitizedData.subjects ? String(sanitizedData.subjects).split(',').map(s => s.trim()) : [],
+          address: sanitizedData.address || null,
           status: formData.status.toLowerCase(),
           college_id: collegeId
         });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
+      
 
       toast({
         title: "Faculty Added",

@@ -7,13 +7,16 @@ const nameRegex = /^[a-zA-Z\s.'-]+$/;
 const studentIdRegex = /^[A-Z0-9]{3,15}$/;
 const otpRegex = /^\d{6}$/;
 
+// International phone regex (10-15 digits, optional + prefix)
+const internationalPhoneRegex = /^\+?[1-9]\d{9,14}$/;
+
 // Common validation schemas
 export const ValidationSchemas = {
   // Personal Information
   name: z
     .string()
     .min(2, "Name must be at least 2 characters")
-    .max(50, "Name cannot exceed 50 characters")
+    .max(100, "Name cannot exceed 100 characters")
     .regex(nameRegex, "Name can only contain letters, spaces, dots, hyphens, and apostrophes")
     .transform((name) => name.trim()),
 
@@ -21,7 +24,7 @@ export const ValidationSchemas = {
     .string()
     .min(1, "Email is required")
     .email("Please enter a valid email address (e.g., user@example.com)")
-    .max(100, "Email cannot exceed 100 characters")
+    .max(255, "Email cannot exceed 255 characters")
     .transform((email) => email.toLowerCase().trim()),
 
   phone: z
@@ -30,6 +33,47 @@ export const ValidationSchemas = {
     .transform((phone) => phone.replace(/\D/g, ''))
     .refine((phone) => phoneRegex.test(phone), {
       message: "Enter a valid 10-digit mobile number starting with 6, 7, 8, or 9 (e.g., 9876543210)"
+    }),
+
+  // International phone with country code support
+  internationalPhone: z
+    .string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(16, "Phone number cannot exceed 15 digits plus country code")
+    .transform((phone) => phone.replace(/\s/g, ''))
+    .refine((phone) => internationalPhoneRegex.test(phone.replace(/\D/g, '')), {
+      message: "Please enter a valid phone number with country code (e.g., +919876543210)"
+    }),
+
+  // Date of birth validation - no future dates, reasonable age range
+  birthDate: z
+    .date()
+    .refine((date) => date <= new Date(), {
+      message: "Birth date cannot be in the future"
+    })
+    .refine((date) => {
+      const age = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+      return age >= 3 && age <= 120;
+    }, {
+      message: "Please enter a valid birth date (age must be between 3-120 years)"
+    }),
+
+  // Birth date as string (from date picker)
+  birthDateString: z
+    .string()
+    .min(1, "Birth date is required")
+    .refine((dateStr) => {
+      const date = new Date(dateStr);
+      return !isNaN(date.getTime()) && date <= new Date();
+    }, {
+      message: "Birth date cannot be in the future"
+    })
+    .refine((dateStr) => {
+      const date = new Date(dateStr);
+      const age = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+      return age >= 3 && age <= 120;
+    }, {
+      message: "Please enter a valid birth date (age must be between 3-120 years)"
     }),
 
   // Academic Information
@@ -97,7 +141,38 @@ export const ValidationSchemas = {
 
   address: z
     .string()
-    .max(200, "Address cannot exceed 200 characters")
+    .max(500, "Address cannot exceed 500 characters")
+    .optional(),
+
+  // File upload validation (for use with File objects)
+  fileUpload: z
+    .custom<File>()
+    .refine((file) => file instanceof File, "Please select a file")
+    .refine((file) => file.size <= 5 * 1024 * 1024, "File size must be less than 5MB")
+    .refine(
+      (file) => ['image/jpeg', 'image/png', 'application/pdf'].includes(file.type),
+      "Only JPEG, PNG, and PDF files are allowed"
+    ),
+
+  // Image upload validation
+  imageUpload: z
+    .custom<File>()
+    .refine((file) => file instanceof File, "Please select an image")
+    .refine((file) => file.size <= 2 * 1024 * 1024, "Image must be less than 2MB")
+    .refine(
+      (file) => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type),
+      "Only JPEG, PNG, and WebP images are allowed"
+    ),
+
+  // Optional file upload
+  optionalFileUpload: z
+    .custom<File>()
+    .refine((file) => !file || file instanceof File, "Invalid file")
+    .refine((file) => !file || file.size <= 5 * 1024 * 1024, "File size must be less than 5MB")
+    .refine(
+      (file) => !file || ['image/jpeg', 'image/png', 'application/pdf'].includes(file.type),
+      "Only JPEG, PNG, and PDF files are allowed"
+    )
     .optional(),
 
   // Exam related

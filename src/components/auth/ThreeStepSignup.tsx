@@ -9,6 +9,8 @@ import { Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { validatePhone, validateEmail, validatePassword } from "@/lib/validationSchemas";
+import { PasswordStrength } from "@/components/ui/password-strength";
+import { useRateLimit } from "@/hooks/useRateLimit";
 
 interface SignupData {
   phone_number: string;
@@ -37,6 +39,7 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
   const [otpSent, setOtpSent] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const { toast } = useToast();
+  const { checkRateLimit, isLimited } = useRateLimit({ cooldownMs: 3000 });
 
   const [signupData, setSignupData] = useState<SignupData>({
     phone_number: '',
@@ -68,6 +71,11 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
   };
 
   const sendOTP = async () => {
+    // Rate limit check
+    if (!checkRateLimit()) {
+      return;
+    }
+
     if (!validatePhoneNumber(signupData.phone_number)) {
       setError(phoneError || 'Please enter a valid 10-digit Indian mobile number');
       return;
@@ -199,6 +207,11 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
   };
 
   const completeSignup = async () => {
+    // Rate limit check
+    if (!checkRateLimit()) {
+      return;
+    }
+
     if (!validateStep2()) return;
 
     setLoading(true);
@@ -446,9 +459,8 @@ export const ThreeStepSignup: React.FC<ThreeStepSignupProps> = ({ onSuccess, onB
             {passwordError && (
               <p className="text-sm text-destructive">{passwordError}</p>
             )}
-            <p className="text-xs text-muted-foreground">
-              Must be at least 8 characters with uppercase, lowercase, and number
-            </p>
+            {/* Password Strength Indicator */}
+            <PasswordStrength password={signupData.password} showRequirements={true} />
           </div>
 
           <div className="space-y-2">
