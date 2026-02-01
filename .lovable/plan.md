@@ -1,406 +1,616 @@
 
 
-# Full Accessibility Implementation
+# Perfect Mobile Experience Implementation
 
 ## Overview
 
-This plan makes the EduFlow application fully accessible according to WCAG AA standards, including proper ARIA labels, keyboard navigation, focus management, screen reader support, and enhanced color contrast.
+This plan implements comprehensive mobile optimizations for the EduFlow application to ensure a flawless experience on 375px viewports (iPhone SE/mini) and larger mobile devices. It addresses touch targets, navigation, horizontal scrolling, font sizes, responsive tables, forms with proper keyboard types, and adds mobile-specific enhancements like bottom navigation and pull-to-refresh.
 
 ---
 
 ## Current State Analysis
 
-| Requirement | Current Status | Gap |
-|-------------|---------------|-----|
-| Skip-to-content link | Implemented | None - already in Layout.tsx |
-| Main content landmark | Implemented | `<main id="main-content">` exists in Layout.tsx |
-| ARIA labels on icon buttons | Partial | ~70 icon buttons missing aria-labels |
-| Alt text on images | Good | Most images have alt text |
-| Focus indicators | Good | Radix components have focus-visible styles |
-| Keyboard navigation | Mostly working | Tab order correct, Enter/Space work on buttons |
-| Modal focus trapping | Built-in | Radix Dialog/AlertDialog handle this automatically |
-| Escape to close modals | Built-in | Radix handles this |
-| Form label association | Partial | Some manual inputs need explicit labels |
-| Color contrast | Needs audit | Some muted text may fail 4.5:1 ratio |
-| Page title announcements | Not implemented | No dynamic document.title updates |
-| Screen reader live regions | Not implemented | No aria-live for notifications |
+| Area | Current Status | Gap |
+|------|---------------|-----|
+| Mobile Hook | useIsMobile at 768px breakpoint | Working correctly |
+| Hamburger Menu | Implemented on Index.tsx landing | Missing in-app mobile nav |
+| Sidebar Mobile | Uses Sheet drawer on mobile | Works but needs touch area improvements |
+| Touch Targets | Buttons h-10 (40px), some h-9 (36px) | Need h-11 (44px) minimum for mobile |
+| Tables | overflow-auto wrapper exists | Not explicitly styled for mobile scroll |
+| Font Sizes | Default text-sm (14px) | Need 16px minimum for mobile inputs |
+| Bottom Navigation | Not implemented | Key actions not easily accessible |
+| Form Keyboards | Mostly missing inputMode | No tel/email/number keyboard hints |
+| Pull-to-Refresh | Not implemented | No native-feeling refresh on lists |
+| Dialog on Mobile | Centered modal | Should use Drawer for better UX |
 
----
+### Key Files Requiring Changes
 
-## Files to Create/Modify
+**Core Components:**
+- `src/components/ui/button.tsx` - Touch target size adjustments
+- `src/components/ui/input.tsx` - Font size and inputMode support
+- `src/components/ui/table.tsx` - Mobile scroll enhancements
+- `src/components/ui/dialog.tsx` - Responsive modal/drawer hybrid
+- `src/components/layout/Layout.tsx` - Bottom nav integration
 
-| Action | File | Purpose |
-|--------|------|---------|
-| Create | `src/hooks/usePageTitle.tsx` | Dynamic page title updates for screen readers |
-| Create | `src/components/ui/visually-hidden.tsx` | Helper for screen-reader-only content |
-| Create | `src/components/ui/live-region.tsx` | ARIA live region for announcements |
-| Modify | `src/index.css` | Enhanced focus styles, contrast fixes |
-| Modify | `src/components/layout/Layout.tsx` | Add role="main" to main content |
-| Modify | `src/components/layout/Header.tsx` | Add ARIA labels to icon buttons |
-| Modify | `src/components/notifications/NotificationDropdown.tsx` | Add ARIA labels and live region |
-| Modify | `src/components/ui/dialog.tsx` | Ensure focus trap and Escape handling |
-| Modify | `src/components/ui/alert-dialog.tsx` | Add role="alertdialog" if missing |
-| Modify | `src/components/dashboard/StatsCard.tsx` | Add aria-label for screen readers |
-| Modify | `src/pages/Dashboard.tsx` | Add usePageTitle hook |
-| Modify | `src/pages/Students.tsx` | Add usePageTitle hook |
-| Modify | Major pages | Add page title hooks |
+**New Components:**
+- `src/components/mobile/BottomNavigation.tsx` - Mobile tab bar
+- `src/components/mobile/PullToRefresh.tsx` - Pull-to-refresh wrapper
+- `src/components/mobile/MobileTableWrapper.tsx` - Horizontal scroll indicator
+- `src/components/mobile/ResponsiveDialog.tsx` - Dialog/Drawer hybrid
+
+**Pages to Update:**
+- All pages with tables (Students, Fees, Faculty, Library, etc.)
+- All pages with forms needing keyboard types
 
 ---
 
 ## Implementation Details
 
-### 1. Page Title Hook for Screen Readers
+### 1. Enhanced Button Component with Touch Targets
 
-Create a hook to update document.title on route changes:
+Update button sizes to meet 44px minimum:
 
 ```typescript
-// src/hooks/usePageTitle.tsx
-import { useEffect } from 'react';
-
-export function usePageTitle(title: string, suffix: string = "EduFlow") {
-  useEffect(() => {
-    const fullTitle = title ? `${title} | ${suffix}` : suffix;
-    const previousTitle = document.title;
-    document.title = fullTitle;
-    
-    // Announce page change to screen readers
-    const announcement = document.createElement('div');
-    announcement.setAttribute('role', 'status');
-    announcement.setAttribute('aria-live', 'polite');
-    announcement.setAttribute('aria-atomic', 'true');
-    announcement.className = 'sr-only';
-    announcement.textContent = `Navigated to ${title}`;
-    document.body.appendChild(announcement);
-    
-    return () => {
-      document.title = previousTitle;
-      announcement.remove();
-    };
-  }, [title, suffix]);
-}
+// src/components/ui/button.tsx
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ...",
+  {
+    variants: {
+      size: {
+        default: "h-10 md:h-10 min-h-[44px] md:min-h-0 px-4 py-2",
+        sm: "h-9 md:h-9 min-h-[44px] md:min-h-0 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0",
+      },
+    },
+  }
+)
 ```
 
-### 2. Visually Hidden Component
+### 2. Input Component with Mobile Optimizations
 
-For screen-reader-only content:
+Ensure 16px font (prevents iOS zoom) and add inputMode support:
 
 ```typescript
-// src/components/ui/visually-hidden.tsx
-export function VisuallyHidden({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="sr-only">
-      {children}
-    </span>
-  );
-}
+// src/components/ui/input.tsx
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, inputMode, ...props }, ref) => {
+    // Auto-set inputMode based on type if not provided
+    const derivedInputMode = inputMode || 
+      (type === 'email' ? 'email' : 
+       type === 'tel' ? 'tel' : 
+       type === 'number' ? 'numeric' : 
+       type === 'url' ? 'url' : undefined);
+
+    return (
+      <input
+        type={type}
+        inputMode={derivedInputMode}
+        className={cn(
+          "flex h-10 md:h-10 min-h-[44px] md:min-h-0 w-full rounded-md border border-input bg-background px-3 py-2",
+          // 16px font on mobile to prevent zoom, 14px on desktop
+          "text-base md:text-sm",
+          "...",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
 ```
 
-### 3. Live Region for Announcements
+### 3. Mobile-Optimized Table Component
 
-For dynamic content updates:
+Add horizontal scroll indicators and mobile-friendly styling:
 
 ```typescript
-// src/components/ui/live-region.tsx
-interface LiveRegionProps {
+// src/components/mobile/MobileTableWrapper.tsx
+interface MobileTableWrapperProps {
   children: React.ReactNode;
-  mode?: 'polite' | 'assertive';
-  atomic?: boolean;
+  showScrollHint?: boolean;
 }
 
-export function LiveRegion({ 
-  children, 
-  mode = 'polite',
-  atomic = true 
-}: LiveRegionProps) {
+export function MobileTableWrapper({ children, showScrollHint = true }: MobileTableWrapperProps) {
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const checkScroll = () => {
+      if (scrollRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        setCanScrollRight(scrollWidth > clientWidth && scrollLeft < scrollWidth - clientWidth - 5);
+      }
+    };
+    checkScroll();
+    // Add listener for scroll and resize
+  }, []);
+
   return (
-    <div
-      role="status"
-      aria-live={mode}
-      aria-atomic={atomic}
-      className="sr-only"
-    >
-      {children}
+    <div className="relative">
+      <div 
+        ref={scrollRef}
+        className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0"
+        onScroll={checkScroll}
+      >
+        {children}
+      </div>
+      {/* Scroll hint gradient */}
+      {isMobile && canScrollRight && showScrollHint && (
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+      )}
     </div>
   );
 }
 ```
 
-### 4. Enhanced Focus Styles
+Update the base Table component:
 
-Add more visible focus indicators to index.css:
+```typescript
+// src/components/ui/table.tsx
+const Table = React.forwardRef<HTMLTableElement, TableProps>(
+  ({ className, ...props }, ref) => (
+    <div className="relative w-full overflow-x-auto -webkit-overflow-scrolling-touch">
+      <table
+        ref={ref}
+        className={cn(
+          "w-full caption-bottom text-sm",
+          // Minimum width to ensure readability on mobile
+          "min-w-[600px] md:min-w-0",
+          className
+        )}
+        {...props}
+      />
+    </div>
+  )
+)
+```
+
+### 4. Bottom Navigation Component
+
+Create a persistent bottom nav for key actions on mobile:
+
+```typescript
+// src/components/mobile/BottomNavigation.tsx
+interface BottomNavItem {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  href: string;
+  badge?: number;
+}
+
+export function BottomNavigation() {
+  const isMobile = useIsMobile();
+  const { userRole } = useAuth();
+  const location = useLocation();
+  
+  if (!isMobile) return null;
+  
+  const items = useMemo(() => {
+    // Return role-specific nav items
+    if (userRole === 'student') {
+      return [
+        { label: 'Home', icon: Home, href: '/dashboard' },
+        { label: 'Courses', icon: BookOpen, href: '/student-course' },
+        { label: 'Results', icon: FileText, href: '/student-results' },
+        { label: 'Tests', icon: ClipboardCheck, href: '/student-tests' },
+        { label: 'Profile', icon: User, href: '/student-profile' },
+      ];
+    }
+    // Admin and other roles
+    return [
+      { label: 'Home', icon: Home, href: '/dashboard' },
+      { label: 'Students', icon: Users, href: '/students' },
+      { label: 'Fees', icon: CreditCard, href: '/fees' },
+      { label: 'Courses', icon: BookOpen, href: '/courses' },
+      { label: 'More', icon: MoreHorizontal, href: '#more' }, // Opens sidebar
+    ];
+  }, [userRole]);
+
+  return (
+    <nav 
+      className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border safe-area-inset-bottom"
+      role="navigation"
+      aria-label="Main navigation"
+    >
+      <div className="flex items-center justify-around h-16 pb-safe">
+        {items.map((item) => (
+          <NavLink
+            key={item.href}
+            to={item.href}
+            className={cn(
+              "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2",
+              "touch-manipulation active:scale-95 transition-transform",
+              isActive ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <item.icon className="h-5 w-5" />
+            <span className="text-xs mt-1">{item.label}</span>
+          </NavLink>
+        ))}
+      </div>
+    </nav>
+  );
+}
+```
+
+### 5. Pull-to-Refresh Component
+
+Create a native-feeling pull-to-refresh for list pages:
+
+```typescript
+// src/components/mobile/PullToRefresh.tsx
+interface PullToRefreshProps {
+  children: React.ReactNode;
+  onRefresh: () => Promise<void>;
+  disabled?: boolean;
+}
+
+export function PullToRefresh({ children, onRefresh, disabled }: PullToRefreshProps) {
+  const [isPulling, setIsPulling] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const startY = useRef(0);
+  const isMobile = useIsMobile();
+  
+  const threshold = 80;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (disabled || isRefreshing) return;
+    if (containerRef.current?.scrollTop === 0) {
+      startY.current = e.touches[0].clientY;
+      setIsPulling(true);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isPulling || disabled) return;
+    const currentY = e.touches[0].clientY;
+    const distance = Math.min(currentY - startY.current, 120);
+    if (distance > 0) {
+      setPullDistance(distance);
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (!isPulling) return;
+    setIsPulling(false);
+    
+    if (pullDistance >= threshold) {
+      setIsRefreshing(true);
+      await onRefresh();
+      setIsRefreshing(false);
+    }
+    
+    setPullDistance(0);
+  };
+
+  if (!isMobile) return <>{children}</>;
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative overflow-y-auto h-full"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Pull indicator */}
+      <div 
+        className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center transition-transform"
+        style={{ 
+          transform: `translateY(${pullDistance - 40}px)`,
+          opacity: pullDistance / threshold 
+        }}
+      >
+        {isRefreshing ? (
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        ) : (
+          <ArrowDown className={cn(
+            "h-6 w-6 transition-transform",
+            pullDistance >= threshold && "rotate-180"
+          )} />
+        )}
+      </div>
+      
+      {/* Content with transform for pull effect */}
+      <div style={{ transform: `translateY(${pullDistance * 0.5}px)` }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+```
+
+### 6. Responsive Dialog Component
+
+Create a hybrid that uses Dialog on desktop and Drawer on mobile:
+
+```typescript
+// src/components/mobile/ResponsiveDialog.tsx
+interface ResponsiveDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function ResponsiveDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  className
+}: ResponsiveDialogProps) {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className={cn("max-h-[85vh]", className)}>
+          <DrawerHeader>
+            <DrawerTitle>{title}</DrawerTitle>
+            {description && <DrawerDescription>{description}</DrawerDescription>}
+          </DrawerHeader>
+          <div className="overflow-y-auto px-4 pb-4">
+            {children}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className={className}>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
+        </DialogHeader>
+        {children}
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+### 7. CSS Enhancements for Mobile
+
+Add mobile-specific styles to index.css:
 
 ```css
-/* Enhanced focus indicators for accessibility */
-*:focus-visible {
-  outline: 2px solid hsl(var(--ring)) !important;
-  outline-offset: 2px !important;
+/* src/index.css - Mobile Enhancements */
+
+/* Safe area insets for notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
-/* High contrast focus for buttons */
-button:focus-visible,
-[role="button"]:focus-visible {
-  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.5);
+/* Prevent horizontal overflow on mobile */
+@media (max-width: 767px) {
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  /* Add padding for bottom nav */
+  main {
+    padding-bottom: 80px;
+  }
+  
+  /* Improve touch scrolling */
+  .overflow-auto,
+  .overflow-x-auto,
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Larger tap targets for checkboxes and radios */
+  [role="checkbox"],
+  [role="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent text from being too small */
+  input, textarea, select {
+    font-size: 16px !important; /* Prevents iOS zoom */
+  }
 }
 
-/* Skip link styles (enhance existing) */
-.skip-link:focus {
-  clip: auto !important;
-  height: auto !important;
-  width: auto !important;
-  overflow: visible !important;
-  position: absolute !important;
+/* Touch manipulation for interactive elements */
+button, 
+a, 
+[role="button"],
+.touch-target {
+  touch-action: manipulation;
+}
+
+/* Active state feedback for touch */
+@media (hover: none) {
+  button:active,
+  a:active,
+  [role="button"]:active {
+    opacity: 0.7;
+  }
 }
 ```
 
-### 5. Color Contrast Improvements
+### 8. Mobile Layout Adjustments
 
-Update CSS variables for better contrast:
+Update Layout.tsx for bottom navigation:
 
-```css
-:root {
-  /* Improve muted-foreground contrast */
-  --muted-foreground: 215.4 16.3% 40%; /* Darker for better contrast */
+```typescript
+// src/components/layout/Layout.tsx
+export function Layout({ children }: LayoutProps) {
+  const isMobile = useIsMobile();
+  
+  return (
+    <SidebarProvider>
+      <OnboardingProvider>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+        <div className="min-h-screen flex w-full bg-background">
+          <AppSidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Header />
+            <main 
+              id="main-content" 
+              role="main"
+              aria-label="Main content"
+              className={cn(
+                "flex-1 overflow-y-auto p-3 sm:p-4 md:p-6",
+                isMobile && "pb-20" // Space for bottom nav
+              )}
+            >
+              {children}
+            </main>
+          </div>
+        </div>
+        {/* Bottom Navigation for Mobile */}
+        <BottomNavigation />
+        <WelcomeModal />
+        <ProductTour />
+      </OnboardingProvider>
+    </SidebarProvider>
+  );
 }
-
-.dark {
-  /* Improve dark mode muted text contrast */
-  --muted-foreground: 215 20.2% 70%; /* Lighter for better contrast */
-}
 ```
 
-### 6. Layout Landmark Enhancement
+### 9. Form Input Type Enhancements
 
-Update Layout.tsx to ensure proper landmarks:
+Add proper keyboard types to form fields:
 
-```tsx
-// Already has role via <main> element
-// Ensure aria-labelledby for sections
-<main 
-  id="main-content" 
-  role="main"
-  aria-label="Main content"
-  className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6"
->
-  {children}
-</main>
-```
-
-### 7. Icon Button ARIA Labels
-
-Add aria-labels to all icon-only buttons:
-
-**Header.tsx - Notification button:**
-```tsx
-<Button 
-  variant="ghost" 
-  size="icon" 
-  className="relative"
-  aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
->
-  <Bell className="h-5 w-5" />
-  ...
-</Button>
-```
-
-**NotificationDropdown.tsx:**
-```tsx
-<Button
-  variant="ghost"
-  size="sm"
-  className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-  onClick={(e) => handleDismiss(e, notification.id)}
-  aria-label="Dismiss notification"
->
-  <X className="h-3 w-3" />
-</Button>
-```
-
-**Events.tsx - Clear poster button:**
-```tsx
-<Button
-  type="button"
-  variant="destructive"
-  size="icon"
-  className="absolute -top-2 -right-2 h-6 w-6"
-  onClick={() => { ... }}
-  aria-label="Remove poster image"
->
-  <X className="h-4 w-4" />
-</Button>
-```
-
-### 8. StatsCard Screen Reader Support
-
-Make stats cards announce properly:
-
-```tsx
-<Card 
-  className={cn("...", className)}
-  role="region"
-  aria-label={`${title}: ${value}`}
->
-  ...
-</Card>
-```
-
-### 9. Table Accessibility
-
-Ensure tables have proper structure:
-
-```tsx
-<Table role="table" aria-label="Student records">
-  <TableHeader>
-    <TableRow>
-      <TableHead scope="col">Name</TableHead>
-      ...
-    </TableRow>
-  </TableHeader>
-  <TableBody>
-    ...
-  </TableBody>
-</Table>
-```
-
-### 10. Dialog Accessibility Improvements
-
-Ensure dialogs work correctly (mostly built-in with Radix):
-
-```tsx
-// Dialog.tsx - add aria-modal (Radix handles this)
-<DialogPrimitive.Content
-  ref={ref}
-  aria-modal="true"
-  aria-labelledby="dialog-title"
-  aria-describedby="dialog-description"
-  ...
->
-```
-
-### 11. Form Input Labels
-
-Ensure all inputs have associated labels:
-
-```tsx
-// Pattern for manual inputs
-<div className="space-y-2">
-  <Label htmlFor="search-input">Search students</Label>
-  <Input
-    id="search-input"
-    placeholder="Search by name or ID..."
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
-</div>
-
-// Or use aria-label for inputs without visible labels
+**Pattern for validated inputs:**
+```typescript
+// Pattern: Add inputMode to inputs based on field type
 <Input
-  aria-label="Search students, courses, and faculty"
-  placeholder="Search..."
+  type="email"
+  inputMode="email"       // Shows email keyboard
+  autoComplete="email"    // Suggests saved emails
+  ...
+/>
+
+<Input
+  type="tel"
+  inputMode="tel"         // Shows phone keypad
+  autoComplete="tel"      // Suggests phone numbers
+  ...
+/>
+
+<Input
+  type="number"
+  inputMode="numeric"     // Shows number keyboard
+  pattern="[0-9]*"        // iOS number keyboard
   ...
 />
 ```
 
 ---
 
+## File Structure
+
+```text
+src/
+├── components/
+│   ├── mobile/
+│   │   ├── BottomNavigation.tsx       # NEW: Mobile tab bar
+│   │   ├── PullToRefresh.tsx          # NEW: Pull-to-refresh wrapper
+│   │   ├── MobileTableWrapper.tsx     # NEW: Scroll indicator
+│   │   ├── ResponsiveDialog.tsx       # NEW: Dialog/Drawer hybrid
+│   │   └── index.ts                   # NEW: Exports
+│   ├── ui/
+│   │   ├── button.tsx                 # Modified: Touch targets
+│   │   ├── input.tsx                  # Modified: Font size, inputMode
+│   │   └── table.tsx                  # Modified: Mobile scroll
+│   └── layout/
+│       └── Layout.tsx                 # Modified: Bottom nav integration
+├── index.css                          # Modified: Mobile styles
+└── hooks/
+    └── use-mobile.tsx                 # Existing (no changes)
+```
+
+---
+
 ## Implementation Checklist
 
-### Phase 1: Core Accessibility Infrastructure
-1. Create usePageTitle hook
-2. Create VisuallyHidden component
-3. Create LiveRegion component
-4. Update index.css with enhanced focus styles
-5. Update index.css with contrast improvements
+### Phase 1: Core Mobile Infrastructure
+1. Create BottomNavigation component
+2. Create PullToRefresh component
+3. Create MobileTableWrapper component
+4. Create ResponsiveDialog component
+5. Create mobile/index.ts exports
 
-### Phase 2: Landmark and Navigation
-6. Add role="main" and aria-label to Layout.tsx main content
-7. Add aria-labels to AppSidebar navigation
-8. Add page title updates to all major pages
+### Phase 2: Component Updates
+6. Update button.tsx with touch target sizes
+7. Update input.tsx with mobile font size and inputMode
+8. Update table.tsx with mobile scroll styles
+9. Add mobile CSS to index.css
 
-### Phase 3: Interactive Elements
-9. Add aria-labels to Header icon buttons
-10. Add aria-labels to NotificationDropdown buttons
-11. Add aria-labels to Events.tsx icon buttons
-12. Add aria-labels to testimonial carousel navigation
-13. Add aria-labels to all remaining icon-only buttons
+### Phase 3: Layout Integration
+10. Update Layout.tsx with bottom nav
+11. Ensure proper padding for bottom nav
+12. Test sidebar drawer on mobile
 
-### Phase 4: Content and Announcements
-14. Add aria-label to StatsCard for screen readers
-15. Add table accessibility attributes
-16. Add aria-live region for notifications
-17. Add aria-labels to form inputs without visible labels
+### Phase 4: Page Updates
+13. Add MobileTableWrapper to Students page
+14. Add MobileTableWrapper to Fees page
+15. Add PullToRefresh to list pages
+16. Update form inputs with proper keyboard types
 
-### Phase 5: Testing and Verification
-18. Test keyboard navigation through all pages
-19. Test with screen reader (VoiceOver/NVDA)
-20. Run automated accessibility audit
-
----
-
-## Keyboard Navigation Summary
-
-| Element | Key | Action |
-|---------|-----|--------|
-| All focusable | Tab | Move to next element |
-| All focusable | Shift+Tab | Move to previous element |
-| Buttons | Enter/Space | Activate |
-| Links | Enter | Navigate |
-| Dialogs | Escape | Close |
-| Dropdown menus | Arrow Up/Down | Navigate options |
-| Dropdown menus | Escape | Close |
-| Combobox | Arrow Up/Down | Navigate options |
-| Combobox | Enter | Select option |
-
-Most keyboard navigation is already handled by Radix UI components.
+### Phase 5: Testing
+17. Test on 375px width viewport
+18. Verify touch targets are 44px minimum
+19. Test horizontal scroll on tables
+20. Verify forms use correct keyboards
+21. Test pull-to-refresh functionality
 
 ---
 
-## WCAG AA Compliance Summary
+## Mobile Touch Target Summary
 
-| Criterion | Status After Implementation |
-|-----------|---------------------------|
-| 1.1.1 Non-text Content | Pass - Alt text on all images |
-| 1.3.1 Info and Relationships | Pass - Proper semantic HTML |
-| 1.3.2 Meaningful Sequence | Pass - Logical DOM order |
-| 1.4.3 Contrast (Minimum) | Pass - 4.5:1 ratio for text |
-| 2.1.1 Keyboard | Pass - All functionality accessible |
-| 2.1.2 No Keyboard Trap | Pass - Escape closes modals |
-| 2.4.1 Bypass Blocks | Pass - Skip link implemented |
-| 2.4.2 Page Titled | Pass - Dynamic titles |
-| 2.4.3 Focus Order | Pass - Logical tab order |
-| 2.4.4 Link Purpose | Pass - Clear link text |
-| 2.4.6 Headings and Labels | Pass - Descriptive headings |
-| 2.4.7 Focus Visible | Pass - Enhanced focus styles |
-| 3.1.1 Language of Page | Already set in HTML |
-| 3.2.1 On Focus | Pass - No context change on focus |
-| 3.3.1 Error Identification | Pass - Form validation |
-| 3.3.2 Labels or Instructions | Pass - Form labels |
-| 4.1.1 Parsing | Pass - Valid HTML |
-| 4.1.2 Name, Role, Value | Pass - ARIA labels |
+| Component | Current | Updated |
+|-----------|---------|---------|
+| Default Button | h-10 (40px) | min-h-[44px] |
+| Small Button | h-9 (36px) | min-h-[44px] |
+| Icon Button | h-10 w-10 | min-h-[44px] min-w-[44px] |
+| Input | h-10 | min-h-[44px] |
+| Bottom Nav Item | N/A | h-16 (64px) |
+| Checkbox/Radio | varies | min-h-[44px] min-w-[44px] |
 
 ---
 
-## Color Contrast Specific Fixes
+## Keyboard Type Mapping
 
-| Element | Current | Updated | Ratio |
-|---------|---------|---------|-------|
-| Muted text (light) | hsl(215 16% 47%) | hsl(215 16% 40%) | 4.5:1+ |
-| Muted text (dark) | hsl(215 20% 65%) | hsl(215 20% 70%) | 4.5:1+ |
-| Badge secondary | Keep as-is | Verify | 4.5:1 |
-| Placeholder text | system default | Verify | 4.5:1+ |
+| Input Type | inputMode | autoComplete |
+|------------|-----------|--------------|
+| Email | email | email |
+| Phone | tel | tel |
+| Amount/Number | numeric | - |
+| Search | search | - |
+| URL | url | url |
+| Password | - | current-password |
 
 ---
 
-## Files Changed Summary
+## Cross-Browser Testing Notes
 
-| Category | Files |
-|----------|-------|
-| New hooks | usePageTitle.tsx |
-| New components | visually-hidden.tsx, live-region.tsx |
-| Core styles | index.css |
-| Layout | Layout.tsx |
-| Header | Header.tsx, NotificationDropdown.tsx |
-| Dashboard | StatsCard.tsx, Dashboard.tsx |
-| All pages | Add usePageTitle to each page |
-| UI components | dialog.tsx (verify), table.tsx (if needed) |
-| Various icon buttons | Events.tsx, AMCPlans.tsx, etc. |
+| Browser | Key Considerations |
+|---------|-------------------|
+| iOS Safari | 16px font to prevent zoom, safe-area-inset for notch |
+| Android Chrome | Standard touch targets, smooth scrolling |
+| Samsung Internet | Test overflow-scrolling |
+| Firefox Mobile | Test pull-to-refresh |
 
