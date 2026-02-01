@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,8 @@ import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { format } from "date-fns";
 
 export default function Attendance() {
+  usePageTitle("Attendance");
+  
   const { stats, todaySessions, studentSummaries, loading, refreshData } = useAttendanceData();
   const [searchTerm, setSearchTerm] = useState("");
 

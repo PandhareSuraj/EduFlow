@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -93,6 +94,8 @@ const reportCategories = [
 ];
 
 export default function Reports() {
+  usePageTitle("Reports");
+  
   const { toast } = useToast();
   const { data, loading, fetchData } = useReportData();
   const [currentFilters, setCurrentFilters] = useState<FilterValues | null>(null);

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Layout } from '@/components/layout/Layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,8 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const FollowUps = () => {
+  usePageTitle("Follow-ups");
+  
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFollowUp, setSelectedFollowUp] = useState<UnifiedFollowUp | null>(null);

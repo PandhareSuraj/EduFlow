@@ -14,7 +14,11 @@ interface StatsCardProps {
 
 export function StatsCard({ title, value, icon: Icon, trend, className }: StatsCardProps) {
   return (
-    <Card className={cn("bg-gradient-card shadow-card hover:shadow-glow transition-all duration-300", className)}>
+    <Card 
+      className={cn("bg-gradient-card shadow-card hover:shadow-glow transition-all duration-300", className)}
+      role="region"
+      aria-label={`${title}: ${value}${trend ? `, ${trend.isPositive ? 'up' : 'down'} ${trend.value}% from last month` : ''}`}
+    >
       <CardContent className="p-3 sm:p-4 lg:p-6">
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
@@ -29,7 +33,7 @@ export function StatsCard({ title, value, icon: Icon, trend, className }: StatsC
               </p>
             )}
           </div>
-          <div className="p-2 sm:p-3 bg-primary/10 rounded-full ml-2 flex-shrink-0">
+          <div className="p-2 sm:p-3 bg-primary/10 rounded-full ml-2 flex-shrink-0" aria-hidden="true">
             <Icon className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-primary" />
           </div>
         </div>

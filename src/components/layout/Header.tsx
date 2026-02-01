@@ -100,16 +100,19 @@ export function Header() {
               <PopoverTrigger asChild>
                 <div className="relative ml-4" data-tour="header-search">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search students, courses..."
-                    className="pl-10 w-48 md:w-64 lg:w-80"
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setSearchOpen(e.target.value.length >= 2);
-                    }}
-                    onFocus={() => searchTerm.length >= 2 && setSearchOpen(true)}
-                  />
+                    <Input
+                      placeholder="Search students, courses..."
+                      className="pl-10 w-48 md:w-64 lg:w-80"
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setSearchOpen(e.target.value.length >= 2);
+                      }}
+                      onFocus={() => searchTerm.length >= 2 && setSearchOpen(true)}
+                      aria-label="Search students, courses, and faculty"
+                      aria-expanded={searchOpen}
+                      aria-haspopup="listbox"
+                    />
                 </div>
               </PopoverTrigger>
               <PopoverContent className="w-[320px] md:w-[384px] lg:w-[448px] p-0" align="start">
@@ -186,6 +189,7 @@ export function Header() {
                       className="pl-10"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                      aria-label="Search students, courses, and faculty"
                     />
                   </div>
                 </div>
@@ -237,10 +241,14 @@ export function Header() {
           </div>
           
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className={`flex items-center ${isMobile ? 'p-1' : 'space-x-2'} h-8 sm:h-auto`}>
+<DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className={`flex items-center ${isMobile ? 'p-1' : 'space-x-2'} h-8 sm:h-auto`}
+                aria-label={`User menu for ${user?.email || 'user'}`}
+              >
                 <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
-                  <AvatarImage src="/placeholder-user.jpg" alt="@user" />
+                  <AvatarImage src="/placeholder-user.jpg" alt={`Profile picture for ${user?.email || 'user'}`} />
                   <AvatarFallback className="text-xs">
                     {user?.email?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>

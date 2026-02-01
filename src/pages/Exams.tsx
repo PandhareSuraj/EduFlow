@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ReportGenerator, ReportConfigs } from "@/utils/reportGenerator";
 import { LiveExamManagement } from "@/components/exams/LiveExamManagement";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 // Data interfaces
 interface Exam {
@@ -60,6 +61,8 @@ interface Course {
 }
 
 export default function Exams() {
+  usePageTitle("Exams");
+  
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");

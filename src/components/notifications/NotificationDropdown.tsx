@@ -57,12 +57,18 @@ export function NotificationDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="relative"
+          aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+        >
+          <Bell className="h-5 w-5" aria-hidden="true" />
           {unreadCount > 0 && (
             <Badge 
               variant="destructive" 
               className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+              aria-hidden="true"
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
@@ -144,8 +150,9 @@ export function NotificationDropdown() {
                       size="sm"
                       className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                       onClick={(e) => handleDismiss(e, notification.id)}
+                      aria-label={`Dismiss notification: ${notification.title}`}
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-3 w-3" aria-hidden="true" />
                     </Button>
                   </div>
                 </div>

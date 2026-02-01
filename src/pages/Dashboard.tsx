@@ -13,6 +13,7 @@ import {
   Activity
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useBranding } from "@/hooks/useBranding";
@@ -62,6 +63,10 @@ interface CollegeAMCData {
 export default function Dashboard() {
   const { userRole } = useAuth();
   const { collegeName } = useBranding();
+  
+  // Set page title for screen readers
+  usePageTitle(userRole === 'super_admin' ? 'Multi-College Dashboard' : 'Dashboard');
+  
   const [stats, setStats] = useState<DashboardStats>({
     totalStudents: 0,
     activeCourses: 0,
