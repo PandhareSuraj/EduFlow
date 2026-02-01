@@ -35,6 +35,7 @@ import { AccountantDashboard } from "@/components/dashboard/AccountantDashboard"
 import { AuditorDashboard } from "@/components/dashboard/AuditorDashboard";
 import { LibrarianDashboard } from "@/components/dashboard/LibrarianDashboard";
 import { VideoTutorialButton } from "@/components/videos/VideoTutorialButton";
+import { StatsCardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import StudentDashboard from './StudentDashboard';
 
 interface DashboardStats {
@@ -278,49 +279,57 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className={`grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 ${isSuperAdmin ? 'lg:grid-cols-3 xl:grid-cols-6' : 'lg:grid-cols-4'}`}>
-        {isSuperAdmin && (
-          <>
-            <StatsCard
-              title="Total Colleges"
-              value={stats.totalColleges?.toString() || "0"}
-              icon={Building2}
-              trend={{ value: 0, isPositive: true }}
-            />
-            <StatsCard
-              title="Total AMC Revenue"
-              value={loading ? "..." : stats.totalAMCRevenue || "₹0"}
-              icon={IndianRupee}
-              trend={{ value: 15, isPositive: true }}
-              className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900"
-            />
-          </>
-        )}
-        <StatsCard
-          title={isSuperAdmin ? "Total Students" : "Total Students"}
-          value={loading ? "..." : stats.totalStudents.toLocaleString()}
-          icon={Users}
-          trend={{ value: 12, isPositive: true }}
-        />
-        <StatsCard
-          title={isSuperAdmin ? "System Users" : "Active Courses"}
-          value={loading ? "..." : (isSuperAdmin ? stats.totalUsers?.toString() || "0" : stats.activeCourses.toString())}
-          icon={isSuperAdmin ? Activity : GraduationCap}
-          trend={{ value: isSuperAdmin ? 8 : 0, isPositive: true }}
-        />
-        <StatsCard
-          title={isSuperAdmin ? "Monthly AMC" : "Monthly Revenue"}
-          value={loading ? "..." : stats.monthlyRevenue}
-          icon={CreditCard}
-          trend={{ value: 8, isPositive: true }}
-        />
-        <StatsCard
-          title={isSuperAdmin ? "Active Courses" : "Faculty Members"}
-          value={loading ? "..." : (isSuperAdmin ? stats.activeCourses.toString() : stats.facultyMembers.toString())}
-          icon={isSuperAdmin ? GraduationCap : UserCheck}
-          trend={{ value: 4, isPositive: true }}
-        />
-      </div>
+      {loading ? (
+        <div className={`grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 ${isSuperAdmin ? 'lg:grid-cols-3 xl:grid-cols-6' : 'lg:grid-cols-4'}`}>
+          {[...Array(isSuperAdmin ? 6 : 4)].map((_, i) => (
+            <StatsCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : (
+        <div className={`grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 ${isSuperAdmin ? 'lg:grid-cols-3 xl:grid-cols-6' : 'lg:grid-cols-4'}`}>
+          {isSuperAdmin && (
+            <>
+              <StatsCard
+                title="Total Colleges"
+                value={stats.totalColleges?.toString() || "0"}
+                icon={Building2}
+                trend={{ value: 0, isPositive: true }}
+              />
+              <StatsCard
+                title="Total AMC Revenue"
+                value={stats.totalAMCRevenue || "₹0"}
+                icon={IndianRupee}
+                trend={{ value: 15, isPositive: true }}
+                className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900"
+              />
+            </>
+          )}
+          <StatsCard
+            title={isSuperAdmin ? "Total Students" : "Total Students"}
+            value={stats.totalStudents.toLocaleString()}
+            icon={Users}
+            trend={{ value: 12, isPositive: true }}
+          />
+          <StatsCard
+            title={isSuperAdmin ? "System Users" : "Active Courses"}
+            value={isSuperAdmin ? stats.totalUsers?.toString() || "0" : stats.activeCourses.toString()}
+            icon={isSuperAdmin ? Activity : GraduationCap}
+            trend={{ value: isSuperAdmin ? 8 : 0, isPositive: true }}
+          />
+          <StatsCard
+            title={isSuperAdmin ? "Monthly AMC" : "Monthly Revenue"}
+            value={stats.monthlyRevenue}
+            icon={CreditCard}
+            trend={{ value: 8, isPositive: true }}
+          />
+          <StatsCard
+            title={isSuperAdmin ? "Active Courses" : "Faculty Members"}
+            value={isSuperAdmin ? stats.activeCourses.toString() : stats.facultyMembers.toString()}
+            icon={isSuperAdmin ? GraduationCap : UserCheck}
+            trend={{ value: 4, isPositive: true }}
+          />
+        </div>
+      )}
 
       {/* Quick Actions & Recent Activity */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3">

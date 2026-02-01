@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { PageLoader } from '@/components/ui/page-loader';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -20,13 +21,9 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
 
   console.log('ProtectedRoute - User:', !!user, 'Loading:', loading, 'UserRole:', userRole, 'Required:', requiredRole || allowedRoles);
 
-  // Show loading while authentication is being checked
+  // Show branded loading while authentication is being checked
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <PageLoader message="Checking authentication" />;
   }
 
   // Redirect to auth if not authenticated
@@ -36,15 +33,7 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
 
   // If user is authenticated but role is still loading and we need role-based access
   if (user && userRole === null && (requiredRole || allowedRoles)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading user permissions...</p>
-          <p className="text-xs text-muted-foreground">This may take a moment...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader message="Loading user permissions" />;
   }
 
   // Check role-based access if required
@@ -71,8 +60,8 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
   if ((requiredRole || allowedRoles) && !hasAccess()) {
     console.log('Access denied - User role:', userRole, 'Required:', requiredRole || allowedRoles);
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4 p-8">
           <h1 className="text-2xl font-bold text-destructive mb-4">Access Denied</h1>
           <p className="text-muted-foreground">You don't have permission to access this page.</p>
           <div className="bg-muted p-4 rounded-lg">
@@ -88,7 +77,7 @@ export function ProtectedRoute({ children, requiredRole, allowedRoles }: Protect
           </p>
           <button 
             onClick={() => navigate('/dashboard')}
-            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
           >
             Return to Dashboard
           </button>

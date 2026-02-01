@@ -29,7 +29,6 @@ import {
   Eye,
   Edit,
   Trash2,
-  Loader2,
   Settings,
   UserPlus
 } from "lucide-react";
@@ -40,6 +39,7 @@ import { VideoTutorialButton } from "@/components/videos/VideoTutorialButton";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { TableSkeleton } from "@/components/skeletons";
 
 interface Student {
   id: number;
@@ -225,6 +225,10 @@ export default function Students() {
     }
   };
 
+  if (loading) {
+    return <TableSkeleton rows={8} columns={9} showStats={true} statsCount={4} />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -328,12 +332,7 @@ export default function Students() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="ml-2">Loading students...</span>
-            </div>
-          ) : filteredStudents.length === 0 ? (
+          {filteredStudents.length === 0 ? (
             <div className="text-center p-8">
               <p className="text-muted-foreground">
                 {searchTerm || statusFilter !== "all" 
