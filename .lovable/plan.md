@@ -1,24 +1,47 @@
 
 
-# Comprehensive Error Handling Implementation
+# Comprehensive Form Validation Implementation
 
 ## Overview
 
-This plan adds robust error handling throughout the EduFlow application including a global error boundary, network status detection, session expiration handling, enhanced toast notifications, and a user-friendly 404 page.
+This plan enhances form validation across the EduFlow application by building on the existing Zod-based validation infrastructure, adding server-side validation, input sanitization, rate limiting, password strength indicators, and consistent validation patterns across all forms.
 
 ---
 
 ## Current State Analysis
 
-| Component | Current Status | Gap |
-|-----------|---------------|-----|
-| Error Boundary | Not implemented | No React error catching |
-| Toast System | Exists (dual: useToast + Sonner) | Inconsistent usage, no standardized helpers |
-| Network Detection | Not implemented | No offline/online detection |
-| Session Expiration | Basic auth state | No proactive session refresh handling |
-| 404 Page | Basic implementation | Missing navigation, styling, suggestions |
-| Loading States | Inconsistent | Some components lack loading feedback |
-| Retry Logic | Minimal | Most operations don't offer retry |
+The project already has a solid validation foundation:
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Zod schemas | Partial | `validationSchemas.ts` has core schemas |
+| ValidatedInput | Implemented | Supports real-time validation with icons |
+| ValidatedForm | Implemented | Form context with disabled submit until valid |
+| react-hook-form | Partial | Used in ~17 files with zodResolver |
+| Server-side validation | Minimal | Only phone validation in edge functions |
+| Input sanitization | Not implemented | No DOMPurify or sanitization utilities |
+| Rate limiting | Not implemented | No form submission throttling |
+| Password strength | Not implemented | Only basic requirements text |
+| File upload validation | Minimal | Has helper but not consistently used |
+
+### Forms Requiring Updates
+
+Based on code analysis, forms fall into three categories:
+
+**Category A - Using ValidatedForm (well-validated):**
+- ValidatedStudentDialog
+- Some fee collection forms
+
+**Category B - Using react-hook-form with Zod (partially validated):**
+- AddInventoryItemDialog, AddHostelAllocationDialog
+- PlacementDriveDialog, InterviewSchedulingDialog
+- InquiryFormDialog, PromotionConfigDialog
+
+**Category C - Manual validation (needs enhancement):**
+- AddFacultyDialog, EditStudentDialog
+- CollectFeeDialog, AddCourseDialog
+- Auth.tsx login/signup forms
+- Most dialog components in /forms folder
 
 ---
 
@@ -26,338 +49,410 @@ This plan adds robust error handling throughout the EduFlow application includin
 
 | Action | File | Purpose |
 |--------|------|---------|
-| Create | `src/components/error/ErrorBoundary.tsx` | Global React error boundary |
-| Create | `src/components/error/ErrorFallback.tsx` | User-friendly error display |
-| Create | `src/components/error/OfflineIndicator.tsx` | Network status banner |
-| Create | `src/hooks/useNetworkStatus.tsx` | Online/offline detection hook |
-| Create | `src/hooks/useErrorHandler.tsx` | Centralized error handling utilities |
-| Modify | `src/App.tsx` | Wrap with ErrorBoundary, add network monitoring |
-| Modify | `src/pages/NotFound.tsx` | Enhanced 404 page with navigation |
-| Modify | `src/hooks/useAuth.tsx` | Add session expiration detection |
+| Create | `src/lib/sanitize.ts` | Input sanitization utilities |
+| Create | `src/hooks/useRateLimit.tsx` | Rate limiting hook for form submissions |
+| Create | `src/components/ui/password-strength.tsx` | Password strength indicator component |
+| Modify | `src/lib/validationSchemas.ts` | Add date of birth, file, international phone schemas |
+| Modify | `src/components/ui/validated-input.tsx` | Add birthdate validation, enhance error display |
+| Modify | `src/components/auth/ThreeStepSignup.tsx` | Add password strength indicator |
+| Modify | `src/pages/Auth.tsx` | Add validation to legacy signup form |
+| Create | `src/components/ui/validated-file-input.tsx` | File upload with type/size validation |
+| Modify | `src/components/forms/AddFacultyDialog.tsx` | Full Zod validation + sanitization |
+| Modify | `src/components/forms/CollectFeeDialog.tsx` | Add Zod schema + rate limiting |
+| Create | `supabase/functions/_shared/validation.ts` | Server-side validation utilities |
+| Modify | `supabase/functions/create-student-user/index.ts` | Add server-side validation |
+| Modify | `supabase/functions/create-faculty-user/index.ts` | Add server-side validation |
 
 ---
 
 ## Implementation Details
 
-### 1. Global Error Boundary Component
+### 1. Input Sanitization Utilities
 
-Create a React Error Boundary that catches JavaScript errors anywhere in the component tree:
+Create a sanitization library to prevent XSS and clean inputs:
 
 **Features:**
-- Catches render errors, lifecycle errors, and errors in constructors
-- Shows user-friendly message instead of white screen
-- Provides "Try Again" button to reset the app
-- Logs errors to console in development only
-- Includes error details in collapsible section for debugging
+- HTML entity encoding for text inputs
+- Strip HTML tags from plain text fields
+- Trim whitespace
+- Normalize unicode characters
+- SQL injection prevention (for direct queries)
 
-**Key Code Pattern:**
-```tsx
-class ErrorBoundary extends Component<Props, State> {
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log in development only
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error caught:', error, errorInfo);
-    }
-  }
+**Key Functions:**
+```typescript
+// src/lib/sanitize.ts
+export function sanitizeText(input: string): string {
+  return input
+    .trim()
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
 
-  render() {
-    if (this.state.hasError) {
-      return <ErrorFallback onReset={this.resetError} />;
-    }
-    return this.props.children;
-  }
+export function sanitizeForDatabase(input: string): string {
+  return input
+    .trim()
+    .replace(/[<>'"]/g, '')
+    .normalize('NFKC');
+}
+
+export function sanitizeEmail(input: string): string {
+  return input.toLowerCase().trim();
+}
+
+export function sanitizePhone(input: string): string {
+  return input.replace(/\D/g, '');
 }
 ```
 
-### 2. Error Fallback Component
+### 2. Rate Limiting Hook
 
-A friendly UI shown when errors occur:
+Prevent form submission spam:
 
-- EduFlow branding maintained
-- Clear message: "Something went wrong"
-- Description: "We're sorry, but something unexpected happened. Please try refreshing the page."
-- Retry button to reset the error boundary
-- Link to return home
-- Optional: Show error details in development mode
+**Features:**
+- Configurable cooldown period (default 3 seconds)
+- Toast feedback when rate limited
+- Tracks last submission timestamp
+- Per-form rate limiting using form ID
 
-### 3. Network Status Hook and Indicator
-
-Detect online/offline status and show persistent banner:
-
-**Hook Features:**
-- Uses `navigator.onLine` for initial state
-- Listens to `online`/`offline` events
-- Returns `{ isOnline, isOffline }`
-
-**Offline Banner:**
-- Fixed position at top of screen
-- Yellow/warning styling
-- Message: "You're offline. Please check your internet connection."
-- Auto-hides when connection restored with success toast
-
-### 4. Centralized Error Handler Hook
-
-Create standardized error handling utilities:
-
-```tsx
-function useErrorHandler() {
-  const { toast } = useToast();
-  const navigate = useNavigate();
+**Implementation Pattern:**
+```typescript
+// src/hooks/useRateLimit.tsx
+export function useRateLimit(cooldownMs: number = 3000) {
+  const [lastSubmit, setLastSubmit] = useState<number>(0);
+  const [isLimited, setIsLimited] = useState(false);
   
-  const handleError = (error: unknown, options?: ErrorOptions) => {
-    const message = parseErrorMessage(error);
-    
-    // Handle specific error types
-    if (isNetworkError(error)) {
-      toast({ title: "Network Error", description: "Please check your connection.", variant: "destructive" });
-      return;
+  const checkRateLimit = useCallback(() => {
+    const now = Date.now();
+    if (now - lastSubmit < cooldownMs) {
+      setIsLimited(true);
+      toast({
+        title: "Please wait",
+        description: "You're submitting too quickly. Please wait a moment.",
+        variant: "destructive"
+      });
+      return false;
     }
-    
-    if (isAuthError(error)) {
-      toast({ title: "Session Expired", description: "Please log in again.", variant: "destructive" });
-      navigate('/auth');
-      return;
-    }
-    
-    if (isPermissionError(error)) {
-      toast({ title: "Access Denied", description: "You don't have permission to perform this action.", variant: "destructive" });
-      return;
-    }
-    
-    // Generic error
-    toast({ 
-      title: "Error", 
-      description: options?.userMessage || "Something went wrong. Please try again.", 
-      variant: "destructive",
-      action: options?.retry ? <RetryButton onClick={options.retry} /> : undefined
-    });
-  };
+    setLastSubmit(now);
+    setIsLimited(false);
+    return true;
+  }, [lastSubmit, cooldownMs]);
   
-  return { handleError, showSuccess, showLoading };
+  return { checkRateLimit, isLimited };
 }
 ```
 
-**Error Classification:**
-- Network errors: `TypeError: Failed to fetch`, `NetworkError`
-- Auth errors: 401, 403, `JWT expired`, `session expired`
-- Permission errors: `permission denied`, `access denied`
-- Validation errors: 400, `validation failed`
-- Server errors: 500+, `internal server error`
+### 3. Password Strength Indicator Component
 
-### 5. Session Expiration Handling
+Visual feedback for password strength:
 
-Enhance the AuthProvider to detect and handle session expiration:
+**Strength Criteria:**
+- Minimum length (8 characters)
+- Uppercase letter present
+- Lowercase letter present
+- Number present
+- Special character present (@$!%*?&)
+- Overall length bonus (12+ chars)
 
-**Changes to useAuth.tsx:**
-- Listen for `TOKEN_REFRESHED` event from Supabase
-- Detect `SIGNED_OUT` due to session expiration
-- Show toast notification when session expires
-- Redirect to login page with return URL
-- Clear local state immediately
+**Visual Design:**
+- Progress bar with color gradient (red -> yellow -> green)
+- Strength label (Weak, Fair, Good, Strong, Very Strong)
+- Checklist of requirements with icons
+- Matches existing Tailwind styling
+
+```typescript
+// src/components/ui/password-strength.tsx
+interface PasswordStrengthProps {
+  password: string;
+  showRequirements?: boolean;
+}
+
+function calculateStrength(password: string): {
+  score: number; // 0-5
+  label: string;
+  color: string;
+  requirements: { met: boolean; label: string }[];
+}
+```
+
+### 4. Enhanced Validation Schemas
+
+Extend the existing Zod schemas:
+
+**New Schemas:**
+```typescript
+// Add to src/lib/validationSchemas.ts
+
+// Date of birth - no future dates, reasonable age range
+birthDate: z
+  .date()
+  .refine((date) => date <= new Date(), {
+    message: "Birth date cannot be in the future"
+  })
+  .refine((date) => {
+    const age = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 365);
+    return age >= 3 && age <= 120;
+  }, {
+    message: "Please enter a valid birth date (age must be between 3-120 years)"
+  }),
+
+// International phone with country code support
+internationalPhone: z
+  .string()
+  .min(10, "Phone number must be at least 10 digits")
+  .max(15, "Phone number cannot exceed 15 digits")
+  .regex(/^\+?[1-9]\d{9,14}$/, "Please enter a valid phone number"),
+
+// File upload validation
+fileUpload: z
+  .custom<File>()
+  .refine((file) => file instanceof File, "Please select a file")
+  .refine((file) => file.size <= 5 * 1024 * 1024, "File size must be less than 5MB")
+  .refine(
+    (file) => ['image/jpeg', 'image/png', 'application/pdf'].includes(file.type),
+    "Only JPEG, PNG, and PDF files are allowed"
+  ),
+
+// Image upload (photos)
+imageUpload: z
+  .custom<File>()
+  .refine((file) => file instanceof File, "Please select an image")
+  .refine((file) => file.size <= 2 * 1024 * 1024, "Image must be less than 2MB")
+  .refine(
+    (file) => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type),
+    "Only JPEG, PNG, and WebP images are allowed"
+  ),
+```
+
+### 5. Validated File Input Component
+
+Reusable file upload with validation:
+
+**Features:**
+- Accepts allowed file types as prop
+- Validates file size before upload
+- Shows file name after selection
+- Displays inline error messages
+- Preview for images
+- Clear button to remove selection
+
+```typescript
+// src/components/ui/validated-file-input.tsx
+interface ValidatedFileInputProps {
+  id: string;
+  label: string;
+  accept?: string;
+  maxSizeMB?: number;
+  allowedTypes?: string[];
+  value: File | null;
+  onChange: (file: File | null) => void;
+  onValidationChange?: (isValid: boolean, error?: string) => void;
+  required?: boolean;
+  showPreview?: boolean;
+}
+```
+
+### 6. Server-Side Validation (Edge Functions)
+
+Add validation to all edge functions that accept user input:
+
+**Shared Validation Module:**
+```typescript
+// supabase/functions/_shared/validation.ts
+export function validateEmail(email: string): { valid: boolean; error?: string } {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    return { valid: false, error: 'Invalid email format' };
+  }
+  if (email.length > 255) {
+    return { valid: false, error: 'Email too long' };
+  }
+  return { valid: true };
+}
+
+export function validatePhone(phone: string): { valid: boolean; error?: string } {
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.length < 10 || cleaned.length > 15) {
+    return { valid: false, error: 'Invalid phone number length' };
+  }
+  return { valid: true };
+}
+
+export function validateName(name: string): { valid: boolean; error?: string } {
+  if (!name || name.length < 2 || name.length > 100) {
+    return { valid: false, error: 'Name must be 2-100 characters' };
+  }
+  if (!/^[a-zA-Z\s.'-]+$/.test(name)) {
+    return { valid: false, error: 'Name contains invalid characters' };
+  }
+  return { valid: true };
+}
+
+export function sanitizeInput(input: string): string {
+  return input
+    .trim()
+    .replace(/[<>]/g, '')
+    .slice(0, 1000); // Prevent extremely long inputs
+}
+```
+
+**Edge Function Updates:**
+- create-student-user: Validate email, name, password strength
+- create-faculty-user: Validate email, phone, name
+- create-general-user: Validate all user inputs
+- send-sms-otp: Already has phone validation (enhance with rate limiting)
+
+### 7. Form-Specific Enhancements
+
+**AddFacultyDialog - Full Validation:**
+```typescript
+const facultyFormSchema = z.object({
+  name: ValidationSchemas.name,
+  email: ValidationSchemas.email,
+  phone: ValidationSchemas.phone,
+  designation: z.string().min(1, "Please select a designation"),
+  department: z.string().min(1, "Please select a department"),
+  experience: z.string().max(50).optional(),
+  qualification: z.string().max(200).optional(),
+  subjects: z.string().max(500).optional(),
+  address: ValidationSchemas.address,
+});
+```
+
+**CollectFeeDialog - Enhanced Validation:**
+- Use existing FormSchemas.collectFee
+- Add rate limiting (prevent double payments)
+- Validate amount doesn't exceed balance
+- Required cheque/transaction fields based on payment method
+
+**Auth.tsx Signup Form:**
+- Add password strength indicator
+- Validate confirm password match
+- Email format validation
+- Show inline errors
+
+### 8. Required Field Indicators
+
+Update all forms to show asterisks for required fields:
 
 **Pattern:**
 ```tsx
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_OUT' && !intentionalSignOut) {
-    toast({
-      title: "Session Expired",
-      description: "Your session has expired. Please log in again.",
-      variant: "destructive"
-    });
-    navigate('/auth?redirect=' + window.location.pathname);
-  }
-});
+<Label htmlFor="name">
+  Full Name <span className="text-destructive">*</span>
+</Label>
 ```
 
-### 6. Enhanced 404 Page
-
-Improve the NotFound page with better UX:
-
-**Features:**
-- EduFlow branding and styling
-- Clear 404 heading with friendly message
-- Navigation suggestions based on user role
-- Search functionality (optional)
-- Animated illustration
-- "Go to Dashboard" and "Go Home" buttons
-- Recent pages visited (if available)
-
-### 7. QueryClient Configuration
-
-Configure React Query with sensible defaults:
-
-```tsx
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: (failureCount, error) => {
-        // Don't retry on 4xx errors
-        if (isClientError(error)) return false;
-        return failureCount < 3;
-      },
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      onError: (error) => {
-        // Global error handling for queries
-        console.error('Query error:', error);
-      }
-    },
-    mutations: {
-      retry: false,
-      onError: (error) => {
-        // Global error handling for mutations
-        console.error('Mutation error:', error);
-      }
-    }
-  }
-});
-```
+Already implemented in ValidatedInput with the `required` prop.
 
 ---
 
-## Error Message Mapping
-
-| Error Type | User Message |
-|------------|--------------|
-| Network offline | "You're offline. Please check your connection." |
-| Network timeout | "The request timed out. Please try again." |
-| Session expired | "Your session has expired. Please log in again." |
-| Permission denied | "You don't have access to this resource." |
-| Not found (404) | "The page you're looking for doesn't exist." |
-| Validation error | "Please check your input and try again." |
-| Server error (500) | "Something went wrong on our end. Please try again later." |
-| Generic error | "Something went wrong. Please try again." |
-
----
-
-## Toast Notification Patterns
-
-Standardize toast usage across the app:
-
-**Success Pattern:**
-```tsx
-toast({
-  title: "Success",
-  description: "Data saved successfully",
-});
-```
-
-**Error Pattern:**
-```tsx
-toast({
-  title: "Error", 
-  description: "Something went wrong. Please try again.",
-  variant: "destructive",
-  action: <ToastAction onClick={retry}>Try Again</ToastAction>
-});
-```
-
-**Loading Pattern:**
-Use loading states in buttons/components rather than toasts for operations under 2 seconds.
-
----
-
-## Retry Button Component
-
-Create a reusable retry button for failed operations:
-
-```tsx
-function RetryButton({ onClick, label = "Try Again" }: RetryButtonProps) {
-  const [retrying, setRetrying] = useState(false);
-  
-  const handleRetry = async () => {
-    setRetrying(true);
-    await onClick();
-    setRetrying(false);
-  };
-  
-  return (
-    <Button variant="outline" size="sm" onClick={handleRetry} disabled={retrying}>
-      <RefreshCw className={cn("h-4 w-4 mr-2", retrying && "animate-spin")} />
-      {retrying ? "Retrying..." : label}
-    </Button>
-  );
-}
-```
-
----
-
-## App.tsx Structure After Changes
-
-```tsx
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ErrorBoundary>
-      <TooltipProvider>
-        <AuthProvider>
-          <CollegeProvider>
-            <ThemeProvider>
-              <NetworkStatusProvider>
-                <Toaster />
-                <Sonner />
-                <OfflineIndicator />
-                <BrowserRouter>
-                  <Routes>
-                    {/* ... routes ... */}
-                  </Routes>
-                </BrowserRouter>
-              </NetworkStatusProvider>
-            </ThemeProvider>
-          </CollegeProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </ErrorBoundary>
-  </QueryClientProvider>
-);
-```
-
----
-
-## File Structure
+## Validation Flow Diagram
 
 ```text
-src/
-├── components/
-│   └── error/
-│       ├── ErrorBoundary.tsx       # Class component for error catching
-│       ├── ErrorFallback.tsx       # UI for error state
-│       ├── OfflineIndicator.tsx    # Network status banner
-│       ├── RetryButton.tsx         # Reusable retry button
-│       └── index.ts                # Exports
-├── hooks/
-│   ├── useNetworkStatus.tsx        # Online/offline detection
-│   └── useErrorHandler.tsx         # Centralized error utilities
-├── pages/
-│   └── NotFound.tsx                # Enhanced 404 page
-└── App.tsx                         # Updated with error boundary
+User Input
+    │
+    ▼
+┌─────────────────────┐
+│  Client-Side        │
+│  - Real-time Zod    │
+│  - Input masking    │
+│  - Required check   │
+│  - Visual feedback  │
+└─────────────────────┘
+    │ Valid?
+    ▼
+┌─────────────────────┐
+│  Rate Limit Check   │
+│  - 3 second cooldown│
+│  - Toast feedback   │
+└─────────────────────┘
+    │ Allowed?
+    ▼
+┌─────────────────────┐
+│  Sanitization       │
+│  - Strip HTML       │
+│  - Normalize text   │
+│  - Clean phone/email│
+└─────────────────────┘
+    │
+    ▼
+┌─────────────────────┐
+│  API Request        │
+│  (Supabase or Edge) │
+└─────────────────────┘
+    │
+    ▼
+┌─────────────────────┐
+│  Server-Side        │
+│  - Re-validate all  │
+│  - Sanitize again   │
+│  - RLS policies     │
+└─────────────────────┘
+    │
+    ▼
+    Database
 ```
 
 ---
 
 ## Implementation Checklist
 
-1. Create ErrorBoundary class component with error catching
-2. Create ErrorFallback with user-friendly UI and retry button
-3. Create useNetworkStatus hook with event listeners
-4. Create OfflineIndicator component with fixed banner
-5. Create useErrorHandler hook with error classification
-6. Update useAuth.tsx with session expiration detection
-7. Update App.tsx to wrap everything in ErrorBoundary
-8. Update QueryClient with retry configuration
-9. Enhance NotFound.tsx with navigation and styling
-10. Create RetryButton component for failed operations
+### Phase 1: Core Infrastructure
+1. Create `src/lib/sanitize.ts` with sanitization utilities
+2. Create `src/hooks/useRateLimit.tsx` for form throttling
+3. Create `src/components/ui/password-strength.tsx` component
+4. Update `src/lib/validationSchemas.ts` with new schemas
+
+### Phase 2: Input Components
+5. Create `src/components/ui/validated-file-input.tsx`
+6. Enhance `src/components/ui/validated-input.tsx` with birthdate support
+
+### Phase 3: Auth Forms
+7. Update ThreeStepSignup with password strength indicator
+8. Update Auth.tsx login/signup with validation
+
+### Phase 4: Major Forms
+9. Update AddFacultyDialog with full Zod validation
+10. Update CollectFeeDialog with rate limiting and sanitization
+11. Update EditStudentDialog with consistent validation
+
+### Phase 5: Server-Side
+12. Create shared validation module for edge functions
+13. Update create-student-user with server validation
+14. Update create-faculty-user with server validation
 
 ---
 
-## Behavior Summary
+## Error Message Standards
 
-| Scenario | User Experience |
-|----------|-----------------|
-| React component error | Shows ErrorFallback with "Try Again" button |
-| Network goes offline | Yellow banner appears at top with message |
-| Network comes online | Banner disappears, success toast shown |
-| Session expires | Toast notification, redirect to login |
-| Permission denied | Toast with access denied message |
-| 404 page | Friendly page with navigation options |
-| API call fails | Toast with error + optional retry button |
-| Mutation succeeds | Toast with success message |
+| Field Type | Example Error Message |
+|------------|----------------------|
+| Email | "Please enter a valid email address (e.g., user@example.com)" |
+| Phone | "Enter a valid 10-digit mobile number starting with 6, 7, 8, or 9" |
+| Name | "Name can only contain letters, spaces, dots, hyphens, and apostrophes" |
+| Password | "Password must be at least 8 characters with uppercase, lowercase, and number" |
+| Birth Date | "Birth date cannot be in the future" |
+| Required | "[Field name] is required" |
+| File Size | "File size must be less than 5MB" |
+| File Type | "Only JPEG, PNG, and PDF files are allowed" |
+
+---
+
+## Testing Scenarios
+
+After implementation, test these scenarios:
+
+| Scenario | Expected Behavior |
+|----------|-------------------|
+| Empty required field | Inline error, submit disabled |
+| Invalid email format | Real-time error display |
+| Future birth date | "Birth date cannot be in the future" |
+| Rapid form submissions | Rate limit message after 3 submissions |
+| Weak password | Red progress bar, requirements not met |
+| Strong password | Green progress bar, all checks passed |
+| File too large | "File size must be less than 5MB" |
+| Invalid file type | "Only JPEG, PNG, and PDF files are allowed" |
+| XSS attempt (`<script>`) | Input sanitized, no execution |
+| SQL injection attempt | Input sanitized, query safe |
 
