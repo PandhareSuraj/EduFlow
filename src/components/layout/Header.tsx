@@ -26,6 +26,8 @@ import { NotificationDropdown } from "@/components/notifications/NotificationDro
 import { useGlobalSearch, SearchResult } from "@/hooks/useGlobalSearch";
 import { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { HelpDrawer } from "@/components/help";
+import { useGlobalKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 export function Header() {
   const { user, userRole } = useAuth();
@@ -34,7 +36,11 @@ export function Header() {
   const isMobile = useIsMobile();
   const { searchTerm, setSearchTerm, results, isLoading, clearSearch } = useGlobalSearch();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const { restartTour } = useOnboarding();
+
+  // Register global keyboard shortcuts
+  useGlobalKeyboardShortcuts(() => setHelpOpen(true));
 
   const handleSignOut = async () => {
     try {
@@ -239,6 +245,20 @@ export function Header() {
           <div data-tour="header-notifications">
             <NotificationDropdown />
           </div>
+          
+          {/* Help Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setHelpOpen(true)}
+            aria-label="Help and support"
+            data-tour="header-help"
+            className="h-8 w-8 sm:h-9 sm:w-9"
+          >
+            <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+          </Button>
+          
+          <HelpDrawer open={helpOpen} onOpenChange={setHelpOpen} />
           
           <DropdownMenu>
 <DropdownMenuTrigger asChild>
