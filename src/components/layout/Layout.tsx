@@ -1,6 +1,8 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Header } from "./Header";
+import { Footer } from "./Footer";
+import { Breadcrumbs } from "./Breadcrumbs";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { WelcomeModal, ProductTour } from "@/components/onboarding";
 import { BottomNavigation } from "@/components/mobile";
@@ -38,8 +40,11 @@ export function Layout({ children }: LayoutProps) {
                 isMobile && "pb-20"
               )}
             >
+              <Breadcrumbs />
               {children}
             </main>
+            {/* Footer - hidden on mobile */}
+            {!isMobile && <Footer />}
           </div>
         </div>
         {/* Mobile Bottom Navigation */}
