@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Eye, Edit, Users, BookOpen, BarChart3, Loader2, CheckCircle, XCircle, DollarSign } from "lucide-react";
+import { Search, Eye, Edit, Users, BookOpen, BarChart3, CheckCircle, XCircle, DollarSign } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddCourseDialog } from "@/components/forms/AddCourseDialog";
 import { ViewCourseDialog, EditCourseDialog } from "@/components/forms/CourseDialogs";
@@ -14,6 +14,7 @@ import { FeeStructureDialog } from "@/components/forms/FeeStructureDialog";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { CardGridSkeleton } from "@/components/skeletons";
 
 interface Course {
   id: number;
@@ -222,9 +223,7 @@ export default function Courses() {
 
       {/* Courses Grid */}
       {loading ? (
-        <div className="flex justify-center items-center min-h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
+        <CardGridSkeleton cards={6} columns={3} />
       ) : filteredCourses.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
