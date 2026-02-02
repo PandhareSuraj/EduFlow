@@ -2,18 +2,18 @@ import { Building2 } from 'lucide-react';
 
 // Mock institution logos - in production these would be real logos
 const institutions = [
-  'KK Patil College',
-  'St. Mary\'s University',
-  'National Institute of Technology',
-  'Delhi Public School',
-  'Christ University',
-  'Manipal Academy',
-  'Amity University',
-  'VIT Vellore',
-  'BITS Pilani',
-  'IIM Bangalore',
-  'Symbiosis International',
-  'Lovely Professional University'
+  'Sai Vidya College of Engineering',
+  'Shree Balaji Institute of Technology',
+  'Nalanda Academy of Arts & Science',
+  'Guru Nanak Polytechnic',
+  'Bharathi Women\'s College',
+  'Vidyapeeth Institute of Management',
+  'Sardar Patel Commerce College',
+  'Adarsh Nursing College',
+  'Sunrise International School',
+  'Mahatma Gandhi Institute of Education',
+  'Swami Vivekananda Degree College',
+  'Chanakya Business School'
 ];
 
 export function TrustLogos() {
@@ -21,7 +21,7 @@ export function TrustLogos() {
     <section className="py-12 border-y bg-muted/30 overflow-hidden">
       <div className="container mx-auto px-4 mb-8">
         <p className="text-center text-muted-foreground">
-          Trusted by <span className="text-primary font-semibold">500+</span> leading educational institutions across India
+          Trusted by <span className="text-primary font-semibold">growing number of</span> educational institutions across India
         </p>
       </div>
       
