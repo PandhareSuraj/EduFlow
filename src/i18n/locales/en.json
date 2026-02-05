@@ -1,0 +1,498 @@
+ {
+   "common": {
+     "signIn": "Sign In",
+     "signUp": "Sign Up",
+     "bookDemo": "Book Demo",
+     "getStarted": "Get Started Free",
+     "watchDemo": "Watch Demo",
+     "learnMore": "Learn More",
+     "contactUs": "Contact Us",
+     "backToHome": "Back to Home",
+     "features": "Features",
+     "pricing": "Pricing",
+     "testimonials": "Testimonials",
+     "productTour": "Product Tour",
+     "startFreeTrial": "Start Free Trial",
+     "scheduleDemo": "Schedule a Demo Call",
+     "takeTour": "Take Product Tour",
+     "contactSales": "Contact Sales",
+     "contactSupport": "Contact Support"
+   },
+   "landing": {
+     "hero": {
+       "badge": "Complete Education Management Solution",
+       "title": "Transform Your",
+       "titleHighlight": "Institution",
+       "titleEnd": "Digitally",
+       "description": "EduFlow is a powerful education management platform designed for institutions of all types. Manage students, faculty, academics, finances, and operations seamlessly.",
+       "stats": {
+         "institutions": "Institutions",
+         "students": "Students",
+         "faculty": "Faculty",
+         "uptime": "Uptime"
+       }
+     },
+     "features": {
+       "title": "Everything Your Institution Needs",
+       "subtitle": "Comprehensive modules designed for modern educational management",
+       "studentManagement": {
+         "title": "Student Management",
+         "description": "Complete student lifecycle from admission to alumni. Track records, attendance, and performance.",
+         "features": ["Admission Management", "Profile Management", "Attendance Tracking", "Progress Reports"]
+       },
+       "academicExcellence": {
+         "title": "Academic Excellence",
+         "description": "Manage courses, curriculum, examinations, and results with ease and precision.",
+         "features": ["Course Management", "Exam Scheduling", "Result Processing", "Faculty Assignment"]
+       },
+       "financialManagement": {
+         "title": "Financial Management",
+         "description": "Handle fees, payments, expenses, and generate comprehensive financial reports.",
+         "features": ["Fee Collection", "Payment Processing", "Expense Tracking", "Financial Reports"]
+       },
+       "hostelManagement": {
+         "title": "Hostel Management",
+         "description": "Manage hostel rooms, allocations, complaints, and maintain student accommodation.",
+         "features": ["Room Allocation", "Occupancy Tracking", "Complaint Management", "Inventory Control"]
+       },
+       "transportSystem": {
+         "title": "Transport System",
+         "description": "Organize routes, track buses, manage drivers, and ensure safe student transportation.",
+         "features": ["Route Management", "Vehicle Tracking", "Driver Management", "Student Assignments"]
+       },
+       "librarySystem": {
+         "title": "Library System",
+         "description": "Comprehensive library management with book inventory, issue/return, and digital cataloging.",
+         "features": ["Book Management", "Issue/Return", "Member Management", "Digital Catalog"]
+       },
+       "eventManagement": {
+         "title": "Event Management",
+         "description": "Plan, organize, and track institutional events, seminars, and activities seamlessly.",
+         "features": ["Event Scheduling", "Registration", "Attendance", "Photo Gallery"]
+       },
+       "placementCareer": {
+         "title": "Placement & Career",
+         "description": "Connect students with opportunities, track placements, and maintain industry relationships.",
+         "features": ["Company Database", "Placement Drives", "Student Profiles", "Success Tracking"]
+       },
+       "grievanceHandling": {
+         "title": "Grievance Handling",
+         "description": "Efficient system to receive, track, and resolve student and staff grievances.",
+         "features": ["Anonymous Reporting", "Status Tracking", "Priority Management", "Resolution Reports"]
+       }
+     },
+     "institutionTypes": {
+       "title": "Built for All Institution Types",
+       "subtitle": "Flexible and adaptable to your institution's unique requirements",
+       "types": {
+         "medical": { "title": "Medical Colleges", "desc": "Patient management, clinical rotations, equipment tracking" },
+         "engineering": { "title": "Engineering", "desc": "Lab management, projects, industry partnerships" },
+         "arts": { "title": "Arts & Sciences", "desc": "Cultural events, research, diverse programs" },
+         "commerce": { "title": "Commerce", "desc": "Business simulations, internships, career guidance" },
+         "universities": { "title": "Universities", "desc": "Multi-department coordination, large-scale operations" },
+         "k12": { "title": "K-12 Schools", "desc": "Age-appropriate features, parent communication" },
+         "technical": { "title": "Technical Institutes", "desc": "Skill development, certification programs" },
+         "international": { "title": "International", "desc": "Multi-language, diverse curricula support" }
+       }
+     },
+     "whyChoose": {
+       "title": "Why Institutions Choose EduFlow",
+       "subtitle": "Experience the difference with our advanced features",
+       "items": {
+         "lightningFast": { "title": "Lightning Fast", "desc": "Optimized performance for thousands of concurrent users" },
+         "secure": { "title": "Secure & Compliant", "desc": "Enterprise-grade security with data encryption" },
+         "support": { "title": "24/7 Support", "desc": "Round-the-clock assistance from our expert team" },
+         "cloudBased": { "title": "Cloud-Based", "desc": "Access from anywhere, anytime, on any device" },
+         "analytics": { "title": "Advanced Analytics", "desc": "Data-driven insights for better decision making" },
+         "easyToUse": { "title": "Easy to Use", "desc": "Intuitive interface requiring minimal training" }
+       }
+     },
+     "cta": {
+       "title": "Ready to Transform Your Institution?",
+       "subtitle": "Join hundreds of institutions already using EduFlow to streamline their operations"
+     },
+     "footer": {
+       "tagline": "Complete education management solution for modern educational institutions.",
+       "product": "Product",
+       "security": "Security",
+       "roadmap": "Roadmap",
+       "company": "Company",
+       "aboutUs": "About Us",
+       "careers": "Careers",
+       "blog": "Blog",
+       "contact": "Contact",
+       "legal": "Legal",
+       "privacyPolicy": "Privacy Policy",
+       "termsOfService": "Terms of Service",
+       "cookiePolicy": "Cookie Policy",
+       "copyright": "© 2025 EduFlow Platform. Empowering Educational Institutions Worldwide. Built at myweb",
+       "social": {
+         "twitter": "Twitter",
+         "linkedin": "LinkedIn",
+         "facebook": "Facebook",
+         "instagram": "Instagram"
+       }
+     }
+   },
+   "howItWorks": {
+     "sectionLabel": "Simple Onboarding",
+     "title": "Get Started in 3 Easy Steps",
+     "subtitle": "From signup to going live, we make the transition seamless",
+     "steps": {
+       "signUp": {
+         "title": "Sign Up & Configure",
+         "description": "Create your account, add your institution details, and customize settings to match your workflow."
+       },
+       "importData": {
+         "title": "Import Your Data",
+         "description": "Easily migrate existing student, faculty, and academic data using our Excel import tools."
+       },
+       "goLive": {
+         "title": "Go Live in 24 Hours",
+         "description": "Start managing your institution digitally with full support from our onboarding team."
+       }
+     }
+   },
+   "pricing": {
+     "sectionLabel": "Simple Pricing",
+     "title": "Plans That Grow with You",
+     "subtitle": "Start free, upgrade when you need. No hidden fees, cancel anytime.",
+     "perYear": "/year",
+     "custom": "Custom",
+     "mostPopular": "Most Popular",
+     "trialNote": "All plans include 14-day free trial. No credit card required.",
+     "starter": {
+       "name": "Starter",
+       "description": "Perfect for small institutions just getting started",
+       "features": ["Up to 500 students", "Basic attendance tracking", "Fee management", "Student & faculty profiles", "Email support", "Basic reports"],
+       "cta": "Start Free Trial"
+     },
+     "professional": {
+       "name": "Professional",
+       "description": "Ideal for growing institutions with advanced needs",
+       "features": ["Up to 2,000 students", "All Starter features", "Exam management", "Library management", "SMS notifications", "Advanced analytics", "Priority support", "Custom branding"],
+       "cta": "Start Free Trial"
+     },
+     "enterprise": {
+       "name": "Enterprise",
+       "description": "For large institutions requiring full customization",
+       "features": ["Unlimited students", "All Professional features", "Multi-campus support", "Hostel & transport", "Placement module", "API access", "Dedicated account manager", "On-premise option available"],
+       "cta": "Contact Sales"
+     }
+   },
+   "testimonials": {
+     "sectionLabel": "Success Stories",
+     "title": "Trusted by Leading Institutions",
+     "subtitle": "See how EduFlow is transforming education management across India",
+     "items": [
+       {
+         "quote": "EduFlow transformed our administrative processes. What used to take days now takes hours. The fee collection module alone saved us countless hours of manual work.",
+         "author": "Dr. Rajesh Kumar",
+         "role": "Principal",
+         "institution": "Shree Vidya Mandir, Mumbai",
+         "metrics": "60% reduction in admin work"
+       },
+       {
+         "quote": "The attendance tracking and parent communication features have significantly improved our student engagement. Parents love the real-time updates.",
+         "author": "Prof. Sunita Sharma",
+         "role": "Director",
+         "institution": "Saraswati College, Bangalore",
+         "metrics": "45% increase in parent engagement"
+       },
+       {
+         "quote": "We migrated from three different systems to EduFlow. The unified platform has streamlined everything from admissions to examinations.",
+         "author": "Mr. Anil Patel",
+         "role": "Administrator",
+         "institution": "Gujarat Engineering College",
+         "metrics": "Saved ₹5L annually in software costs"
+       },
+       {
+         "quote": "The placement module helped us achieve our best placement season ever. Tracking student applications and company interactions is now effortless.",
+         "author": "Dr. Priya Menon",
+         "role": "Placement Officer",
+         "institution": "Lakshmi Training Institute, Chennai",
+         "metrics": "85% placement rate achieved"
+       }
+     ]
+   },
+   "integrations": {
+     "sectionLabel": "Seamless Integrations",
+     "title": "Connects with Tools You Already Use",
+     "items": {
+       "tally": { "name": "Tally", "desc": "Accounting" },
+       "razorpay": { "name": "Razorpay", "desc": "Payments" },
+       "googleWorkspace": { "name": "Google Workspace", "desc": "Collaboration" },
+       "whatsapp": { "name": "WhatsApp", "desc": "Communication" },
+       "smsGateway": { "name": "SMS Gateway", "desc": "Notifications" },
+       "zoom": { "name": "Zoom", "desc": "Virtual Classes" },
+       "microsoft365": { "name": "Microsoft 365", "desc": "Productivity" },
+       "biometric": { "name": "Biometric", "desc": "Attendance" }
+     }
+   },
+   "mobile": {
+     "sectionLabel": "Mobile First",
+     "title": "Manage On the Go",
+     "subtitle": "Access EduFlow from any device. Our responsive design and mobile apps ensure you're always connected.",
+     "features": {
+       "pushNotifications": { "title": "Push Notifications", "desc": "Instant alerts for fees, attendance, exams" },
+       "offlineMode": { "title": "Offline Mode", "desc": "Works without internet, syncs when connected" },
+       "gpsAttendance": { "title": "GPS Attendance", "desc": "Location-verified attendance marking" },
+       "documentScan": { "title": "Document Scan", "desc": "Scan and upload documents instantly" },
+       "scheduleView": { "title": "Schedule View", "desc": "View timetables and upcoming events" },
+       "quickPayments": { "title": "Quick Payments", "desc": "Pay fees via UPI, cards, or net banking" }
+     },
+     "appStore": {
+       "download": "Download on the",
+       "appStore": "App Store",
+       "getItOn": "Get it on",
+       "googlePlay": "Google Play"
+     },
+     "stats": {
+       "attendance": "Attendance",
+       "dueFees": "Due Fees",
+       "exams": "Exams",
+       "notices": "Notices"
+     },
+     "menuItems": {
+       "markAttendance": "Mark Attendance",
+       "viewTimetable": "View Timetable",
+       "payFees": "Pay Fees"
+     },
+     "synced": "Synced"
+   },
+   "security": {
+     "sectionLabel": "Security First",
+     "title": "Your Data is Safe with Us",
+     "subtitle": "Enterprise-grade security protecting sensitive student and institutional data",
+     "features": {
+       "encryption": { "title": "256-bit SSL Encryption", "desc": "All data transmitted is encrypted end-to-end" },
+       "dataCenter": { "title": "Data Center in India", "desc": "Your data stays within Indian borders" },
+       "soc2": { "title": "SOC 2 Compliant", "desc": "Enterprise-grade security controls" },
+       "gdpr": { "title": "GDPR Ready", "desc": "Full compliance with data protection laws" },
+       "uptime": { "title": "99.9% Uptime SLA", "desc": "Guaranteed availability with redundancy" },
+       "backups": { "title": "Daily Backups", "desc": "Automated backups with instant recovery" }
+     },
+     "certifications": {
+       "iso27001": "ISO 27001",
+       "sslSecured": "SSL Secured",
+       "gdpr": "GDPR",
+       "madeInIndia": "Made in India"
+     },
+     "trustStatement": "Trusted by growing number of educational institutions across India. All data is stored in secure Indian data centers with regular third-party security audits."
+   },
+   "awards": {
+     "badge": "Award Winning Platform",
+     "title": "Awards & Recognition",
+     "subtitle": "Recognized by industry leaders for excellence in educational technology",
+     "items": [
+       { "title": "Best EdTech Solution 2024", "organization": "Education Technology Awards", "year": "2024" },
+       { "title": "Innovation in Education", "organization": "India Education Summit", "year": "2024" },
+       { "title": "Top 10 ERP Solutions", "organization": "EdTech Review", "year": "2023" },
+       { "title": "Customer Excellence Award", "organization": "SaaS India Awards", "year": "2023" }
+     ],
+     "mediaTitle": "As Featured In",
+     "stats": {
+       "industryAwards": "Industry Awards",
+       "mediaFeatures": "Media Features",
+       "customerRating": "Customer Rating",
+       "ratedEduCRM": "Rated Edu CRM"
+     }
+   },
+   "productTour": {
+     "hero": {
+       "badge": "Interactive Product Tour",
+       "title": "Transform Your",
+       "titleHighlight": "Institution",
+       "titleEnd": "with EduFlow",
+       "description": "Experience the complete education management platform that powers growing institutions. See live workflows, real screenshots, and calculate your ROI.",
+       "startDemo": "Start Interactive Demo",
+       "watchVideo": "Watch Video",
+       "scheduleLiveDemo": "Schedule Live Demo",
+       "stats": {
+         "institutions": "Institutions",
+         "studentsManaged": "Students Managed",
+         "uptime": "Uptime",
+         "support": "Support"
+       },
+       "floatingCards": {
+         "newAdmission": "New Admission",
+         "today": "Today",
+         "feeCollected": "Fee Collected"
+       }
+     },
+     "trustLogos": {
+       "title": "Trusted by",
+       "highlight": "growing number of",
+       "suffix": "educational institutions across India"
+     },
+     "problemSolution": {
+       "badge": "The Transformation",
+       "title": "From Chaos to Clarity",
+       "subtitle": "See how EduFlow transforms institutional operations",
+       "before": {
+         "badge": "Before EduFlow",
+         "title": "Manual, Error-Prone",
+         "subtitle": "Outdated processes holding your institution back",
+         "painPoints": [
+           { "text": "Paper-based admission forms", "detail": "Prone to errors, lost documents" },
+           { "text": "Hours spent on attendance", "detail": "Manual registers, calculation errors" },
+           { "text": "Fee collection chaos", "detail": "Missed payments, wrong receipts" },
+           { "text": "Finding student records", "detail": "Searching through files for hours" }
+         ]
+       },
+       "after": {
+         "badge": "With EduFlow",
+         "title": "Automated, Accurate",
+         "subtitle": "Modern systems for modern institutions",
+         "solutions": [
+           { "text": "Digital admissions", "metric": "95% faster", "detail": "Online forms with auto-verification" },
+           { "text": "One-tap attendance", "metric": "100% accurate", "detail": "Biometric & mobile marking" },
+           { "text": "Instant payments", "metric": "Zero errors", "detail": "Multiple gateways, auto receipts" },
+           { "text": "Instant search", "metric": "<1 second", "detail": "Find any record instantly" }
+         ]
+       }
+     },
+     "infographics": {
+       "badge": "How It Works",
+       "title": "Up & Running in 4 Simple Steps",
+       "subtitle": "Get started with EduFlow in minutes, not months",
+       "steps": [
+         { "title": "Sign Up", "description": "Create your institution account in 2 minutes" },
+         { "title": "Import Data", "description": "Bulk upload students, faculty via Excel" },
+         { "title": "Configure", "description": "Set up courses, fees, and workflows" },
+         { "title": "Go Live!", "description": "Start managing your institution" }
+       ],
+       "moduleCoverage": {
+         "title": "Complete Module Coverage",
+         "subtitle": "All features included in every plan - no hidden modules",
+         "modules": {
+           "students": "Students",
+           "academics": "Academics",
+           "finance": "Finance",
+           "analytics": "Analytics"
+         },
+         "note": "100% Feature Access - Every module, every feature, available from day one"
+       }
+     },
+     "features": {
+       "badge": "Comprehensive Features",
+       "title": "Explore Every Feature",
+       "subtitle": "Click on any module to discover its complete capabilities",
+       "keyCapabilities": "Key Capabilities"
+     },
+     "roi": {
+       "badge": "ROI Calculator",
+       "title": "Calculate Your Savings",
+       "subtitle": "See how much time and money EduFlow can save your institution",
+       "institutionDetails": "Your Institution Details",
+       "numberOfStudents": "Number of Students",
+       "numberOfFaculty": "Number of Faculty",
+       "adminStaffCount": "Admin Staff Count",
+       "weeklyManualHours": "Weekly Manual Admin Hours",
+       "estimatedSavings": "Your Estimated Savings",
+       "hoursSavedYear": "Hours Saved/Year",
+       "annualSavings": "Annual Savings",
+       "efficiencyGain": "Efficiency Gain",
+       "monthsToBreakeven": "Months to Breakeven",
+       "whatThisMeans": "What This Means For You",
+       "employeesAutomated": "full-time employees worth of work automated annually",
+       "focusOnSuccess": "Your staff can focus on student success instead of paperwork",
+       "zeroErrors": "Zero errors in fee collection, attendance, and record keeping",
+       "accessibility": "24/7 accessibility for students, parents, and staff"
+     },
+     "faq": {
+       "badge": "FAQ",
+       "title": "Frequently Asked Questions",
+       "subtitle": "Everything you need to know about EduFlow. Can't find what you're looking for?",
+       "contactTeam": "Contact our team",
+       "stillHaveQuestions": "Still have questions?",
+       "teamHereToHelp": "Our team is here to help",
+       "categories": {
+         "gettingStarted": "Getting Started",
+         "features": "Features & Functionality",
+         "pricing": "Pricing & Support",
+         "security": "Security & Compliance"
+       },
+       "questions": {
+         "setupTime": {
+           "q": "How long does it take to set up EduFlow for my institution?",
+           "a": "Most institutions are up and running within 24-48 hours. Our onboarding team handles data migration, user setup, and provides personalized training. For larger institutions with complex requirements, setup may take up to a week."
+         },
+         "technicalExpertise": {
+           "q": "Do I need any technical expertise to use EduFlow?",
+           "a": "Not at all! EduFlow is designed for educators, not IT professionals. The interface is intuitive and user-friendly. We also provide comprehensive training, video tutorials, and 24/7 support to help you get started."
+         },
+         "importData": {
+           "q": "Can I import existing student and faculty data?",
+           "a": "Yes! EduFlow supports bulk data import from Excel, CSV, and most common formats. Our team can also help migrate data from your existing systems, including legacy software, spreadsheets, or even paper records."
+         },
+         "multipleCampuses": {
+           "q": "Does EduFlow support multiple campuses or branches?",
+           "a": "Absolutely! EduFlow's multi-campus architecture allows you to manage multiple branches from a single dashboard while maintaining separate data, reports, and user access for each campus."
+         },
+         "parentAccess": {
+           "q": "Can parents access student information?",
+           "a": "Yes, EduFlow includes a dedicated parent portal where parents can view attendance, grades, fee status, and communicate with teachers. You have full control over what information is visible to parents."
+         },
+         "mobileApp": {
+           "q": "Is there a mobile app for EduFlow?",
+           "a": "EduFlow is fully responsive and works seamlessly on any device. We also offer dedicated mobile apps for Android and iOS for teachers and students with features like attendance marking, push notifications, and more."
+         },
+         "customization": {
+           "q": "Can I customize EduFlow to match my institution's workflow?",
+           "a": "Yes! EduFlow offers extensive customization options including custom fields, flexible fee structures, configurable grading systems, and role-based access control. Our team can also develop custom features for your specific needs."
+         },
+         "cost": {
+           "q": "What does EduFlow cost?",
+           "a": "EduFlow offers flexible pricing based on your institution size and requirements. We have plans starting from ₹5,000/month for small institutions. Contact us for a customized quote based on your specific needs."
+         },
+         "freeTrial": {
+           "q": "Is there a free trial available?",
+           "a": "Yes! We offer a 14-day free trial with full access to all features. No credit card required. You can also request a personalized demo where our team walks you through the platform."
+         },
+         "support": {
+           "q": "What kind of support do you provide?",
+           "a": "We offer 24/7 support via chat, email, and phone. All plans include access to our knowledge base, video tutorials, and community forum. Premium plans include dedicated account managers and priority support."
+         },
+         "dataOnCancel": {
+           "q": "What happens to my data if I decide to cancel?",
+           "a": "Your data belongs to you. If you decide to cancel, we provide a complete export of all your data in standard formats. We retain backups for 30 days after cancellation in case you change your mind."
+         },
+         "dataSecurity": {
+           "q": "Is my data secure with EduFlow?",
+           "a": "Security is our top priority. EduFlow uses bank-grade encryption, secure data centers, regular backups, and complies with industry standards. We conduct regular security audits and penetration testing."
+         },
+         "regulations": {
+           "q": "Is EduFlow compliant with educational regulations?",
+           "a": "Yes, EduFlow is designed to comply with educational regulations in India including UGC, AICTE, and state education board requirements. We also support GST compliance for fee management."
+         }
+       }
+     },
+     "finalCta": {
+       "title": "Ready to Transform Your Institution?",
+       "subtitle": "Join growing number of educational institutions already using EduFlow to streamline their operations and focus on what matters most - student success.",
+       "benefits": [
+         "No setup fees or hidden charges",
+         "Free onboarding and training",
+         "24/7 dedicated support",
+         "30-day money-back guarantee"
+       ],
+       "noCreditCard": "No credit card required • Setup in 5 minutes"
+     },
+     "footer": {
+       "copyright": "© 2025 EduFlow Platform. Built at myweb"
+     }
+   },
+   "nav": {
+     "dashboard": "Dashboard",
+     "students": "Students",
+     "courses": "Courses",
+     "faculty": "Faculty",
+     "fees": "Fees",
+     "attendance": "Attendance",
+     "exams": "Exams",
+     "library": "Library",
+     "reports": "Reports",
+     "settings": "Settings"
+   }
+ }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+ import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -22,10 +23,12 @@ import {
 } from '@/components/landing';
 import { FloatingContactButton, InquiryFormDialog } from '@/components/lead-generation';
 import { IntroVideoDialog } from '@/components/videos/IntroVideoDialog';
+ import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 
 export default function Index() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+   const { t } = useTranslation();
   const [statsCount, setStatsCount] = useState({ colleges: 0, students: 0, faculty: 0, uptime: 0 });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
@@ -107,28 +110,23 @@ export default function Index() {
             />
           </div>
           <div className="hidden sm:flex items-center gap-1 md:gap-2">
-            <Button variant="ghost" onClick={() => scrollToSection('features')} className="text-sm">
-              Features
-            </Button>
-            <Button variant="ghost" onClick={() => scrollToSection('pricing')} className="text-sm">
-              Pricing
-            </Button>
-            <Button variant="ghost" onClick={() => scrollToSection('testimonials')} className="text-sm">
-              Testimonials
-            </Button>
+            <Button variant="ghost" onClick={() => scrollToSection('features')} className="text-sm">{t('common.features')}</Button>
+            <Button variant="ghost" onClick={() => scrollToSection('pricing')} className="text-sm">{t('common.pricing')}</Button>
+            <Button variant="ghost" onClick={() => scrollToSection('testimonials')} className="text-sm">{t('common.testimonials')}</Button>
             <Button variant="ghost" onClick={() => navigate('/product-tour')} className="text-sm">
               <Map className="mr-1.5 h-3.5 w-3.5" />
-              Product Tour
+              {t('common.productTour')}
             </Button>
-            <InquiryFormDialog title="Book a Demo" description="Schedule a personalized demo with our team to see EduFlow in action.">
+            <LanguageSwitcher />
+            <InquiryFormDialog title={t('common.bookDemo')} description="Schedule a personalized demo with our team to see EduFlow in action.">
               <Button variant="outline" className="text-sm border-primary/50 hover:bg-primary/5">
                 <CalendarPlus className="mr-1.5 h-3.5 w-3.5" />
-                Book Demo
+                {t('common.bookDemo')}
               </Button>
             </InquiryFormDialog>
             <Button onClick={() => navigate('/auth')} className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-sm">
               <LogIn className="mr-1.5 h-3.5 w-3.5" />
-              Sign In
+              {t('common.signIn')}
             </Button>
           </div>
 
@@ -154,7 +152,7 @@ export default function Index() {
                   className="justify-start text-base"
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Features
+                  {t('common.features')}
                 </Button>
                 <Button 
                   variant="ghost" 
@@ -162,7 +160,7 @@ export default function Index() {
                   className="justify-start text-base"
                 >
                   <DollarSign className="mr-2 h-4 w-4" />
-                  Pricing
+                  {t('common.pricing')}
                 </Button>
                 <Button 
                   variant="ghost" 
@@ -170,7 +168,7 @@ export default function Index() {
                   className="justify-start text-base"
                 >
                   <Award className="mr-2 h-4 w-4" />
-                  Testimonials
+                  {t('common.testimonials')}
                 </Button>
                 <Button 
                   variant="ghost" 
@@ -178,15 +176,15 @@ export default function Index() {
                   className="justify-start text-base"
                 >
                   <Map className="mr-2 h-4 w-4" />
-                  Product Tour
+                  {t('common.productTour')}
                 </Button>
-                <InquiryFormDialog title="Book a Demo" description="Schedule a personalized demo with our team to see EduFlow in action.">
+                <InquiryFormDialog title={t('common.bookDemo')} description="Schedule a personalized demo with our team to see EduFlow in action.">
                   <Button 
                     variant="outline" 
                     className="justify-start text-base border-primary/50"
                   >
                     <CalendarPlus className="mr-2 h-4 w-4" />
-                    Book Demo
+                    {t('common.bookDemo')}
                   </Button>
                 </InquiryFormDialog>
                 <div className="border-t my-2" />
@@ -195,7 +193,7 @@ export default function Index() {
                   className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
                 >
                   <LogIn className="mr-2 h-4 w-4" />
-                  Sign In
+                  {t('common.signIn')}
                 </Button>
               </div>
             </SheetContent>
@@ -211,20 +209,19 @@ export default function Index() {
           <div className="space-y-8 animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Complete Education Management Solution</span>
+              <span className="text-sm font-medium text-primary">{t('landing.hero.badge')}</span>
             </div>
             
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
-              Transform Your{" "}
+              {t('landing.hero.title')}{" "}
               <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-pulse">
-                Institution
+                {t('landing.hero.titleHighlight')}
               </span>
-              {" "}Digitally
+              {" "}{t('landing.hero.titleEnd')}
             </h1>
             
             <p className="text-xl text-muted-foreground leading-relaxed">
-              EduFlow is a powerful education management platform designed for institutions of all types. 
-              Manage students, faculty, academics, finances, and operations seamlessly.
+              {t('landing.hero.description')}
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -233,7 +230,7 @@ export default function Index() {
                 onClick={() => navigate('/auth')}
                 className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-all shadow-elegant hover:shadow-glow group"
               >
-                Get Started Free
+                {t('common.getStarted')}
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button 
@@ -243,7 +240,7 @@ export default function Index() {
                 className="border-2 hover:bg-primary/5 group"
               >
                 <Play className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                Watch Demo
+                {t('common.watchDemo')}
               </Button>
             </div>
 
@@ -251,19 +248,19 @@ export default function Index() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-8">
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary">{statsCount.colleges}+</div>
-                <div className="text-sm text-muted-foreground">Institutions</div>
+                <div className="text-sm text-muted-foreground">{t('landing.hero.stats.institutions')}</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-secondary">{statsCount.students.toLocaleString()}+</div>
-                <div className="text-sm text-muted-foreground">Students</div>
+                <div className="text-sm text-muted-foreground">{t('landing.hero.stats.students')}</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-accent">{statsCount.faculty.toLocaleString()}+</div>
-                <div className="text-sm text-muted-foreground">Faculty</div>
+                <div className="text-sm text-muted-foreground">{t('landing.hero.stats.faculty')}</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-success">{statsCount.uptime}%</div>
-                <div className="text-sm text-muted-foreground">Uptime</div>
+                <div className="text-sm text-muted-foreground">{t('landing.hero.stats.uptime')}</div>
               </div>
             </div>
           </div>
@@ -308,10 +305,10 @@ export default function Index() {
       <section id="features" className="container mx-auto px-4 py-20 bg-muted/30 scroll-mt-20">
         <div className="text-center mb-16 space-y-4">
           <h2 className="text-3xl md:text-5xl font-bold">
-            Everything Your Institution Needs
+            {t('landing.features.title')}
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Comprehensive modules designed for modern educational management
+            {t('landing.features.subtitle')}
           </p>
         </div>
 
@@ -502,10 +499,10 @@ export default function Index() {
         <Card className="bg-gradient-to-br from-primary via-secondary to-accent text-white border-0 shadow-glow">
           <CardContent className="p-12 md:p-16 text-center space-y-6">
             <h2 className="text-3xl md:text-5xl font-bold">
-              Ready to Transform Your Institution?
+              {t('landing.cta.title')}
             </h2>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Join hundreds of institutions already using EduFlow to streamline their operations
+              {t('landing.cta.subtitle')}
             </p>
             <div className="flex flex-wrap gap-4 justify-center pt-6">
               <Button 
@@ -513,7 +510,7 @@ export default function Index() {
                 onClick={() => navigate('/auth')}
                 className="bg-white text-primary hover:bg-white/90 shadow-elegant group"
               >
-                Start Free Trial
+                {t('common.startFreeTrial')}
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button 
@@ -522,7 +519,7 @@ export default function Index() {
                 onClick={() => navigate('/product-tour')}
                 className="border-2 border-white text-white hover:bg-white/20 bg-white/10"
               >
-                Take Product Tour
+                {t('common.takeTour')}
               </Button>
             </div>
           </CardContent>
