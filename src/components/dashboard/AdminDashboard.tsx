@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { 
   Users, 
   GraduationCap, 
@@ -21,6 +20,12 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { UpcomingEventsCard } from "@/components/dashboard/UpcomingEventsCard";
 import { useDashboardNotifications } from '@/hooks/useDashboardNotifications';
+import { 
+  UserActivityWidget, 
+  FinancialInsightsWidget, 
+  AcademicOverviewWidget, 
+  UserManagementWidget 
+} from "@/components/dashboard/admin";
 
 interface AdminStats {
   totalStudents: number;
@@ -262,6 +267,14 @@ export function AdminDashboard() {
         <div className="lg:col-span-2">
           <RecentActivity />
         </div>
+      </div>
+
+      {/* Role-Specific Feature Widgets */}
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+        <UserActivityWidget />
+        <FinancialInsightsWidget />
+        <AcademicOverviewWidget />
+        <UserManagementWidget />
       </div>
 
       {/* Pending Actions and Upcoming Events */}
