@@ -248,7 +248,7 @@ export default function Auth() {
             <img 
               src={eduflowLogo} 
               alt="EduFlow" 
-              className="h-28 md:h-32 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all duration-300" 
+              className="h-32 md:h-40 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all duration-300" 
             />
           </div>
           <h1 className="text-2xl font-bold text-foreground">EduFlow Platform</h1>
