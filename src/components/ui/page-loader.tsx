@@ -13,7 +13,7 @@ export function PageLoader({ message = "Loading..." }: PageLoaderProps) {
         <img 
           src={eduflowLogo} 
           alt="EduFlow" 
-          className="h-16 w-auto animate-pulse"
+          className="h-24 w-auto animate-pulse"
         />
         
         {/* Spinner */}

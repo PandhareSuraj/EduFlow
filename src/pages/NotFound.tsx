@@ -70,7 +70,7 @@ const NotFound = () => {
             <img 
               src={eduflowLogo} 
               alt="EduFlow" 
-              className="h-16 w-auto opacity-80"
+              className="h-24 w-auto opacity-80"
             />
           </div>
           <div className="flex justify-center">

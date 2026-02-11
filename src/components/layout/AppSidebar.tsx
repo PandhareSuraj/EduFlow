@@ -204,7 +204,7 @@ export function AppSidebar() {
         {!isCollapsed && (
           <div className="text-white flex items-center space-x-3">
             {logoUrl && userRole !== 'super_admin' && (
-              <img src={logoUrl} alt={`Logo`} className="h-8 w-8 object-contain" />
+              <img src={logoUrl} alt={`Logo`} className="h-10 w-10 object-contain" />
             )}
             <div>
               <h2 className="font-bold text-lg leading-tight">{getPortalTitle()}</h2>
