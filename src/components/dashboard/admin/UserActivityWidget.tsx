@@ -3,30 +3,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Users, 
-  UserCheck, 
-  Clock, 
-  TrendingUp,
-  Activity
+  Clock,
+  Activity,
+  UserPlus,
+  Info
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface UserActivityStats {
   totalUsers: number;
-  activeToday: number;
-  activeThisWeek: number;
-  recentLogins: Array<{
+  recentRegistrations: number;
+  recentUsers: Array<{
     email: string;
     role: string;
-    lastLogin: string;
+    createdAt: string;
   }>;
 }
 
 export function UserActivityWidget() {
   const [stats, setStats] = useState<UserActivityStats>({
     totalUsers: 0,
-    activeToday: 0,
-    activeThisWeek: 0,
-    recentLogins: []
+    recentRegistrations: 0,
+    recentUsers: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -36,31 +35,21 @@ export function UserActivityWidget() {
 
   const fetchUserActivity = async () => {
     try {
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-      // Fetch user roles with last login info
-      const { data: userRoles, count: totalCount } = await supabase
-        .from('user_roles')
-        .select('user_id, role, created_at', { count: 'exact' });
+      const [totalResult, recentResult, recentUsersResult] = await Promise.all([
+        supabase.from('user_roles').select('user_id', { count: 'exact' }),
+        supabase.from('user_roles').select('user_id', { count: 'exact' })
+          .gte('created_at', sevenDaysAgo.toISOString()),
+        supabase.from('user_roles').select('user_id, role, created_at')
+          .order('created_at', { ascending: false })
+          .limit(5)
+      ]);
 
-      // Get unique users active today (based on recent activity patterns)
-      // This is a simplified approach - in production you'd track actual logins
-      const activeToday = Math.floor((totalCount || 0) * 0.3); // Estimate 30% daily active
-      const activeThisWeek = Math.floor((totalCount || 0) * 0.7); // Estimate 70% weekly active
-
-      // Get recent user activity from profiles or audit log
-      const { data: recentUsers } = await supabase
-        .from('user_roles')
-        .select('user_id, role, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      const recentLogins = (recentUsers || []).map(user => ({
+      const recentUsers = (recentUsersResult.data || []).map(user => ({
         email: `User ${user.user_id.substring(0, 8)}...`,
         role: user.role,
-        lastLogin: new Date(user.created_at).toLocaleDateString('en-US', {
+        createdAt: new Date(user.created_at).toLocaleDateString('en-US', {
           month: 'short',
           day: 'numeric',
           hour: '2-digit',
@@ -69,10 +58,9 @@ export function UserActivityWidget() {
       }));
 
       setStats({
-        totalUsers: totalCount || 0,
-        activeToday,
-        activeThisWeek,
-        recentLogins
+        totalUsers: totalResult.count || 0,
+        recentRegistrations: recentResult.count || 0,
+        recentUsers
       });
     } catch (error) {
       console.error('Error fetching user activity:', error);
@@ -83,10 +71,10 @@ export function UserActivityWidget() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'admin': return 'default';
-      case 'teacher': return 'secondary';
-      case 'student': return 'outline';
-      default: return 'secondary';
+      case 'admin': return 'default' as const;
+      case 'teacher': return 'secondary' as const;
+      case 'student': return 'outline' as const;
+      default: return 'secondary' as const;
     }
   };
 
@@ -101,8 +89,8 @@ export function UserActivityWidget() {
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
-            <div className="grid grid-cols-3 gap-3">
-              {[1, 2, 3].map(i => (
+            <div className="grid grid-cols-2 gap-3">
+              {[1, 2].map(i => (
                 <div key={i} className="h-16 bg-muted rounded-lg" />
               ))}
             </div>
@@ -120,42 +108,47 @@ export function UserActivityWidget() {
   return (
     <Card className="shadow-card">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center text-base">
-          <Activity className="mr-2 h-5 w-5 text-primary" />
-          User Activity
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center text-base">
+            <Activity className="mr-2 h-5 w-5 text-primary" />
+            User Activity
+          </CardTitle>
+          <Tooltip>
+            <TooltipTrigger>
+              <Info className="h-4 w-4 text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs max-w-[200px]">Login tracking requires an audit log. Showing registration data only.</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <div className="bg-primary/10 rounded-lg p-3 text-center">
             <Users className="h-5 w-5 mx-auto mb-1 text-primary" />
             <p className="text-xl font-bold">{stats.totalUsers}</p>
             <p className="text-xs text-muted-foreground">Total Users</p>
           </div>
           <div className="bg-success/10 rounded-lg p-3 text-center">
-            <UserCheck className="h-5 w-5 mx-auto mb-1 text-success" />
-            <p className="text-xl font-bold">{stats.activeToday}</p>
-            <p className="text-xs text-muted-foreground">Active Today</p>
-          </div>
-          <div className="bg-accent/10 rounded-lg p-3 text-center">
-            <TrendingUp className="h-5 w-5 mx-auto mb-1 text-accent" />
-            <p className="text-xl font-bold">{stats.activeThisWeek}</p>
-            <p className="text-xs text-muted-foreground">This Week</p>
+            <UserPlus className="h-5 w-5 mx-auto mb-1 text-success" />
+            <p className="text-xl font-bold">{stats.recentRegistrations}</p>
+            <p className="text-xs text-muted-foreground">New This Week</p>
           </div>
         </div>
 
-        {/* Recent Activity */}
+        {/* Recent Registrations */}
         <div>
           <h4 className="text-sm font-medium mb-2 flex items-center">
             <Clock className="h-4 w-4 mr-1" />
-            Recent Users
+            Recently Added Users
           </h4>
           <div className="space-y-2">
-            {stats.recentLogins.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+            {stats.recentUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No recent registrations</p>
             ) : (
-              stats.recentLogins.map((user, index) => (
+              stats.recentUsers.map((user, index) => (
                 <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
@@ -163,11 +156,9 @@ export function UserActivityWidget() {
                     </div>
                     <span className="text-sm font-medium truncate max-w-[120px]">{user.email}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
-                      {user.role}
-                    </Badge>
-                  </div>
+                  <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
+                    {user.role}
+                  </Badge>
                 </div>
               ))
             )}
