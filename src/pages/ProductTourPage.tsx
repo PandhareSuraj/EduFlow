@@ -247,14 +247,16 @@ export default function ProductTourPage() {
                     Start Free Trial
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    className="border-2 border-white text-white hover:bg-white/20 bg-white/10 w-full"
-                  >
-                    <Calendar className="mr-2 h-5 w-5" />
-                    Schedule a Demo Call
-                  </Button>
+                  <InquiryFormDialog title="Schedule a Demo Call" description="Fill out the form and our team will schedule a personalized demo for your institution.">
+                    <Button 
+                      size="lg" 
+                      variant="outline"
+                      className="border-2 border-white text-white hover:bg-white/20 bg-white/10 w-full"
+                    >
+                      <Calendar className="mr-2 h-5 w-5" />
+                      Schedule a Demo Call
+                    </Button>
+                  </InquiryFormDialog>
                   <p className="text-center text-white/70 text-sm">
                     No credit card required • Setup in 5 minutes
                   </p>

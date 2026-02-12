@@ -1,27 +1,27 @@
 import { z } from 'zod';
 
-// API endpoint for lead generation
+// API endpoint for BizFlow CRM lead submission
 const INQUIRY_API_URL = 'https://gcyrapukltxjohjfxgza.supabase.co/functions/v1/submit-inquiry';
 
-// Project source identifier (snake_case)
+// Public API key for BizFlow CRM
+const BIZFLOW_API_KEY = 'mwz_4FTkez0IkAKRorr5rRAW77dq8Pae';
+
+// Project source identifier (snake_case, must match allowed_sources in CRM)
 const PROJECT_SOURCE = 'eduflow_platform';
 
-// Type definitions
+// Type definitions — only fields accepted by public API
 export interface InquiryPayload {
   contact_person: string;
   phone: string;
   source: string;
   email?: string;
-  company_name?: string;
   message?: string;
-  priority: string;
 }
 
 export interface InquiryFormData {
   contact_person: string;
   phone: string;
   email?: string;
-  company_name?: string;
   message?: string;
 }
 
@@ -36,7 +36,7 @@ export interface InquiryResponse {
   message?: string;
 }
 
-// Zod validation schema
+// Zod validation schema — matches BizFlow CRM constraints
 export const inquirySchema = z.object({
   contact_person: z
     .string()
@@ -51,23 +51,21 @@ export const inquirySchema = z.object({
   email: z
     .string()
     .email('Please enter a valid email address')
+    .max(255, 'Email cannot exceed 255 characters')
     .optional()
     .or(z.literal('')),
-  company_name: z.string().optional(),
   message: z.string().max(2000, 'Message cannot exceed 2000 characters').optional(),
 });
 
 export type InquiryFormSchema = z.infer<typeof inquirySchema>;
 
-// Submit inquiry to external API
+// Submit inquiry to BizFlow CRM
 export async function submitInquiry(formData: InquiryFormData): Promise<InquiryResponse> {
   const payload: InquiryPayload = {
     contact_person: formData.contact_person.trim(),
     phone: formData.phone.replace(/\D/g, ''),
     source: PROJECT_SOURCE,
-    priority: 'medium',
     ...(formData.email && { email: formData.email.trim() }),
-    ...(formData.company_name && { company_name: formData.company_name.trim() }),
     ...(formData.message && { message: formData.message.trim() }),
   };
 
@@ -76,6 +74,7 @@ export async function submitInquiry(formData: InquiryFormData): Promise<InquiryR
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-public-api-key': BIZFLOW_API_KEY,
       },
       body: JSON.stringify(payload),
     });
@@ -89,12 +88,10 @@ export async function submitInquiry(formData: InquiryFormData): Promise<InquiryR
       const errors: InquiryError[] = [];
 
       if (errorData.details && Array.isArray(errorData.details)) {
-        errorData.details.forEach((detail: { path?: string[]; message?: string }) => {
-          if (detail.path && detail.path.length > 0 && detail.message) {
-            errors.push({
-              field: detail.path[0],
-              message: detail.message,
-            });
+        errorData.details.forEach((detail: { path?: string[]; field?: string; message?: string }) => {
+          const field = detail.field || (detail.path && detail.path.length > 0 ? detail.path[0] : 'general');
+          if (field && detail.message) {
+            errors.push({ field, message: detail.message });
           }
         });
       }
@@ -102,6 +99,13 @@ export async function submitInquiry(formData: InquiryFormData): Promise<InquiryR
       return {
         success: false,
         errors: errors.length > 0 ? errors : [{ field: 'general', message: errorData.error || 'Validation failed' }],
+      };
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      return {
+        success: false,
+        errors: [{ field: 'general', message: 'Authentication failed. Please try again later.' }],
       };
     }
 

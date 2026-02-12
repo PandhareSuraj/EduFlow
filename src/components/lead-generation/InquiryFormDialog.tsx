@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Loader2, Send, User, Phone, Mail, Building2, MessageSquare } from 'lucide-react';
+import { Loader2, Send, User, Phone, Mail, MessageSquare } from 'lucide-react';
 import { inquirySchema, submitInquiry, type InquiryFormSchema } from '@/utils/inquiryApi';
 
 interface InquiryFormDialogProps {
@@ -42,7 +42,6 @@ export function InquiryFormDialog({
       contact_person: '',
       phone: '',
       email: '',
-      company_name: '',
       message: '',
     },
   });
@@ -54,7 +53,6 @@ export function InquiryFormDialog({
       contact_person: data.contact_person,
       phone: data.phone,
       email: data.email,
-      company_name: data.company_name,
       message: data.message,
     });
 
@@ -83,7 +81,6 @@ export function InquiryFormDialog({
     return errors[field]?.message || serverErrors[field];
   };
 
-  // Handle phone input to only allow numeric characters
   const handlePhoneInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.target.value = e.target.value.replace(/\D/g, '');
   };
@@ -151,19 +148,6 @@ export function InquiryFormDialog({
             {getError('email') && (
               <p className="text-sm text-destructive">{getError('email')}</p>
             )}
-          </div>
-
-          {/* Institution Name Field */}
-          <div className="space-y-2">
-            <Label htmlFor="company_name" className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-              Institution Name
-            </Label>
-            <Input
-              id="company_name"
-              placeholder="Your college or institution"
-              {...register('company_name')}
-            />
           </div>
 
           {/* Message Field */}
