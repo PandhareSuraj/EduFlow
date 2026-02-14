@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Smartphone, Bell, Wifi, WifiOff, MapPin, Camera, Calendar, CreditCard } from "lucide-react";
+import dashboardPreview from '@/assets/screenshots/dashboard-preview.png';
 
 const mobileFeatures = [
   { icon: Bell, title: "Push Notifications", desc: "Instant alerts for fees, attendance, exams" },
@@ -70,9 +71,9 @@ export function MobileShowcase() {
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-gray-900 rounded-b-2xl z-10"></div>
               
               {/* Screen */}
-              <div className="w-full h-full bg-gradient-to-br from-primary/20 via-background to-secondary/20 rounded-[2.5rem] overflow-hidden">
+              <div className="w-full h-full bg-background rounded-[2.5rem] overflow-hidden">
                 {/* Status Bar */}
-                <div className="flex justify-between items-center px-6 py-2 text-xs">
+                <div className="flex justify-between items-center px-6 py-2 text-xs bg-muted/50">
                   <span>9:41</span>
                   <div className="flex gap-1">
                     <Wifi className="h-3 w-3" />
@@ -80,41 +81,13 @@ export function MobileShowcase() {
                   </div>
                 </div>
 
-                {/* App Content Mockup */}
-                <div className="p-4 space-y-4">
-                  <div className="text-center py-4">
-                    <Smartphone className="h-8 w-8 mx-auto text-primary mb-2" />
-                    <p className="font-bold text-lg">EduFlow</p>
-                    <p className="text-xs text-muted-foreground">Education Management</p>
-                  </div>
-
-                  {/* Quick Stats */}
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { label: "Attendance", value: "92%" },
-                      { label: "Due Fees", value: "₹5,000" },
-                      { label: "Exams", value: "3" },
-                      { label: "Notices", value: "5" },
-                    ].map((stat, i) => (
-                      <Card key={i} className="bg-card/50">
-                        <CardContent className="p-3 text-center">
-                          <p className="text-lg font-bold text-primary">{stat.value}</p>
-                          <p className="text-xs text-muted-foreground">{stat.label}</p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
-                  {/* Menu Items */}
-                  <div className="space-y-2 mt-4">
-                    {["Mark Attendance", "View Timetable", "Pay Fees"].map((item, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 bg-card/30 rounded-xl">
-                        <div className="w-8 h-8 bg-primary/20 rounded-lg"></div>
-                        <span className="text-sm">{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                {/* Real Platform Screenshot */}
+                <img 
+                  src={dashboardPreview} 
+                  alt="EduFlow mobile view - Real platform screenshot"
+                  loading="lazy"
+                  className="w-full h-full object-cover object-top"
+                />
               </div>
             </div>
 
