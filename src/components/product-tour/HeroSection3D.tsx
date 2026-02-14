@@ -1,9 +1,9 @@
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Play, Calendar, Sparkles, Users, Building2, Award, Clock, Video } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { IntroVideoDialog } from '@/components/videos/IntroVideoDialog';
+import { InquiryFormDialog } from '@/components/lead-generation';
 const stats = [
   { icon: Building2, value: 500, suffix: '+', label: 'Institutions' },
   { icon: Users, value: 50000, suffix: '+', label: 'Students Managed' },
@@ -50,7 +50,6 @@ function AnimatedCounter({ value, suffix, duration = 2000 }: { value: number; su
 }
 
 export function HeroSection3D() {
-  const navigate = useNavigate();
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   return (
     <section className="relative overflow-hidden py-20 md:py-32 min-h-[90vh] flex items-center">
@@ -110,15 +109,16 @@ export function HeroSection3D() {
                 <Video className="mr-2 h-5 w-5" />
                 Watch Video
               </Button>
-              <Button 
-                size="lg" 
-                variant="ghost"
-                onClick={() => navigate('/auth')}
-                className="group"
-              >
-                <Calendar className="mr-2 h-5 w-5" />
-                Schedule Live Demo
-              </Button>
+              <InquiryFormDialog title="Schedule a Live Demo" description="Get a personalized walkthrough of EduFlow for your institution.">
+                <Button 
+                  size="lg" 
+                  variant="ghost"
+                  className="group"
+                >
+                  <Calendar className="mr-2 h-5 w-5" />
+                  Schedule Live Demo
+                </Button>
+              </InquiryFormDialog>
             </div>
           </div>
 
