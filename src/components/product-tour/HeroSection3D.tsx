@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Play, Calendar, Sparkles, Users, Building2, Award, Clock, Video } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { IntroVideoDialog } from '@/components/videos/IntroVideoDialog';
+import dashboardPreview from '@/assets/screenshots/dashboard-preview.png';
 import { InquiryFormDialog } from '@/components/lead-generation';
 const stats = [
   { icon: Building2, value: 500, suffix: '+', label: 'Institutions' },
@@ -145,32 +146,13 @@ export function HeroSection3D() {
                   </div>
                 </div>
                 
-                {/* Dashboard Preview */}
-                <div className="p-4 bg-background space-y-3">
-                  <div className="flex gap-2">
-                    <div className="h-8 w-24 bg-primary/20 rounded animate-pulse" />
-                    <div className="h-8 flex-1 bg-muted rounded" />
-                  </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    <div className="h-16 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <Users className="h-6 w-6 text-primary/50" />
-                    </div>
-                    <div className="h-16 bg-secondary/10 rounded-lg flex items-center justify-center">
-                      <Building2 className="h-6 w-6 text-secondary/50" />
-                    </div>
-                    <div className="h-16 bg-accent/10 rounded-lg flex items-center justify-center">
-                      <Award className="h-6 w-6 text-accent/50" />
-                    </div>
-                    <div className="h-16 bg-success/10 rounded-lg flex items-center justify-center">
-                      <Clock className="h-6 w-6 text-success/50" />
-                    </div>
-                  </div>
-                  <div className="h-24 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg" />
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="h-12 bg-muted rounded" />
-                    <div className="h-12 bg-muted rounded" />
-                  </div>
-                </div>
+                {/* Real Dashboard Screenshot */}
+                <img 
+                  src={dashboardPreview} 
+                  alt="EduFlow Dashboard - Real platform screenshot"
+                  loading="eager"
+                  className="w-full h-auto object-cover"
+                />
               </div>
             </div>
 

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 import eduflowLogo from '@/assets/eduflow-logo.png';
+import dashboardPreview from '@/assets/screenshots/dashboard-preview.png';
 import { 
   IntegrationLogos, 
   HowItWorks, 
@@ -275,31 +276,29 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Hero Visual */}
+          {/* Hero Visual - Real Platform Screenshot */}
           <div className="relative animate-fade-in delay-300">
             <div className="relative rounded-2xl overflow-hidden shadow-glass border border-primary/10 bg-gradient-glass backdrop-blur-xl p-1">
-              <div className="rounded-xl overflow-hidden bg-gradient-to-br from-primary/5 to-secondary/5 p-8">
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    { icon: Users, label: "Students", color: "primary" },
-                    { icon: BookOpen, label: "Academics", color: "secondary" },
-                    { icon: DollarSign, label: "Finances", color: "success" },
-                    { icon: Calendar, label: "Events", color: "warning" }
-                  ].map((item, i) => (
-                    <Card key={i} className="bg-card/50 backdrop-blur-sm hover:scale-105 transition-transform cursor-pointer">
-                      <CardContent className="p-6 text-center">
-                        <div className={`p-3 bg-${item.color}/10 rounded-full w-fit mx-auto mb-3`}>
-                          {item.label === "Finances" ? (
-                            <span className={`text-2xl font-bold text-${item.color}`}>₹</span>
-                          ) : (
-                            <item.icon className={`h-6 w-6 text-${item.color}`} />
-                          )}
-                        </div>
-                        <p className="font-medium">{item.label}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
+              <div className="rounded-xl overflow-hidden bg-background">
+                {/* Browser Chrome */}
+                <div className="bg-muted p-2.5 flex items-center gap-2.5">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-destructive/60" />
+                    <div className="w-3 h-3 rounded-full bg-warning/60" />
+                    <div className="w-3 h-3 rounded-full bg-success/60" />
+                  </div>
+                  <div className="flex-1 flex justify-center">
+                    <div className="bg-background rounded-md px-4 py-1 text-xs text-muted-foreground">
+                      app.eduflow.in/dashboard
+                    </div>
+                  </div>
                 </div>
+                <img 
+                  src={dashboardPreview} 
+                  alt="EduFlow Dashboard - Real platform screenshot showing student management, attendance tracking, and analytics"
+                  loading="eager"
+                  className="w-full h-auto object-cover"
+                />
               </div>
             </div>
             <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl animate-pulse"></div>
