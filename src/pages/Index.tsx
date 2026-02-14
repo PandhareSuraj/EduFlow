@@ -8,7 +8,7 @@ import {
   GraduationCap, Users, BookOpen, TrendingUp, LogIn, 
   CheckCircle2, BarChart3, Shield, Zap, Clock, Globe,
   Calendar, DollarSign, FileText, Award, Building2, Bus,
-  Heart, UserCheck, ArrowRight, Sparkles, Play, Map, Menu, CalendarPlus
+  Heart, UserCheck, ArrowRight, Sparkles, Play, Map, Menu, CalendarPlus, Phone
 } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 import eduflowLogo from '@/assets/eduflow-logo.png';
@@ -233,11 +233,21 @@ export default function Index() {
                 {t('common.getStarted')}
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
+              <InquiryFormDialog title="Book a Free Demo" description="Get a personalized walkthrough of EduFlow for your institution.">
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="border-2 border-primary/50 hover:bg-primary/5 group"
+                >
+                  <CalendarPlus className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                  Book a Free Demo
+                </Button>
+              </InquiryFormDialog>
               <Button 
                 size="lg" 
-                variant="outline"
+                variant="ghost"
                 onClick={() => setVideoModalOpen(true)}
-                className="border-2 hover:bg-primary/5 group"
+                className="group"
               >
                 <Play className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
                 {t('common.watchDemo')}
@@ -401,6 +411,25 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Mid-Page CTA Banner */}
+      <section className="container mx-auto px-4 py-12">
+        <div className="relative rounded-2xl bg-gradient-to-r from-primary/10 via-secondary/5 to-accent/10 border border-primary/20 p-8 md:p-12 text-center overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 blur-3xl -z-10" />
+          <h3 className="text-2xl md:text-3xl font-bold mb-3">
+            Still exploring? Let us show you around.
+          </h3>
+          <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+            Get a quick callback from our team — we'll walk you through the features that matter most to your institution.
+          </p>
+          <InquiryFormDialog title="Request a Callback" description="Leave your details and our team will call you back within 24 hours.">
+            <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-lg">
+              <Phone className="mr-2 h-5 w-5" />
+              Request a Callback
+            </Button>
+          </InquiryFormDialog>
+        </div>
+      </section>
+
       {/* How It Works */}
       <HowItWorks />
 
@@ -513,14 +542,16 @@ export default function Index() {
                 {t('common.startFreeTrial')}
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                onClick={() => navigate('/product-tour')}
-                className="border-2 border-white text-white hover:bg-white/20 bg-white/10"
-              >
-                {t('common.takeTour')}
-              </Button>
+              <InquiryFormDialog title="Schedule a Demo" description="Book a personalized demo and see how EduFlow can transform your institution.">
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="border-2 border-white text-white hover:bg-white/20 bg-white/10"
+                >
+                  <CalendarPlus className="mr-2 h-5 w-5" />
+                  Schedule a Demo
+                </Button>
+              </InquiryFormDialog>
             </div>
           </CardContent>
         </Card>
