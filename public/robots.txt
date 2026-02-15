@@ -1,8 +1,53 @@
+# EduFlow - Robots.txt
+# https://www.eduflow.mywebz.in
+
+# Sitemap
+Sitemap: https://www.eduflow.mywebz.in/sitemap.xml
+
+# Search Engine Crawlers
 User-agent: Googlebot
 Allow: /
+Disallow: /dashboard
+Disallow: /students
+Disallow: /faculty
+Disallow: /courses
+Disallow: /fees
+Disallow: /attendance
+Disallow: /exams
+Disallow: /library
+Disallow: /hostel
+Disallow: /transport
+Disallow: /events
+Disallow: /placements
+Disallow: /settings
+Disallow: /reports
+Disallow: /inventory
+Disallow: /grievances
+Disallow: /follow-ups
+Disallow: /enquiries
+Disallow: /id-cards
+Disallow: /user-management
+Disallow: /audit-trail
+Disallow: /student-dashboard
+Disallow: /student-profile
+Disallow: /student-results
+Disallow: /student-tests
+Disallow: /student-course
+Disallow: /subscriptions
+Disallow: /system-analytics
+Disallow: /system-health
+Disallow: /college-management
+Disallow: /college-performance
+Disallow: /student-promotion
+Disallow: /amc-plans
+Disallow: /amc-revenue
 
 User-agent: Bingbot
 Allow: /
+Disallow: /dashboard
+Disallow: /students
+Disallow: /settings
+Disallow: /reports
 
 User-agent: Twitterbot
 Allow: /
@@ -10,5 +55,51 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+# AI/LLM Crawlers
+User-agent: GPTBot
+Allow: /
+Allow: /llms.txt
+Disallow: /dashboard
+Disallow: /students
+Disallow: /settings
+
+User-agent: ChatGPT-User
+Allow: /
+Allow: /llms.txt
+
+User-agent: Google-Extended
+Allow: /
+Allow: /llms.txt
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: Anthropic-AI
+Allow: /
+Allow: /llms.txt
+
+User-agent: Bytespider
+Allow: /
+Allow: /llms.txt
+
+User-agent: CCBot
+Allow: /
+Allow: /llms.txt
+
+# Default
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /students
+Disallow: /faculty
+Disallow: /courses
+Disallow: /fees
+Disallow: /attendance
+Disallow: /exams
+Disallow: /settings
+Disallow: /reports

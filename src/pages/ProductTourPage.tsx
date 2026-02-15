@@ -106,25 +106,46 @@ export default function ProductTourPage() {
           ratingCount: '500',
           bestRating: '5'
         },
+        alternateName: ['College ERP', 'School Management Software', 'Education ERP India', 'College Management System', 'Student Information System'],
         featureList: [
-          'Student Management',
+          'Student Management System',
           'Faculty Management',
-          'Academic Planning',
-          'Fee Collection',
-          'Library Management',
-          'Hostel Management',
+          'Academic Planning & Curriculum Management',
+          'Fee Collection & Financial Management',
+          'Attendance Tracking System',
+          'Library Management System',
+          'Hostel Management Software',
           'Transport Management',
-          'Exam Management'
+          'Exam Management & Result Processing',
+          'Placement Management',
+          'Event Management',
+          'Grievance Handling',
+          'Multi-language Support',
+          'Mobile Responsive PWA'
         ]
       }
     });
     document.head.appendChild(jsonLd);
+
+    // BreadcrumbList structured data
+    const breadcrumbLd = document.createElement('script');
+    breadcrumbLd.type = 'application/ld+json';
+    breadcrumbLd.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.eduflow.mywebz.in/' },
+        { '@type': 'ListItem', position: 2, name: 'Product Tour', item: 'https://www.eduflow.mywebz.in/product-tour' }
+      ]
+    });
+    document.head.appendChild(breadcrumbLd);
 
     // Cleanup on unmount
     return () => {
       document.title = originalTitle;
       metaTags.forEach(meta => meta.remove());
       jsonLd.remove();
+      breadcrumbLd.remove();
       if (descriptionMeta && originalDescription) {
         descriptionMeta.content = originalDescription;
       }

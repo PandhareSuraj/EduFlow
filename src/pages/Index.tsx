@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
- import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -47,6 +47,84 @@ export default function Index() {
       navigate('/dashboard');
     }
   }, [user, loading, navigate]);
+
+  // JSON-LD structured data for SEO
+  useEffect(() => {
+    const jsonLd = document.createElement('script');
+    jsonLd.type = 'application/ld+json';
+    jsonLd.textContent = JSON.stringify([
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'EduFlow',
+        url: 'https://www.eduflow.mywebz.in',
+        logo: 'https://www.eduflow.mywebz.in/icons/icon-512x512.png',
+        description: 'EduFlow is a comprehensive college management software and education ERP platform for institutions in India.',
+        contactPoint: {
+          '@type': 'ContactPoint',
+          contactType: 'sales',
+          availableLanguage: ['English', 'Hindi', 'Marathi']
+        },
+        sameAs: []
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'EduFlow',
+        alternateName: ['EduFlow ERP', 'EduFlow College Management', 'EduFlow Education ERP'],
+        applicationCategory: 'BusinessApplication',
+        applicationSubCategory: 'Education Management Software',
+        operatingSystem: 'Web-based',
+        url: 'https://www.eduflow.mywebz.in',
+        description: 'Complete college management software and education ERP for managing students, faculty, fees, attendance, hostel, library, transport, exams, and placements.',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'INR',
+          description: 'Free trial available with no setup fees'
+        },
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: '4.8',
+          ratingCount: '500',
+          bestRating: '5'
+        },
+        featureList: [
+          'Student Management System',
+          'Faculty Management',
+          'Fee Collection & Financial Management',
+          'Attendance Tracking System',
+          'Hostel Management Software',
+          'Library Management System',
+          'Transport Management',
+          'Exam Management & Result Processing',
+          'Placement Management',
+          'Event Management',
+          'Grievance Handling',
+          'Inventory Management',
+          'Multi-language Support (English, Hindi, Marathi)',
+          'Role-based Access Control',
+          'Export to Excel and PDF',
+          'Mobile Responsive PWA',
+          'Push Notifications',
+          'Audit Trail'
+        ]
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'EduFlow',
+        url: 'https://www.eduflow.mywebz.in',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: 'https://www.eduflow.mywebz.in/?q={search_term_string}',
+          'query-input': 'required name=search_term_string'
+        }
+      }
+    ]);
+    document.head.appendChild(jsonLd);
+    return () => { jsonLd.remove(); };
+  }, []);
 
   useEffect(() => {
     // Animate counters
