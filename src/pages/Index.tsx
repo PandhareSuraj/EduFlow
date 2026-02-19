@@ -652,41 +652,34 @@ export default function Index() {
               <h4 className="font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="hover:text-primary cursor-pointer transition-colors" onClick={() => navigate('/product-tour')}>Product Tour</li>
-                <li className="hover:text-primary cursor-pointer transition-colors">Pricing</li>
-                <li className="hover:text-primary cursor-pointer transition-colors">Security</li>
-                <li className="hover:text-primary cursor-pointer transition-colors">Roadmap</li>
+                <li className="hover:text-primary cursor-pointer transition-colors" onClick={() => scrollToSection('pricing')}>Pricing</li>
+                <li className="hover:text-primary cursor-pointer transition-colors" onClick={() => scrollToSection('features')}>Features</li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="hover:text-primary cursor-pointer transition-colors">About Us</li>
-                <li className="hover:text-primary cursor-pointer transition-colors">Careers</li>
-                <li className="hover:text-primary cursor-pointer transition-colors">Blog</li>
-                <li className="hover:text-primary cursor-pointer transition-colors">Contact</li>
+                <li>
+                  <a href="https://www.mywebz.in" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">About Us</a>
+                </li>
+                <li>
+                  <a href="mailto:support@eduflow.mywebz.in" className="hover:text-primary transition-colors">Contact</a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="hover:text-primary cursor-pointer transition-colors">Privacy Policy</li>
-                <li className="hover:text-primary cursor-pointer transition-colors">Terms of Service</li>
-                <li className="hover:text-primary cursor-pointer transition-colors">Cookie Policy</li>
-                <li className="hover:text-primary cursor-pointer transition-colors">GDPR</li>
+                <li className="text-muted-foreground/60">Privacy Policy</li>
+                <li className="text-muted-foreground/60">Terms of Service</li>
               </ul>
             </div>
           </div>
 
           <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>© 2025 EduFlow Platform. Empowering Educational Institutions Worldwide. Built at myweb (<a href="https://www.mywebz.in" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline transition-colors">www.mywebz.in</a>)</p>
-            <div className="flex gap-4">
-              <span className="hover:text-primary cursor-pointer transition-colors">Twitter</span>
-              <span className="hover:text-primary cursor-pointer transition-colors">LinkedIn</span>
-              <span className="hover:text-primary cursor-pointer transition-colors">Facebook</span>
-              <span className="hover:text-primary cursor-pointer transition-colors">Instagram</span>
-            </div>
+            <p>© {new Date().getFullYear()} EduFlow Platform. Empowering Educational Institutions Worldwide. Built at myweb (<a href="https://www.mywebz.in" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline transition-colors">www.mywebz.in</a>)</p>
           </div>
         </div>
       </footer>

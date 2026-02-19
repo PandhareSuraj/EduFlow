@@ -45,19 +45,21 @@ export function MobileShowcase() {
 
           {/* App Store Badges */}
           <div className="flex flex-wrap gap-4">
-            <div className="px-6 py-3 bg-black text-white rounded-xl flex items-center gap-3 cursor-pointer hover:bg-gray-800 transition-colors">
+            <div className="relative px-6 py-3 bg-black/70 text-white rounded-xl flex items-center gap-3 opacity-70">
               <div className="text-2xl">🍎</div>
               <div>
                 <p className="text-xs text-gray-400">Download on the</p>
                 <p className="font-semibold">App Store</p>
               </div>
+              <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full">Coming Soon</span>
             </div>
-            <div className="px-6 py-3 bg-black text-white rounded-xl flex items-center gap-3 cursor-pointer hover:bg-gray-800 transition-colors">
+            <div className="relative px-6 py-3 bg-black/70 text-white rounded-xl flex items-center gap-3 opacity-70">
               <div className="text-2xl">▶️</div>
               <div>
                 <p className="text-xs text-gray-400">Get it on</p>
                 <p className="font-semibold">Google Play</p>
               </div>
+              <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full">Coming Soon</span>
             </div>
           </div>
         </div>

@@ -4,7 +4,7 @@ import { InquiryFormDialog } from './InquiryFormDialog';
 
 export function FloatingContactButton() {
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-20 sm:bottom-6 right-6 z-50">
       <InquiryFormDialog
         title="Quick Inquiry"
         description="Have a question? Fill out this form and we'll get back to you right away."
