@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Calendar, LogIn, ArrowLeft, CheckCircle2, CalendarPlus } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { ArrowRight, Calendar, LogIn, ArrowLeft, CheckCircle2, CalendarPlus, Menu } from 'lucide-react';
 
 // Import all product tour components
 import { HeroSection3D } from '@/components/product-tour/HeroSection3D';
@@ -29,6 +30,7 @@ const PAGE_META = {
 
 export default function ProductTourPage() {
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Set up meta tags and JSON-LD structured data
   useEffect(() => {
@@ -165,19 +167,21 @@ export default function ProductTourPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-xs sm:text-sm">
+              <ArrowLeft className="mr-1 sm:mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Back to Home</span>
+              <span className="sm:hidden">Home</span>
             </Button>
           </div>
           <img 
             src={eduflowLogo} 
             alt="EduFlow - Education Management Platform" 
             loading="eager"
-            className="h-20 md:h-24 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-110 hover:drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300 cursor-pointer" 
+            className="h-12 sm:h-16 md:h-20 w-auto hover:scale-105 transition-all duration-300 cursor-pointer" 
           />
-          <div className="flex items-center gap-2">
+          {/* Desktop buttons */}
+          <div className="hidden sm:flex items-center gap-2">
             <InquiryFormDialog title="Book a Demo" description="Schedule a personalized demo with our team to see EduFlow in action.">
               <Button variant="outline" className="border-primary/50 hover:bg-primary/5">
                 <CalendarPlus className="mr-2 h-4 w-4" />
@@ -189,6 +193,30 @@ export default function ProductTourPage() {
               Sign In
             </Button>
           </div>
+          {/* Mobile hamburger */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild className="sm:hidden">
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[280px] bg-background">
+              <div className="flex flex-col gap-4 mt-8">
+                <img src={eduflowLogo} alt="EduFlow" loading="lazy" className="h-14 w-auto mb-4" />
+                <InquiryFormDialog title="Book a Demo" description="Schedule a personalized demo with our team to see EduFlow in action.">
+                  <Button variant="outline" className="justify-start border-primary/50">
+                    <CalendarPlus className="mr-2 h-4 w-4" />
+                    Book Demo
+                  </Button>
+                </InquiryFormDialog>
+                <Button onClick={() => { navigate('/auth'); setMobileMenuOpen(false); }} className="bg-gradient-to-r from-primary to-secondary hover:opacity-90">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Sign In
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
 
@@ -295,7 +323,7 @@ export default function ProductTourPage() {
           <div className="flex items-center gap-2">
             <img src={eduflowLogo} alt="EduFlow" loading="lazy" className="h-10 w-auto" />
           </div>
-          <p>© 2025 EduFlow Platform. Built at myweb (<a href="https://www.mywebz.in" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.mywebz.in</a>)</p>
+          <p>© {new Date().getFullYear()} EduFlow Platform. Built at myweb (<a href="https://www.mywebz.in" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.mywebz.in</a>)</p>
           <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
             Back to Home
           </Button>
