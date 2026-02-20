@@ -672,8 +672,8 @@ export default function Index() {
             <div>
               <h4 className="font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="text-muted-foreground/60">Privacy Policy</li>
-                <li className="text-muted-foreground/60">Terms of Service</li>
+                <li><button onClick={() => navigate('/privacy-policy')} className="hover:text-primary transition-colors">Privacy Policy</button></li>
+                <li><button onClick={() => navigate('/terms-of-service')} className="hover:text-primary transition-colors">Terms of Service</button></li>
               </ul>
             </div>
           </div>
