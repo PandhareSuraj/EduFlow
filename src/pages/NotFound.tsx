@@ -33,6 +33,7 @@ const NotFound = () => {
     if (!user) {
       return [
         { label: "Home", path: "/", icon: Home },
+        { label: "Product Tour", path: "/product-tour", icon: Search },
         { label: "Sign In", path: "/auth", icon: ArrowLeft },
       ];
     }
