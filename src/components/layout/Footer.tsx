@@ -1,8 +1,10 @@
+import { useNavigate } from "react-router-dom";
 import { APP_CONFIG } from "@/config/appConfig";
 
 export function Footer() {
   const { version, supportEmail } = APP_CONFIG;
   const currentYear = new Date().getFullYear();
+  const navigate = useNavigate();
 
   return (
     <footer className="border-t bg-muted/30 py-3 px-4 md:px-6 text-xs text-muted-foreground no-print">
@@ -23,14 +25,26 @@ export function Footer() {
             Contact Support
           </a>
           <span>•</span>
-          <a
-            href="/product-tour"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => navigate("/product-tour")}
             className="hover:text-foreground transition-colors"
           >
             Documentation
-          </a>
+          </button>
+          <span>•</span>
+          <button
+            onClick={() => navigate("/privacy-policy")}
+            className="hover:text-foreground transition-colors"
+          >
+            Privacy
+          </button>
+          <span>•</span>
+          <button
+            onClick={() => navigate("/terms-of-service")}
+            className="hover:text-foreground transition-colors"
+          >
+            Terms
+          </button>
           <span className="hidden sm:inline">•</span>
           <span className="hidden sm:inline">
             Press{" "}

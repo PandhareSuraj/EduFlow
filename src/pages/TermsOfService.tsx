@@ -1,9 +1,16 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { APP_CONFIG } from '@/config/appConfig';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function TermsOfService() {
   const navigate = useNavigate();
+  usePageTitle('Terms of Service');
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">

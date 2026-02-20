@@ -1,1 +1,55 @@
 project_id = "velhefqnjmevluskffzp"
+
+[functions.clean-college-data]
+verify_jwt = false
+
+[functions.create-faculty-user]
+verify_jwt = false
+
+[functions.create-general-user]
+verify_jwt = false
+
+[functions.create-student-user]
+verify_jwt = false
+
+[functions.generate-vapid-keys]
+verify_jwt = false
+
+[functions.initiate-promotion]
+verify_jwt = false
+
+[functions.list-all-users]
+verify_jwt = false
+
+[functions.personal-google-auth]
+verify_jwt = false
+
+[functions.personal-google-upload]
+verify_jwt = false
+
+[functions.process-promotion]
+verify_jwt = false
+
+[functions.remove-push-subscription]
+verify_jwt = false
+
+[functions.reset-faculty-password]
+verify_jwt = false
+
+[functions.reset-user-password]
+verify_jwt = false
+
+[functions.rollback-promotion]
+verify_jwt = false
+
+[functions.save-push-subscription]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.send-sms-otp]
+verify_jwt = false
+
+[functions.verify-sms-otp]
+verify_jwt = false

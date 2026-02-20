@@ -152,8 +152,13 @@ export default function Index() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+        <img 
+          src={eduflowLogo} 
+          alt="EduFlow" 
+          className="h-24 w-auto animate-pulse"
+        />
+        <p className="mt-4 text-muted-foreground text-sm">Loading...</p>
       </div>
     );
   }
@@ -185,7 +190,8 @@ export default function Index() {
               src={eduflowLogo} 
               alt="EduFlow - Education Management Platform" 
               loading="eager"
-              className="h-14 md:h-16 lg:h-20 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(59,130,246,0.6)] transition-all duration-300 cursor-pointer" 
+              className="h-14 md:h-16 lg:h-20 w-auto animate-[fade-in_0.6s_ease-out,scale-in_0.5s_ease-out] hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(59,130,246,0.6)] transition-all duration-300 cursor-pointer"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             />
           </div>
           <div className="hidden sm:flex items-center gap-1 md:gap-2">
@@ -672,8 +678,8 @@ export default function Index() {
             <div>
               <h4 className="font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><button onClick={() => navigate('/privacy-policy')} className="hover:text-primary transition-colors">Privacy Policy</button></li>
-                <li><button onClick={() => navigate('/terms-of-service')} className="hover:text-primary transition-colors">Terms of Service</button></li>
+                <li><button aria-label="View Privacy Policy" onClick={() => navigate('/privacy-policy')} className="hover:text-primary transition-colors">Privacy Policy</button></li>
+                <li><button aria-label="View Terms of Service" onClick={() => navigate('/terms-of-service')} className="hover:text-primary transition-colors">Terms of Service</button></li>
               </ul>
             </div>
           </div>
