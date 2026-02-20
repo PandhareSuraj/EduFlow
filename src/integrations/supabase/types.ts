@@ -5224,6 +5224,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_dashboard_stats: { Args: never; Returns: Json }
       get_faculty_login_status: {
         Args: { faculty_id: string }
         Returns: boolean
@@ -5270,6 +5271,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      link_user_to_student: { Args: { p_student_email: string }; Returns: Json }
       update_exam_statuses: { Args: never; Returns: undefined }
     }
     Enums: {
