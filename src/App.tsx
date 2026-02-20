@@ -55,6 +55,8 @@ const Placements = lazy(() => import("./pages/Placements"));
 const Grievances = lazy(() => import("./pages/Grievances"));
 const StudentPromotion = lazy(() => import("./pages/StudentPromotion"));
 const ProductTourPage = lazy(() => import("./pages/ProductTourPage"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 
 // Configure QueryClient with retry logic and error handling
 const queryClient = new QueryClient({
@@ -105,6 +107,16 @@ const App = () => (
                     </Suspense>
                   } />
                   <Route path="/" element={<Index />} />
+                  <Route path="/privacy-policy" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <PrivacyPolicy />
+                    </Suspense>
+                  } />
+                  <Route path="/terms-of-service" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <TermsOfService />
+                    </Suspense>
+                  } />
                   <Route path="/dashboard" element={
                     <ProtectedRoute>
                       <Suspense fallback={<DashboardFallback />}>
