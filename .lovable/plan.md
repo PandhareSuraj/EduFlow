@@ -1,26 +1,28 @@
 
 
-# Fix Navigation Bar Height to Match Logo
+# Fix: Replace Skeleton Mock Preview with Real Screenshot
 
 ## Problem
-The navigation bar has extra vertical padding (`py-3`) making it taller than necessary, while the logo appears relatively small within that space.
+The "Mock Interface Preview" card in the Interactive Workflow Demo section on the Product Tour page displays static skeleton placeholder divs (gray pulsing bars and boxes). To users, this looks like content that failed to load -- a broken, unprofessional appearance.
 
 ## Solution
-Remove the fixed padding and let the logo dictate the nav bar height. Reduce padding to a minimal value (`py-1`) so the header hugs the logo tightly.
+Replace the skeleton mockup with the actual EduFlow dashboard screenshot (`dashboard-preview.png`) that already exists in the project. This makes the preview look polished and intentional.
 
 ## Changes
 
-### File: `src/pages/Index.tsx` (line 187)
+### File: `src/components/product-tour/InteractiveWorkflowDemo.tsx`
 
-Change the header container padding from `py-3` to `py-1`:
+1. Add import for the dashboard screenshot at the top:
+   ```
+   import dashboardPreview from '@/assets/screenshots/dashboard-preview.png';
+   ```
 
-```
-// Before
-<div className="container mx-auto px-4 py-3 flex justify-between items-center">
+2. Replace the skeleton placeholder content (lines 274-284) with the real screenshot image:
+   - Remove the fake skeleton bars (`h-4 bg-muted rounded`, `h-16 bg-primary/10`, `h-24 bg-muted/50`)
+   - Add an `<img>` tag showing the dashboard screenshot with proper sizing and rounded corners
 
-// After
-<div className="container mx-auto px-4 py-1 flex justify-between items-center">
-```
+The browser chrome header (colored dots + "EduFlow Dashboard" label) stays as-is -- it frames the screenshot nicely.
 
-This single change removes the excess vertical space. The logo (`h-14 md:h-16 lg:h-20`) will naturally define the header height, and the nav buttons (already using `items-center`) will vertically center alongside it.
+## Result
+The previously "broken-looking" area will now show an actual screenshot of the EduFlow dashboard, giving users a real preview of the platform.
 
