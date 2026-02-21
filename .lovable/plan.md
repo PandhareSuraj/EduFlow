@@ -1,28 +1,43 @@
 
 
-# Fix: Replace Skeleton Mock Preview with Real Screenshot
+# Fix Inquiry Form Submission Errors
 
 ## Problem
-The "Mock Interface Preview" card in the Interactive Workflow Demo section on the Product Tour page displays static skeleton placeholder divs (gray pulsing bars and boxes). To users, this looks like content that failed to load -- a broken, unprofessional appearance.
-
-## Solution
-Replace the skeleton mockup with the actual EduFlow dashboard screenshot (`dashboard-preview.png`) that already exists in the project. This makes the preview look polished and intentional.
+The inquiry form shows "Submission Failed - An unexpected error occurred" because the BizFlow CRM API returns a **409 Conflict** status (the lead with that phone number already exists), but the code has no handler for 409 -- it falls through to the generic error case.
 
 ## Changes
 
-### File: `src/components/product-tour/InteractiveWorkflowDemo.tsx`
+### 1. Handle 409 Conflict in `src/utils/inquiryApi.ts`
 
-1. Add import for the dashboard screenshot at the top:
-   ```
-   import dashboardPreview from '@/assets/screenshots/dashboard-preview.png';
-   ```
+Add a handler for HTTP 409 between the existing 400 and 401/403 handlers. A 409 from the CRM means the lead already exists, so we should treat this as a **success** from the user's perspective (their inquiry is already recorded):
 
-2. Replace the skeleton placeholder content (lines 274-284) with the real screenshot image:
-   - Remove the fake skeleton bars (`h-4 bg-muted rounded`, `h-16 bg-primary/10`, `h-24 bg-muted/50`)
-   - Add an `<img>` tag showing the dashboard screenshot with proper sizing and rounded corners
+```typescript
+if (response.status === 409) {
+  return { success: true, message: 'Your inquiry has already been received. Our team will contact you shortly.' };
+}
+```
 
-The browser chrome header (colored dots + "EduFlow Dashboard" label) stays as-is -- it frames the screenshot nicely.
+### 2. Show custom success message in `src/components/lead-generation/InquiryFormDialog.tsx`
 
-## Result
-The previously "broken-looking" area will now show an actual screenshot of the EduFlow dashboard, giving users a real preview of the platform.
+Update the success toast to use the response message (so the 409 "already received" message is shown instead of the default):
+
+```typescript
+toast.success('Inquiry Received!', {
+  description: response.message || 'Our team will contact you shortly.',
+});
+```
+
+### 3. Fix CSP `data:` URI warning in `public/_headers`
+
+Add `data:` to the `script-src` directive to stop the CSP violation warning about loading base64 scripts (used by the Vite dev/preview pipeline):
+
+```
+script-src 'self' 'unsafe-inline' 'unsafe-eval' data: https://www.youtube.com ...
+```
+
+## Summary
+- 1 functional fix (409 handling) -- resolves the "Submission Failed" error
+- 1 UX improvement (dynamic success message)
+- 1 CSP fix (data: URI allowance)
+- 3 files modified, no new dependencies
 
