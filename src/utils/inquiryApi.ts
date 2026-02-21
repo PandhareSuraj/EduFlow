@@ -102,6 +102,10 @@ export async function submitInquiry(formData: InquiryFormData): Promise<InquiryR
       };
     }
 
+    if (response.status === 409) {
+      return { success: true, message: 'Your inquiry has already been received. Our team will contact you shortly.' };
+    }
+
     if (response.status === 401 || response.status === 403) {
       return {
         success: false,

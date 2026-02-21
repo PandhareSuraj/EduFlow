@@ -58,7 +58,7 @@ export function InquiryFormDialog({
 
     if (response.success) {
       toast.success('Inquiry Received!', {
-        description: 'Our team will contact you shortly.',
+        description: response.message || 'Our team will contact you shortly.',
       });
       reset();
       setOpen(false);
