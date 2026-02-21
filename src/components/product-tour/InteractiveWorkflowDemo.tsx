@@ -7,6 +7,7 @@ import {
   UserPlus, ClipboardCheck, BookOpen, BarChart3,
   ArrowRight, ArrowLeft, CheckCircle2, Play, Pause
 } from 'lucide-react';
+import dashboardPreview from '@/assets/screenshots/dashboard-preview.png';
 
 const workflowSteps = [
   {
@@ -271,17 +272,13 @@ export function InteractiveWorkflowDemo() {
                     </div>
                     <span className="text-xs text-muted-foreground ml-2">EduFlow Dashboard</span>
                   </div>
-                  <CardContent className="p-4 bg-card">
-                    <div className="space-y-3">
-                      <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
-                      <div className="h-4 bg-muted rounded w-1/2 animate-pulse" />
-                      <div className="grid grid-cols-3 gap-2 mt-4">
-                        <div className="h-16 bg-primary/10 rounded-lg" />
-                        <div className="h-16 bg-secondary/10 rounded-lg" />
-                        <div className="h-16 bg-accent/10 rounded-lg" />
-                      </div>
-                      <div className="h-24 bg-muted/50 rounded-lg mt-4" />
-                    </div>
+                  <CardContent className="p-0 bg-card">
+                    <img 
+                      src={dashboardPreview} 
+                      alt="EduFlow Dashboard Preview" 
+                      className="w-full h-auto object-cover"
+                      loading="lazy"
+                    />
                   </CardContent>
                 </Card>
               </div>
