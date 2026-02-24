@@ -10,11 +10,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { useStudentSearch, StudentSearchResult } from "@/hooks/useStudentSearch";
 
 interface StudentSearchComboboxProps {
@@ -31,6 +26,7 @@ export function StudentSearchCombobox({
   className
 }: StudentSearchComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
   const {
     searchTerm,
     setSearchTerm,
@@ -47,8 +43,19 @@ export function StudentSearchCombobox({
            null;
   }, [value, results, recentSelections]);
 
+  // Click-outside to close
+  React.useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
   const handleSelect = (payload: string | StudentSearchResult) => {
-    console.debug("Combobox selected:", payload);
     let chosen: StudentSearchResult | null = null;
 
     if (typeof payload === "string") {
@@ -119,80 +126,84 @@ export function StudentSearchCombobox({
   );
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal={true}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-full justify-between", className)}
-        >
-          {selectedStudent ? (
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span>[{selectedStudent.student_id}] {selectedStudent.name}</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Search className="h-4 w-4" />
-              <span>{placeholder}</span>
-            </div>
-          )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[600px] p-0 z-[60]" align="start">
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Type to search students..."
-            value={searchTerm}
-            onValueChange={setSearchTerm}
-            className="border-none focus:ring-0"
-          />
-          <CommandList className="max-h-[300px]">
-            {isLoading && (
-              <div className="flex items-center justify-center p-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                <span className="ml-2">Searching students...</span>
-              </div>
-            )}
-            
-            {!isLoading && searchTerm && results.length === 0 && (
-              <CommandEmpty>
-                <div className="flex flex-col items-center gap-2 p-4">
-                  <Search className="h-8 w-8 text-muted-foreground" />
-                  <p>No students found for "{searchTerm}"</p>
-                  <p className="text-sm text-muted-foreground">Try searching by ID, name, email, or mobile number</p>
+    <div ref={containerRef} className="relative">
+      <Button
+        variant="outline"
+        role="combobox"
+        aria-expanded={open}
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={cn("w-full justify-between", className)}
+      >
+        {selectedStudent ? (
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            <span>[{selectedStudent.student_id}] {selectedStudent.name}</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Search className="h-4 w-4" />
+            <span>{placeholder}</span>
+          </div>
+        )}
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+      </Button>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-1 w-full z-[60] rounded-md border bg-popover text-popover-foreground shadow-md">
+          <Command shouldFilter={false}>
+            <CommandInput
+              placeholder="Type to search students..."
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+              className="border-none focus:ring-0"
+              autoFocus
+            />
+            <CommandList className="max-h-[300px]">
+              {isLoading && (
+                <div className="flex items-center justify-center p-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                  <span className="ml-2">Searching students...</span>
                 </div>
-              </CommandEmpty>
-            )}
+              )}
+              
+              {!isLoading && searchTerm && results.length === 0 && (
+                <CommandEmpty>
+                  <div className="flex flex-col items-center gap-2 p-4">
+                    <Search className="h-8 w-8 text-muted-foreground" />
+                    <p>No students found for "{searchTerm}"</p>
+                    <p className="text-sm text-muted-foreground">Try searching by ID, name, email, or mobile number</p>
+                  </div>
+                </CommandEmpty>
+              )}
 
-            {!searchTerm && recentSelections.length > 0 && (
-              <CommandGroup heading="Recent Selections">
-                {recentSelections.map((student) => (
-                  <StudentItem key={`recent-${student.id}`} student={student} isRecent />
-                ))}
-              </CommandGroup>
-            )}
+              {!searchTerm && recentSelections.length > 0 && (
+                <CommandGroup heading="Recent Selections">
+                  {recentSelections.map((student) => (
+                    <StudentItem key={`recent-${student.id}`} student={student} isRecent />
+                  ))}
+                </CommandGroup>
+              )}
 
-            {results.length > 0 && (
-              <CommandGroup heading={searchTerm ? `Search Results (${results.length})` : "Students"}>
-                {results.map((student) => (
-                  <StudentItem key={`search-${student.id}`} student={student} />
-                ))}
-              </CommandGroup>
-            )}
+              {results.length > 0 && (
+                <CommandGroup heading={searchTerm ? `Search Results (${results.length})` : "Students"}>
+                  {results.map((student) => (
+                    <StudentItem key={`search-${student.id}`} student={student} />
+                  ))}
+                </CommandGroup>
+              )}
 
-            {selectedStudent && (
-              <CommandGroup>
-                <CommandItem onSelect={handleClear} className="text-destructive">
-                  <span>Clear selection</span>
-                </CommandItem>
-              </CommandGroup>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+              {selectedStudent && (
+                <CommandGroup>
+                  <CommandItem onSelect={handleClear} className="text-destructive">
+                    <span>Clear selection</span>
+                  </CommandItem>
+                </CommandGroup>
+              )}
+            </CommandList>
+          </Command>
+        </div>
+      )}
+    </div>
   );
 }
