@@ -1,46 +1,44 @@
 
 
-# Fix: Student Search Input Blocked Inside Collect Fee Dialog
+# Fix: Student Search in Collect Fee Dialog (Third Attempt)
 
-## Problem
-The previous fix (`modal={true}` + `z-[60]`) is insufficient. The browser console confirms: **"Blocked aria-hidden on an element because its descendant retained focus."** When the Popover opens via a Portal, the Dialog marks all outside DOM nodes as `aria-hidden`. Chrome then blocks focus on the Popover's `CommandInput`, making typing impossible.
+## Root Cause Analysis
 
-## Root Cause
-Radix Dialog uses `aria-hidden` on sibling DOM elements. Since Popover renders through a Portal (outside the Dialog DOM tree), the Dialog marks the Popover's portal container as `aria-hidden`, and Chrome prevents focus on elements inside `aria-hidden` containers.
+The console log confirms the issue persists: `"Blocked aria-hidden on an element because its descendant retained focus."` The focused element is the combobox trigger **Button**, and the ancestor with `aria-hidden` is the **DialogContent** of CollectFeeDialog.
+
+The previous inline-dropdown fix removed the Portal problem, but the `cmdk` library's `Command` component still interferes with Radix Dialog's focus management. When the dropdown opens and `autoFocus` fires on the `CommandInput`, `cmdk` internally manages focus in a way that conflicts with the Dialog's `aria-hidden` bookkeeping.
 
 ## Solution
-Replace the Popover-based dropdown with an **inline dropdown** that renders inside the Dialog DOM tree (no portal), avoiding the focus trap conflict entirely.
+
+Replace `cmdk`'s `Command`/`CommandInput`/`CommandList`/`CommandItem`/`CommandGroup`/`CommandEmpty` with **plain HTML elements** (`<input>`, `<div>`). This eliminates all framework-level focus conflicts entirely.
 
 ### File: `src/components/ui/student-search-combobox.tsx`
 
-Remove the `Popover`/`PopoverTrigger`/`PopoverContent` wrapper entirely. Instead:
+**Changes:**
+1. Remove all `Command*` imports from `cmdk`
+2. Replace `CommandInput` with a plain `<input>` element with the same styling
+3. Replace `CommandList`/`CommandGroup`/`CommandItem`/`CommandEmpty` with plain `<div>` elements
+4. Keep all existing search logic (`useStudentSearch`), click-outside handling, and `StudentItem` rendering — just swap the wrappers
+5. Handle keyboard navigation (arrow keys, Enter) manually for accessibility
 
-1. Use a simple `div`-based toggle: clicking the trigger button toggles `open` state
-2. Render the `Command` dropdown in a positioned `div` directly below the trigger (no Portal)
-3. Add click-outside detection to close the dropdown
-4. Keep all existing search logic, `CommandInput`, `CommandList`, and `StudentItem` unchanged
-
+Key structure:
 ```text
-┌──────────────────────────────────┐
-│ Dialog (z-50, focus trap)        │
-│  ┌────────────────────────────┐  │
-│  │ Trigger Button             │  │
-│  └────────────────────────────┘  │
-│  ┌────────────────────────────┐  │  ← inline div, no portal
-│  │ Command                    │  │
-│  │  CommandInput (typeable!)  │  │
-│  │  CommandList (results)     │  │
-│  └────────────────────────────┘  │
-│                                  │
-└──────────────────────────────────┘
+<div ref={containerRef} className="relative">
+  <Button onClick={toggle} />          ← trigger (unchanged)
+  {open && (
+    <div className="absolute ...">     ← dropdown container (unchanged)
+      <input                           ← plain input replaces CommandInput
+        autoFocus
+        value={searchTerm}
+        onChange={...}
+      />
+      <div className="overflow-y-auto"> ← replaces CommandList
+        {/* results rendered as clickable divs */}
+      </div>
+    </div>
+  )}
+</div>
 ```
 
-Key implementation details:
-- Wrap in a `relative` container div
-- Dropdown is an `absolute`-positioned div with `top-full mt-1 w-full` styling
-- Add `bg-popover border rounded-md shadow-md` for proper visual appearance
-- Use a `useRef` + click-outside listener to close when clicking elsewhere
-- Remove all Popover/PopoverTrigger/PopoverContent imports
-
-This approach completely eliminates the Dialog vs Popover focus conflict since everything stays within the Dialog's DOM tree.
+This approach has zero dependency on `cmdk` or Radix internals, so there are no focus trap or `aria-hidden` conflicts possible.
 
