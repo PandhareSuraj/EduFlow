@@ -2,14 +2,6 @@ import * as React from "react";
 import { Check, ChevronsUpDown, Search, User, Phone, Mail, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { useStudentSearch, StudentSearchResult } from "@/hooks/useStudentSearch";
 
 interface StudentSearchComboboxProps {
@@ -26,7 +18,9 @@ export function StudentSearchCombobox({
   className
 }: StudentSearchComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const [highlightIndex, setHighlightIndex] = React.useState(-1);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
   const {
     searchTerm,
     setSearchTerm,
@@ -38,10 +32,22 @@ export function StudentSearchCombobox({
 
   const selectedStudent = React.useMemo(() => {
     if (!value) return null;
-    return results.find(student => student.id === value) || 
-           recentSelections.find(student => student.id === value) || 
+    return results.find(student => student.id === value) ||
+           recentSelections.find(student => student.id === value) ||
            null;
   }, [value, results, recentSelections]);
+
+  // Build flat list of selectable items for keyboard nav
+  const flatItems = React.useMemo(() => {
+    const items: StudentSearchResult[] = [];
+    if (!searchTerm && recentSelections.length > 0) {
+      items.push(...recentSelections);
+    }
+    if (results.length > 0) {
+      items.push(...results);
+    }
+    return items;
+  }, [searchTerm, recentSelections, results]);
 
   // Click-outside to close
   React.useEffect(() => {
@@ -55,23 +61,21 @@ export function StudentSearchCombobox({
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const handleSelect = (payload: string | StudentSearchResult) => {
-    let chosen: StudentSearchResult | null = null;
-
-    if (typeof payload === "string") {
-      const idNum = Number.parseInt(payload, 10);
-      if (!Number.isNaN(idNum)) {
-        chosen =
-          results.find((s) => s.id === idNum) ||
-          recentSelections.find((s) => s.id === idNum) ||
-          null;
-      }
-    } else {
-      chosen = payload;
+  // Focus input when opened
+  React.useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
+  }, [open]);
 
-    onSelect(chosen);
-    if (chosen) addToRecentSelections(chosen);
+  // Reset highlight when results change
+  React.useEffect(() => {
+    setHighlightIndex(-1);
+  }, [results, searchTerm]);
+
+  const handleSelectStudent = (student: StudentSearchResult) => {
+    onSelect(student);
+    addToRecentSelections(student);
     setOpen(false);
     setSearchTerm("");
   };
@@ -79,15 +83,33 @@ export function StudentSearchCombobox({
   const handleClear = () => {
     onSelect(null);
     setOpen(false);
-    setSearchTerm('');
+    setSearchTerm("");
   };
 
-  const StudentItem = ({ student, isRecent = false }: { student: StudentSearchResult; isRecent?: boolean }) => (
-    <CommandItem
-      key={`${isRecent ? 'recent' : 'search'}-${student.id}`}
-      value={String(student.id)}
-      onSelect={(val) => handleSelect(val)}
-      className="flex flex-col items-start gap-1 p-3 cursor-pointer"
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIndex(prev => Math.min(prev + 1, flatItems.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIndex(prev => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter" && highlightIndex >= 0 && highlightIndex < flatItems.length) {
+      e.preventDefault();
+      handleSelectStudent(flatItems[highlightIndex]);
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  };
+
+  const StudentItem = ({ student, isRecent = false, isHighlighted = false }: { student: StudentSearchResult; isRecent?: boolean; isHighlighted?: boolean }) => (
+    <div
+      role="option"
+      aria-selected={value === student.id}
+      onClick={() => handleSelectStudent(student)}
+      className={cn(
+        "flex flex-col items-start gap-1 p-3 cursor-pointer rounded-sm text-sm",
+        isHighlighted ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"
+      )}
     >
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
@@ -122,8 +144,10 @@ export function StudentSearchCombobox({
           <span className="truncate max-w-[150px]">{student.email}</span>
         </div>
       </div>
-    </CommandItem>
+    </div>
   );
+
+  let itemIndex = 0;
 
   return (
     <div ref={containerRef} className="relative">
@@ -151,57 +175,72 @@ export function StudentSearchCombobox({
 
       {open && (
         <div className="absolute top-full left-0 mt-1 w-full z-[60] rounded-md border bg-popover text-popover-foreground shadow-md">
-          <Command shouldFilter={false}>
-            <CommandInput
+          {/* Search input */}
+          <div className="flex items-center border-b px-3">
+            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            <input
+              ref={inputRef}
+              type="text"
               placeholder="Type to search students..."
               value={searchTerm}
-              onValueChange={setSearchTerm}
-              className="border-none focus:ring-0"
-              autoFocus
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
             />
-            <CommandList className="max-h-[300px]">
-              {isLoading && (
-                <div className="flex items-center justify-center p-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                  <span className="ml-2">Searching students...</span>
+          </div>
+
+          {/* Results list */}
+          <div className="max-h-[300px] overflow-y-auto p-1" role="listbox">
+            {isLoading && (
+              <div className="flex items-center justify-center p-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                <span className="ml-2 text-sm">Searching students...</span>
+              </div>
+            )}
+
+            {!isLoading && searchTerm && results.length === 0 && (
+              <div className="flex flex-col items-center gap-2 p-4 text-sm">
+                <Search className="h-8 w-8 text-muted-foreground" />
+                <p>No students found for "{searchTerm}"</p>
+                <p className="text-muted-foreground">Try searching by ID, name, email, or mobile number</p>
+              </div>
+            )}
+
+            {!searchTerm && recentSelections.length > 0 && (
+              <div>
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Recent Selections</div>
+                {recentSelections.map((student) => {
+                  const idx = itemIndex++;
+                  return (
+                    <StudentItem key={`recent-${student.id}`} student={student} isRecent isHighlighted={highlightIndex === idx} />
+                  );
+                })}
+              </div>
+            )}
+
+            {results.length > 0 && (
+              <div>
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                  {searchTerm ? `Search Results (${results.length})` : "Students"}
                 </div>
-              )}
-              
-              {!isLoading && searchTerm && results.length === 0 && (
-                <CommandEmpty>
-                  <div className="flex flex-col items-center gap-2 p-4">
-                    <Search className="h-8 w-8 text-muted-foreground" />
-                    <p>No students found for "{searchTerm}"</p>
-                    <p className="text-sm text-muted-foreground">Try searching by ID, name, email, or mobile number</p>
-                  </div>
-                </CommandEmpty>
-              )}
+                {results.map((student) => {
+                  const idx = itemIndex++;
+                  return (
+                    <StudentItem key={`search-${student.id}`} student={student} isHighlighted={highlightIndex === idx} />
+                  );
+                })}
+              </div>
+            )}
 
-              {!searchTerm && recentSelections.length > 0 && (
-                <CommandGroup heading="Recent Selections">
-                  {recentSelections.map((student) => (
-                    <StudentItem key={`recent-${student.id}`} student={student} isRecent />
-                  ))}
-                </CommandGroup>
-              )}
-
-              {results.length > 0 && (
-                <CommandGroup heading={searchTerm ? `Search Results (${results.length})` : "Students"}>
-                  {results.map((student) => (
-                    <StudentItem key={`search-${student.id}`} student={student} />
-                  ))}
-                </CommandGroup>
-              )}
-
-              {selectedStudent && (
-                <CommandGroup>
-                  <CommandItem onSelect={handleClear} className="text-destructive">
-                    <span>Clear selection</span>
-                  </CommandItem>
-                </CommandGroup>
-              )}
-            </CommandList>
-          </Command>
+            {selectedStudent && (
+              <div
+                onClick={handleClear}
+                className="p-3 cursor-pointer text-sm text-destructive hover:bg-accent rounded-sm"
+              >
+                Clear selection
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
