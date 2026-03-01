@@ -17,6 +17,7 @@ import { StudentFeeLedger } from "@/components/fees/StudentFeeLedger";
 import { TodaysDueReport } from "@/components/fees/TodaysDueReport";
 import { FeeStructureDialog } from "@/components/forms/FeeStructureDialog";
 import { EditStudentFeeDialog } from "@/components/fees/EditStudentFeeDialog";
+import { AddAdditionalFeeDialog } from "@/components/fees/AddAdditionalFeeDialog";
 import { VideoTutorialButton } from "@/components/videos/VideoTutorialButton";
 import { PermissionWrapper } from "@/components/permissions/RoleGuard";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -43,6 +44,8 @@ interface StudentFeeData {
   discount_percentage: number;
   discount_reason: string;
   total_amount: number;
+  fee_category?: string;
+  fee_description?: string;
   paid_amount: number;
   balance_amount: number;
   status: string;
@@ -115,6 +118,8 @@ export default function Fees() {
         discount_amount: record.discount_amount,
         discount_percentage: record.discount_percentage,
         discount_reason: record.discount_reason,
+        fee_category: record.fee_category,
+        fee_description: record.fee_description,
         payment_status: record.payment_status,
         payment_count: record.payment_count,
         last_payment_date: record.last_payment_date,
@@ -275,6 +280,17 @@ export default function Fees() {
                   <Button variant="outline">
                     <Settings className="mr-2 h-4 w-4" />
                     Fee Structure
+                  </Button>
+                }
+                onSuccess={fetchFeeRecords}
+              />
+            </PermissionWrapper>
+            <PermissionWrapper permission="FEES_EDIT">
+              <AddAdditionalFeeDialog
+                trigger={
+                  <Button variant="outline">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Fee
                   </Button>
                 }
                 onSuccess={fetchFeeRecords}
@@ -485,7 +501,16 @@ export default function Fees() {
                         <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
-                    <TableCell>₹{record.total_amount.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>
+                      <div>
+                        <div>₹{record.total_amount.toLocaleString('en-IN')}</div>
+                        {record.fee_category && record.fee_category !== 'tuition' && (
+                          <Badge variant="outline" className="text-xs mt-1">
+                            {record.fee_description || record.fee_category}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>₹{record.paid_amount.toLocaleString('en-IN')}</TableCell>
                     <TableCell>
                       <div className="text-right">
@@ -540,6 +565,17 @@ export default function Fees() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                        <PermissionWrapper permission="FEES_EDIT">
+                          <AddAdditionalFeeDialog
+                            studentId={record.student_id}
+                            onSuccess={fetchFeeRecords}
+                            trigger={
+                              <Button variant="ghost" size="sm" title="Add additional fee">
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
+                        </PermissionWrapper>
                         {record.balance_amount > 0 && (
                           <PermissionWrapper permission="FEES_COLLECT">
                             <CollectFeeDialog
