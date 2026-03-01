@@ -4316,7 +4316,9 @@ export type Database = {
           discount_percentage: number | null
           discount_reason: string | null
           due_date: string | null
-          fee_structure_id: string
+          fee_category: string
+          fee_description: string | null
+          fee_structure_id: string | null
           follow_up_count: number | null
           follow_up_notes: string | null
           follow_up_status: string | null
@@ -4343,7 +4345,9 @@ export type Database = {
           discount_percentage?: number | null
           discount_reason?: string | null
           due_date?: string | null
-          fee_structure_id: string
+          fee_category?: string
+          fee_description?: string | null
+          fee_structure_id?: string | null
           follow_up_count?: number | null
           follow_up_notes?: string | null
           follow_up_status?: string | null
@@ -4370,7 +4374,9 @@ export type Database = {
           discount_percentage?: number | null
           discount_reason?: string | null
           due_date?: string | null
-          fee_structure_id?: string
+          fee_category?: string
+          fee_description?: string | null
+          fee_structure_id?: string | null
           follow_up_count?: number | null
           follow_up_notes?: string | null
           follow_up_status?: string | null
@@ -5048,7 +5054,9 @@ export type Database = {
           discount_percentage: number | null
           discount_reason: string | null
           due_date: string | null
+          fee_category: string | null
           fee_created_at: string | null
+          fee_description: string | null
           fee_record_id: string | null
           fee_status: string | null
           final_amount: number | null
@@ -5102,7 +5110,9 @@ export type Database = {
           discount_reason: string | null
           due_date: string | null
           email: string | null
+          fee_category: string | null
           fee_created_at: string | null
+          fee_description: string | null
           fee_record_id: string | null
           fee_status: string | null
           last_payment_amount: number | null
@@ -5161,7 +5171,9 @@ export type Database = {
           discount_percentage: number | null
           discount_reason: string | null
           due_date: string | null
+          fee_category: string | null
           fee_created_at: string | null
+          fee_description: string | null
           fee_record_id: string | null
           fee_status: string | null
           original_amount: number | null

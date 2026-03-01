@@ -29,7 +29,9 @@ interface StudentFeeLedgerData {
   due_date: string;
   fee_status: string;
   fee_created_at: string;
-  payment_history: any; // This can be JSON from the database
+  fee_category: string;
+  fee_description: string | null;
+  payment_history: any;
 }
 
 interface StudentFeeLedgerProps {
@@ -131,7 +133,7 @@ export function StudentFeeLedger({ trigger }: StudentFeeLedgerProps) {
 
   const exportLedger = () => {
     const headers = [
-      'Student ID', 'Student Name', 'Course', 'Semester',
+      'Student ID', 'Student Name', 'Course', 'Fee Category', 'Semester',
       'Original Amount', 'Discount Amount', 'Discount %', 'Discount Reason',
       'Final Amount', 'Paid Amount', 'Balance Amount', 'Status', 'Due Date'
     ].join(',');
@@ -140,6 +142,7 @@ export function StudentFeeLedger({ trigger }: StudentFeeLedgerProps) {
       record.student_number,
       record.student_name,
       record.course_name,
+      record.fee_description || record.fee_category,
       record.semester,
       record.original_amount,
       record.discount_amount,
@@ -262,6 +265,7 @@ export function StudentFeeLedger({ trigger }: StudentFeeLedgerProps) {
                   <TableRow>
                     <TableHead>Student</TableHead>
                     <TableHead>Course</TableHead>
+                    <TableHead>Category</TableHead>
                     <TableHead>Semester</TableHead>
                     <TableHead>Original Fee</TableHead>
                     <TableHead>Discount</TableHead>
@@ -283,6 +287,11 @@ export function StudentFeeLedger({ trigger }: StudentFeeLedgerProps) {
                         </div>
                       </TableCell>
                       <TableCell>{record.course_name}</TableCell>
+                      <TableCell>
+                        <Badge variant={record.fee_category !== 'tuition' ? 'secondary' : 'outline'} className="text-xs">
+                          {record.fee_description || record.fee_category}
+                        </Badge>
+                      </TableCell>
                       <TableCell>{record.semester}</TableCell>
                       <TableCell>₹{record.original_amount.toLocaleString('en-IN')}</TableCell>
                       <TableCell>

@@ -136,7 +136,9 @@ export function CollectFeeDialog({
           original_amount,
           discount_amount,
           discount_percentage,
-          discount_reason
+          discount_reason,
+          fee_category,
+          fee_description
         `).eq('student_id', studentId).gt('balance_amount', 0);
       if (error) {
         console.error('Error fetching student fees:', error);
@@ -370,7 +372,12 @@ export function CollectFeeDialog({
                 <SelectContent>
                    {studentFees.map(fee => <SelectItem key={fee.id} value={fee.id}>
                        <div>
-                         <div>Balance: ₹{fee.balance_amount.toLocaleString('en-IN')} | Total: ₹{fee.total_amount.toLocaleString('en-IN')}</div>
+                         <div>
+                           {(fee as any).fee_category && (fee as any).fee_category !== 'tuition' && (
+                             <span className="font-medium text-xs mr-1">[{(fee as any).fee_description || (fee as any).fee_category}]</span>
+                           )}
+                           Balance: ₹{fee.balance_amount.toLocaleString('en-IN')} | Total: ₹{fee.total_amount.toLocaleString('en-IN')}
+                         </div>
                          <div className="text-xs text-muted-foreground">Due: {fee.due_date || 'No due date'}</div>
                           {fee.discount_amount && fee.discount_amount > 0 && <div className="text-xs text-muted-foreground">
                               (Original: ₹{fee.original_amount?.toLocaleString('en-IN')} - Discount: ₹{fee.discount_amount.toLocaleString('en-IN')})
