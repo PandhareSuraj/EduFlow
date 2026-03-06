@@ -106,7 +106,7 @@ export function EditStudentFeeDialog({ feeRecord, trigger, onSuccess }: EditStud
           discount_percentage: formData.discount_percentage,
           discount_reason: formData.discount_reason || null,
           total_amount: newTotal,
-          balance_amount: newTotal - (feeRecord.total_amount - (feeRecord.original_amount || feeRecord.total_amount)),
+          // balance_amount will be recalculated by the recalc_balance_on_fee_update trigger
           due_date: formData.due_date ? format(formData.due_date, 'yyyy-MM-dd') : feeRecord.due_date,
         })
         .eq('id', feeRecord.id);
