@@ -8,16 +8,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useCollege } from "@/contexts/CollegeContext";
 
-function RoutesManagement() {
+function RoutesManagement({ collegeId }: { collegeId?: string }) {
   const { data: routes = [] } = useQuery({
-    queryKey: ["transport-routes"],
+    queryKey: ["transport-routes", collegeId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("transport_routes")
         .select("*")
         .order("created_at", { ascending: false });
       
+      if (collegeId) query = query.eq("college_id", collegeId);
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -71,27 +75,136 @@ function RoutesManagement() {
   );
 }
 
+function BusFleetManagement({ collegeId }: { collegeId?: string }) {
+  const { data: buses = [] } = useQuery({
+    queryKey: ["bus-fleet", collegeId],
+    queryFn: async () => {
+      let query = supabase
+        .from("buses")
+        .select("*, transport_routes(route_name)")
+        .order("bus_number");
+      
+      if (collegeId) query = query.eq("college_id", collegeId);
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Bus Fleet Management</CardTitle>
+        <CardDescription>Manage buses, drivers, and vehicle maintenance</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {buses.length === 0 ? (
+          <p className="text-muted-foreground text-center py-8">No buses registered yet.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Bus Number</TableHead>
+                <TableHead>Registration</TableHead>
+                <TableHead>Route</TableHead>
+                <TableHead>Driver</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Capacity</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {buses.map((bus: any) => (
+                <TableRow key={bus.id}>
+                  <TableCell className="font-medium">{bus.bus_number}</TableCell>
+                  <TableCell>{bus.registration_number || '-'}</TableCell>
+                  <TableCell>{bus.transport_routes?.route_name || 'Unassigned'}</TableCell>
+                  <TableCell>{bus.driver_name || '-'}</TableCell>
+                  <TableCell>{bus.driver_phone || '-'}</TableCell>
+                  <TableCell>{bus.capacity}</TableCell>
+                  <TableCell className="capitalize">{bus.vehicle_type || '-'}</TableCell>
+                  <TableCell>
+                    <Badge variant={bus.status === "active" ? "secondary" : "outline"}>
+                      {bus.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 const Transport = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [showRouteDialog, setShowRouteDialog] = useState(false);
+  const { college } = useCollege();
 
   const { data: stats, refetch } = useQuery({
-    queryKey: ["transport-stats"],
+    queryKey: ["transport-stats", college?.id],
     queryFn: async () => {
-      const { count: activeRoutes } = await supabase
+      let routeQuery = supabase
         .from("transport_routes")
         .select("*", { count: "exact", head: true })
         .eq("status", "active");
       
-      const { count: activeBuses } = await supabase
+      let busQuery = supabase
         .from("buses")
         .select("*", { count: "exact", head: true })
         .eq("status", "active");
+
+      if (college?.id) {
+        routeQuery = routeQuery.eq("college_id", college.id);
+        busQuery = busQuery.eq("college_id", college.id);
+      }
+
+      const { count: activeRoutes } = await routeQuery;
+      const { count: activeBuses } = await busQuery;
 
       return {
         activeRoutes: activeRoutes || 0,
         activeBuses: activeBuses || 0,
       };
+    },
+  });
+
+  const { data: recentRoutes = [] } = useQuery({
+    queryKey: ["transport-overview-routes", college?.id],
+    queryFn: async () => {
+      let query = supabase
+        .from("transport_routes")
+        .select("route_name, status")
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      
+      if (college?.id) query = query.eq("college_id", college.id);
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: recentBuses = [] } = useQuery({
+    queryKey: ["transport-overview-buses", college?.id],
+    queryFn: async () => {
+      let query = supabase
+        .from("buses")
+        .select("bus_number, registration_number, status, transport_routes(route_name)")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      
+      if (college?.id) query = query.eq("college_id", college.id);
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
     },
   });
 
@@ -183,73 +296,52 @@ const Transport = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Route Status</CardTitle>
-                <CardDescription>Current status of all bus routes</CardDescription>
+                <CardTitle>Active Routes</CardTitle>
+                <CardDescription>Current status of bus routes</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="text-sm">Route A - City Center</span>
-                    </div>
-                    <Badge variant="secondary">On Time</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                      <span className="text-sm">Route B - Industrial Area</span>
-                    </div>
-                    <Badge variant="outline">5 min delay</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="text-sm">Route C - Residential</span>
-                    </div>
-                    <Badge variant="secondary">On Time</Badge>
-                  </div>
+                  {recentRoutes.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No routes configured yet.</p>
+                  ) : (
+                    recentRoutes.map((route: any, i: number) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-primary"></div>
+                          <span className="text-sm">{route.route_name}</span>
+                        </div>
+                        <Badge variant="secondary">{route.status}</Badge>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Live Bus Tracking</CardTitle>
-                <CardDescription>Real-time location of active buses</CardDescription>
+                <CardTitle>Bus Fleet</CardTitle>
+                <CardDescription>Registered buses</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Bus KA-01-AB-1234</p>
-                      <p className="text-xs text-muted-foreground">Route A - Stop 3/8</p>
-                    </div>
-                    <Badge variant="secondary">
-                      <div className="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
-                      Active
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Bus KA-01-AB-5678</p>
-                      <p className="text-xs text-muted-foreground">Route B - Stop 5/12</p>
-                    </div>
-                    <Badge variant="secondary">
-                      <div className="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
-                      Active
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Bus KA-01-AB-9012</p>
-                      <p className="text-xs text-muted-foreground">Route C - Depot</p>
-                    </div>
-                    <Badge variant="outline">
-                      <div className="w-2 h-2 rounded-full bg-gray-400 mr-1"></div>
-                      Parked
-                    </Badge>
-                  </div>
+                  {recentBuses.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No buses registered yet.</p>
+                  ) : (
+                    recentBuses.map((bus: any) => (
+                      <div key={bus.bus_number} className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">Bus {bus.bus_number}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(bus as any).transport_routes?.route_name || 'Unassigned'}
+                          </p>
+                        </div>
+                        <Badge variant={bus.status === 'active' ? 'secondary' : 'outline'}>
+                          {bus.status}
+                        </Badge>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -257,19 +349,11 @@ const Transport = () => {
         </TabsContent>
 
         <TabsContent value="routes" className="space-y-4">
-          <RoutesManagement />
+          <RoutesManagement collegeId={college?.id} />
         </TabsContent>
 
         <TabsContent value="buses" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Bus Fleet Management</CardTitle>
-              <CardDescription>Manage buses, drivers, and vehicle maintenance</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Bus fleet management interface will be implemented here.</p>
-            </CardContent>
-          </Card>
+          <BusFleetManagement collegeId={college?.id} />
         </TabsContent>
 
         <TabsContent value="tracking" className="space-y-4">
