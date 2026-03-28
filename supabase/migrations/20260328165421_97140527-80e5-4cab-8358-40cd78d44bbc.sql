@@ -1,0 +1,1 @@
+ALTER TABLE public.placement_drives ADD COLUMN IF NOT EXISTS drive_name text;

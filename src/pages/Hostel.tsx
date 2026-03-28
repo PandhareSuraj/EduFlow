@@ -118,6 +118,74 @@ const Hostel = () => {
     enabled: !!college?.id,
   });
 
+  const { data: buildingStats = [] } = useQuery({
+    queryKey: ["hostel-building-stats", college?.id],
+    queryFn: async () => {
+      if (!college?.id) return [];
+      const { data, error } = await supabase
+        .from("hostel_rooms")
+        .select("building, status, capacity, occupied_beds")
+        .eq("college_id", college.id);
+      if (error) throw error;
+      
+      const buildings: Record<string, { total: number; occupied: number }> = {};
+      (data || []).forEach((room: any) => {
+        const b = room.building || "Unknown";
+        if (!buildings[b]) buildings[b] = { total: 0, occupied: 0 };
+        buildings[b].total++;
+        buildings[b].occupied += room.occupied_beds || 0;
+      });
+      return Object.entries(buildings).map(([name, s]) => ({ name, ...s }));
+    },
+    enabled: !!college?.id,
+  });
+
+  const { data: recentComplaints = [] } = useQuery({
+    queryKey: ["hostel-recent-complaints", college?.id],
+    queryFn: async () => {
+      if (!college?.id) return [];
+      const { data, error } = await supabase
+        .from("hostel_complaints")
+        .select("*")
+        .eq("college_id", college.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!college?.id,
+  });
+
+  const { data: allocations = [] } = useQuery({
+    queryKey: ["hostel-allocations", college?.id],
+    queryFn: async () => {
+      if (!college?.id) return [];
+      const { data, error } = await supabase
+        .from("hostel_allocations")
+        .select("*, students(name, student_id), hostel_rooms(room_number, building)")
+        .eq("college_id", college.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!college?.id,
+  });
+
+  const { data: complaints = [] } = useQuery({
+    queryKey: ["hostel-complaints", college?.id],
+    queryFn: async () => {
+      if (!college?.id) return [];
+      const { data, error } = await supabase
+        .from("hostel_complaints")
+        .select("*, students(name, student_id), hostel_rooms(room_number, building)")
+        .eq("college_id", college.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!college?.id,
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -154,7 +222,7 @@ const Hostel = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalRooms || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Across 3 buildings
+              Across {buildingStats.length} building{buildingStats.length !== 1 ? 's' : ''}
             </p>
           </CardContent>
         </Card>
@@ -163,9 +231,9 @@ const Hostel = () => {
             <CardTitle className="text-sm font-medium">Occupied Rooms</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">95</div>
+            <div className="text-2xl font-bold">{stats?.occupiedRooms || 0}</div>
             <p className="text-xs text-muted-foreground">
-              79% occupancy rate
+              {stats?.totalRooms ? `${Math.round((stats.occupiedRooms / stats.totalRooms) * 100)}% occupancy rate` : 'No rooms yet'}
             </p>
           </CardContent>
         </Card>
@@ -174,20 +242,20 @@ const Hostel = () => {
             <CardTitle className="text-sm font-medium">Pending Complaints</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">{stats?.pendingComplaints || 0}</div>
             <p className="text-xs text-muted-foreground">
-              2 urgent, 6 medium
+              Requires attention
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Allocations</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹4,75,000</div>
+            <div className="text-2xl font-bold">{allocations.filter((a: any) => a.status === 'active').length}</div>
             <p className="text-xs text-muted-foreground">
-              +12% from last month
+              Currently assigned
             </p>
           </CardContent>
         </Card>
@@ -212,18 +280,16 @@ const Hostel = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Building A (40 rooms)</span>
-                    <Badge variant="secondary">32 occupied</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Building B (45 rooms)</span>
-                    <Badge variant="secondary">38 occupied</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Building C (35 rooms)</span>
-                    <Badge variant="secondary">25 occupied</Badge>
-                  </div>
+                  {buildingStats.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No buildings configured yet.</p>
+                  ) : (
+                    buildingStats.map((b: any) => (
+                      <div key={b.name} className="flex items-center justify-between">
+                        <span className="text-sm">{b.name} ({b.total} rooms)</span>
+                        <Badge variant="secondary">{b.occupied} occupied</Badge>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -235,27 +301,23 @@ const Hostel = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Room A-101 - Plumbing</p>
-                      <p className="text-xs text-muted-foreground">2 hours ago</p>
-                    </div>
-                    <Badge variant="destructive">Urgent</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Room B-205 - Electrical</p>
-                      <p className="text-xs text-muted-foreground">5 hours ago</p>
-                    </div>
-                    <Badge variant="secondary">Medium</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Common Area - Cleaning</p>
-                      <p className="text-xs text-muted-foreground">1 day ago</p>
-                    </div>
-                    <Badge variant="outline">Low</Badge>
-                  </div>
+                  {recentComplaints.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No complaints recorded.</p>
+                  ) : (
+                    recentComplaints.map((c: any) => (
+                      <div key={c.id} className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{c.complaint_type || 'General'}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(c.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Badge variant={c.priority === 'urgent' ? 'destructive' : c.priority === 'high' ? 'destructive' : 'secondary'}>
+                          {c.status}
+                        </Badge>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -273,7 +335,41 @@ const Hostel = () => {
               <CardDescription>Manage room assignments and student check-ins</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Allocation management interface will be implemented here.</p>
+              {allocations.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No allocations found. Click "New Allocation" to assign a room.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Room</TableHead>
+                      <TableHead>Building</TableHead>
+                      <TableHead>Allocation Date</TableHead>
+                      <TableHead>Fee (₹)</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {allocations.map((alloc: any) => (
+                      <TableRow key={alloc.id}>
+                        <TableCell className="font-medium">
+                          {alloc.students?.name || 'N/A'}
+                          <span className="text-xs text-muted-foreground ml-1">({alloc.students?.student_id})</span>
+                        </TableCell>
+                        <TableCell>{alloc.hostel_rooms?.room_number || 'N/A'}</TableCell>
+                        <TableCell>{alloc.hostel_rooms?.building || 'N/A'}</TableCell>
+                        <TableCell>{new Date(alloc.allocation_date).toLocaleDateString()}</TableCell>
+                        <TableCell>₹{alloc.room_fee?.toLocaleString() || 0}</TableCell>
+                        <TableCell>
+                          <Badge variant={alloc.status === 'active' ? 'default' : 'outline'}>
+                            {alloc.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -297,7 +393,44 @@ const Hostel = () => {
               <CardDescription>Handle hostel complaints and maintenance requests</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Complaint management interface will be implemented here.</p>
+              {complaints.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No complaints recorded.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Room</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Priority</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {complaints.map((c: any) => (
+                      <TableRow key={c.id}>
+                        <TableCell className="font-medium">{c.students?.name || 'N/A'}</TableCell>
+                        <TableCell>{c.hostel_rooms?.room_number || 'N/A'}</TableCell>
+                        <TableCell className="capitalize">{c.complaint_type || 'General'}</TableCell>
+                        <TableCell className="max-w-[200px] truncate">{c.description || '-'}</TableCell>
+                        <TableCell>
+                          <Badge variant={c.priority === 'urgent' || c.priority === 'high' ? 'destructive' : 'secondary'}>
+                            {c.priority || 'normal'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={c.status === 'resolved' ? 'default' : 'outline'}>
+                            {c.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{new Date(c.created_at).toLocaleDateString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -48,7 +48,7 @@ export function PlacementDrivesList() {
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
-                  <CardTitle className="text-lg">{drive.drive_name}</CardTitle>
+                  <CardTitle className="text-lg">{(drive as any).drive_name || 'Placement Drive'}</CardTitle>
                   <CardDescription>{drive.companies?.name}</CardDescription>
                 </div>
                 <Badge className={getStatusColor(drive.status)}>

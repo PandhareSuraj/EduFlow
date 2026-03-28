@@ -56,7 +56,7 @@ export function PlacementConfirmationDialog({ open, onOpenChange, onSuccess }: P
     queryFn: async () => {
       const { data, error } = await supabase
         .from("job_postings")
-        .select("id, title, companies(name)")
+        .select("id, title, company_id, companies(name)")
         .eq("status", "active")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -75,9 +75,14 @@ export function PlacementConfirmationDialog({ open, onOpenChange, onSuccess }: P
         .eq("user_id", userData.user?.id)
         .single();
 
+      // Look up company_id from the selected job posting
+      const selectedJob = jobs?.find((j: any) => j.id === values.job_id);
+      if (!selectedJob) throw new Error("Selected job posting not found");
+
       const { error } = await supabase.from("student_placements").insert({
         student_id: parseInt(values.student_id),
         job_posting_id: values.job_id,
+        company_id: (selectedJob as any).company_id,
         position_title: values.position_title,
         package_amount: parseFloat(values.salary_package),
         joining_date: values.joining_date,

@@ -3283,6 +3283,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           drive_date: string
+          drive_name: string | null
           eligible_courses: string[] | null
           id: string
           job_positions: string[] | null
@@ -3300,6 +3301,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           drive_date: string
+          drive_name?: string | null
           eligible_courses?: string[] | null
           id?: string
           job_positions?: string[] | null
@@ -3317,6 +3319,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           drive_date?: string
+          drive_name?: string | null
           eligible_courses?: string[] | null
           id?: string
           job_positions?: string[] | null
