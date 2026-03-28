@@ -163,9 +163,9 @@ const Hostel = () => {
             <CardTitle className="text-sm font-medium">Occupied Rooms</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">95</div>
+            <div className="text-2xl font-bold">{stats?.occupiedRooms || 0}</div>
             <p className="text-xs text-muted-foreground">
-              79% occupancy rate
+              {stats?.totalRooms ? `${Math.round((stats.occupiedRooms / stats.totalRooms) * 100)}% occupancy rate` : 'No rooms yet'}
             </p>
           </CardContent>
         </Card>
@@ -174,9 +174,9 @@ const Hostel = () => {
             <CardTitle className="text-sm font-medium">Pending Complaints</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">{stats?.pendingComplaints || 0}</div>
             <p className="text-xs text-muted-foreground">
-              2 urgent, 6 medium
+              Requires attention
             </p>
           </CardContent>
         </Card>
@@ -185,9 +185,9 @@ const Hostel = () => {
             <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹4,75,000</div>
+            <div className="text-2xl font-bold">N/A</div>
             <p className="text-xs text-muted-foreground">
-              +12% from last month
+              Coming soon
             </p>
           </CardContent>
         </Card>

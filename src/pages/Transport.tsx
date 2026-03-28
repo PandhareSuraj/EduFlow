@@ -126,7 +126,7 @@ const Transport = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats?.activeRoutes || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Covering 45 stops
+              Active routes
             </p>
           </CardContent>
         </Card>
@@ -138,7 +138,7 @@ const Transport = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats?.activeBuses || 0}</div>
             <p className="text-xs text-muted-foreground">
-              2 in maintenance
+              Registered buses
             </p>
           </CardContent>
         </Card>
@@ -148,9 +148,9 @@ const Transport = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">650</div>
+            <div className="text-2xl font-bold">N/A</div>
             <p className="text-xs text-muted-foreground">
-              92% attendance today
+              Coming soon
             </p>
           </CardContent>
         </Card>
@@ -160,9 +160,9 @@ const Transport = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">94%</div>
+            <div className="text-2xl font-bold">N/A</div>
             <p className="text-xs text-muted-foreground">
-              +2% from last week
+              Coming soon
             </p>
           </CardContent>
         </Card>

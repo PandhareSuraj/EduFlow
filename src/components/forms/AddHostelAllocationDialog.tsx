@@ -64,31 +64,37 @@ export function AddHostelAllocationDialog({
   });
 
   const { data: students } = useQuery({
-    queryKey: ["students"],
+    queryKey: ["students-for-hostel", college?.id],
     queryFn: async () => {
+      if (!college?.id) return [];
       const { data, error } = await supabase
         .from("students")
         .select("id, name, student_id")
         .eq("status", "active")
+        .eq("college_id", college.id)
         .order("name");
       if (error) throw error;
       return data;
     },
+    enabled: !!college?.id,
   });
 
   // Fetch rooms (not just available ones, but rooms with capacity)
   const { data: rooms = [] } = useQuery({
-    queryKey: ["hostel-rooms-available"],
+    queryKey: ["hostel-rooms-available", college?.id],
     queryFn: async () => {
+      if (!college?.id) return [];
       const { data, error } = await supabase
         .from("hostel_rooms")
         .select("*")
+        .eq("college_id", college.id)
         .order("room_number");
       
       if (error) throw error;
       // Filter rooms that still have capacity
       return (data || []).filter((room: any) => (room.occupied_beds || 0) < room.capacity);
     },
+    enabled: !!college?.id,
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
