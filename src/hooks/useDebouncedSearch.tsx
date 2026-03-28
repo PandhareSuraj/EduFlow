@@ -11,7 +11,7 @@ export function useDebouncedSearch<T>(
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<T[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
