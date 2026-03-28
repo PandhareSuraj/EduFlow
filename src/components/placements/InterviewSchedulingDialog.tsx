@@ -41,7 +41,7 @@ export function InterviewSchedulingDialog({ open, onOpenChange, onSuccess }: Int
     queryFn: async () => {
       const { data, error } = await supabase
         .from("job_postings")
-        .select("id, title, companies(name)")
+        .select("id, title, company_id, companies(name)")
         .eq("status", "active")
         .order("created_at", { ascending: false });
       if (error) throw error;
