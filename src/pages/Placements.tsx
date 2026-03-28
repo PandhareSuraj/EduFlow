@@ -603,7 +603,7 @@ const Placements = () => {
                 {jobs?.map((job) => (
                   <div key={job.id} className="flex justify-between items-start p-4 border rounded-lg">
                     <div>
-                      <h3 className="font-semibold">{(job as any).job_title}</h3>
+                      <h3 className="font-semibold">{(job as any).title}</h3>
                       <p className="text-sm text-muted-foreground">{(job as any).companies?.name}</p>
                       <div className="flex gap-2 mt-2">
                         <Badge variant="secondary">{(job as any).location}</Badge>
