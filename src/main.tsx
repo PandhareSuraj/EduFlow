@@ -5,6 +5,47 @@ import './index.css'
  import './i18n';
 
 const isProduction = import.meta.env.PROD;
+const runtimeRecoveryKey = '__eduflow_runtime_recovered__';
+const reactNullHookErrorPattern = /Cannot read properties of null \(reading 'use(State|Ref|Effect)'\)/;
+
+const clearClientCaches = async () => {
+  if ('serviceWorker' in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+  }
+
+  if ('caches' in window) {
+    const cacheKeys = await caches.keys();
+    await Promise.all(cacheKeys.map((cacheKey) => caches.delete(cacheKey)));
+  }
+};
+
+const recoverFromReactRuntimeMismatch = async () => {
+  if (isProduction) return;
+  if (sessionStorage.getItem(runtimeRecoveryKey) === '1') return;
+
+  sessionStorage.setItem(runtimeRecoveryKey, '1');
+  await clearClientCaches();
+  window.location.reload();
+};
+
+window.addEventListener('error', (event) => {
+  const message = String(event.error?.message || event.message || '');
+  if (reactNullHookErrorPattern.test(message)) {
+    void recoverFromReactRuntimeMismatch();
+  }
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason;
+  const message = typeof reason === 'object' && reason
+    ? String((reason as { message?: string }).message || '')
+    : String(reason || '');
+
+  if (reactNullHookErrorPattern.test(message)) {
+    void recoverFromReactRuntimeMismatch();
+  }
+});
 
 // Register service worker
 if ('serviceWorker' in navigator) {
@@ -21,13 +62,7 @@ if ('serviceWorker' in navigator) {
     }
 
     // In development, clear stale service workers/caches to prevent mixed module runtime errors.
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(registrations.map((registration) => registration.unregister()));
-
-    if ('caches' in window) {
-      const cacheKeys = await caches.keys();
-      await Promise.all(cacheKeys.map((cacheKey) => caches.delete(cacheKey)));
-    }
+    await clearClientCaches();
   });
 }
 

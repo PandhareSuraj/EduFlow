@@ -1,6 +1,6 @@
-const CACHE_NAME = 'eduflow-v2';
-const STATIC_CACHE = 'eduflow-static-v2';
-const DYNAMIC_CACHE = 'eduflow-dynamic-v2';
+const CACHE_NAME = 'eduflow-v3';
+const STATIC_CACHE = 'eduflow-static-v3';
+const DYNAMIC_CACHE = 'eduflow-dynamic-v3';
 
 // Static assets - cache first strategy
 const staticAssets = [
@@ -53,6 +53,15 @@ self.addEventListener('fetch', (event) => {
   // Skip chrome-extension and other non-http(s) requests
   if (!url.protocol.startsWith('http')) return;
 
+  // Never cache Vite dev modules/HMR assets to avoid mixed React runtimes.
+  if (
+    url.pathname.startsWith('/node_modules/.vite/') ||
+    url.pathname.startsWith('/@vite/') ||
+    url.pathname.startsWith('/src/')
+  ) {
+    return;
+  }
+
   // API requests (Supabase) - network first with cache fallback
   if (url.hostname.includes('supabase')) {
     event.respondWith(networkFirst(request));
@@ -63,7 +72,6 @@ self.addEventListener('fetch', (event) => {
   if (
     request.destination === 'image' ||
     request.destination === 'style' ||
-    request.destination === 'script' ||
     request.destination === 'font'
   ) {
     event.respondWith(cacheFirst(request));
