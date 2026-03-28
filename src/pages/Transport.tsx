@@ -55,7 +55,7 @@ function RoutesManagement() {
                   </TableCell>
                   <TableCell>{route.distance} km</TableCell>
                   <TableCell>{route.duration} min</TableCell>
-                  <TableCell>₹{route.fare}</TableCell>
+                  <TableCell>₹{route.base_fare}</TableCell>
                   <TableCell>
                     <Badge variant={route.status === "active" ? "secondary" : "outline"}>
                       {route.status}
