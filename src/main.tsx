@@ -101,4 +101,5 @@ if (isProduction) {
   });
 }
 
+document.getElementById('seo-fallback')?.remove();
 createRoot(document.getElementById("root")!).render(<App />);
