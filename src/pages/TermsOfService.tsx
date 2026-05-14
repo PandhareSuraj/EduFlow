@@ -2,11 +2,15 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { APP_CONFIG } from '@/config/appConfig';
-import { usePageTitle } from '@/hooks/usePageTitle';
+import { useSeo } from '@/hooks/useSeo';
 
 export default function TermsOfService() {
   const navigate = useNavigate();
-  usePageTitle('Terms of Service');
+  useSeo({
+    title: 'Terms of Service',
+    description: 'Terms governing the use of EduFlow education ERP — accounts, acceptable use, payments, data ownership and liability.',
+    canonicalPath: '/terms-of-service',
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);
