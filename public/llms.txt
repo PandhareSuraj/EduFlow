@@ -122,3 +122,10 @@ EduFlow is a comprehensive, cloud-based education management platform (Education
 
 ## Keywords
 college management software, education ERP software India, student management system, fee collection software, attendance management system, hostel management software, library management system, transport management software, exam management system, placement management software, school ERP software, university management system, education management platform, college ERP India, student information system, academic management software, institution management solution, college CRM, education technology, EdTech India
+
+## Pages
+- [Home](/): Overview of EduFlow education ERP and core modules.
+- [Product Tour](/product-tour): Interactive demos, feature walkthroughs and ROI calculator.
+- [Sign In / Free Trial](/auth): Sign in or create an EduFlow account.
+- [Privacy Policy](/privacy-policy): How we collect, use and protect data.
+- [Terms of Service](/terms-of-service): Terms governing use of the platform.

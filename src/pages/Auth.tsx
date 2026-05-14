@@ -13,8 +13,14 @@ import { createDemoUsers } from '@/utils/createDemoUsers';
 import { supabase } from '@/integrations/supabase/client';
 import { ThreeStepSignup } from '@/components/auth/ThreeStepSignup';
 import eduflowLogo from '@/assets/eduflow-logo.png';
+import { useSeo } from '@/hooks/useSeo';
 
 export default function Auth() {
+  useSeo({
+    title: 'Sign In',
+    description: 'Sign in or create an EduFlow account to manage your college, students, fees, attendance and exams.',
+    canonicalPath: '/auth',
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');

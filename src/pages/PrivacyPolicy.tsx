@@ -2,11 +2,15 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { APP_CONFIG } from '@/config/appConfig';
-import { usePageTitle } from '@/hooks/usePageTitle';
+import { useSeo } from '@/hooks/useSeo';
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate();
-  usePageTitle('Privacy Policy');
+  useSeo({
+    title: 'Privacy Policy',
+    description: 'How EduFlow collects, uses, and protects institutional, student, faculty and payment data on our education ERP platform.',
+    canonicalPath: '/privacy-policy',
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);
