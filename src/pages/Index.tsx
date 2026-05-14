@@ -306,6 +306,9 @@ export default function Index() {
                   src={dashboardPreview} 
                   alt="EduFlow Dashboard - Real platform screenshot showing student management, attendance tracking, and analytics"
                   loading="eager"
+                  fetchPriority="high"
+                  width={1280}
+                  height={800}
                   className="w-full h-auto object-cover"
                 />
               </div>
