@@ -23,7 +23,7 @@ import { FloatingContactButton, InquiryFormDialog } from '@/components/lead-gene
 // SEO metadata for the Product Tour page
 const PAGE_META = {
   title: 'Product Tour - EduFlow | See How It Works',
-  description: 'Explore EduFlow\'s comprehensive education management platform. Interactive demos, feature walkthroughs, and ROI calculator to see how we can transform your institution.',
+  description: 'Interactive demos, feature walkthroughs and ROI calculator for EduFlow\'s education management platform.',
   url: 'https://www.eduflow.mywebz.in/product-tour',
   image: 'https://storage.googleapis.com/gpt-engineer-file-uploads/lAaVSYx4RVVmxIS64ld97TLZWug1/social-images/social-1760781174571-clg crm.JPG',
 };
