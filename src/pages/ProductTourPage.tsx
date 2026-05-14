@@ -73,6 +73,16 @@ export default function ProductTourPage() {
       descriptionMeta.content = PAGE_META.description;
     }
 
+    // Self-referencing canonical
+    const canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    const originalCanonical = canonicalEl?.getAttribute('href') ?? null;
+    if (canonicalEl) canonicalEl.setAttribute('href', '/product-tour');
+
+    // Update og:url to self-reference
+    const ogUrlEl = document.querySelector('meta[property="og:url"]') as HTMLMetaElement | null;
+    const originalOgUrl = ogUrlEl?.getAttribute('content') ?? null;
+    if (ogUrlEl) ogUrlEl.setAttribute('content', '/product-tour');
+
     // Create JSON-LD structured data
     const jsonLd = document.createElement('script');
     jsonLd.type = 'application/ld+json';
