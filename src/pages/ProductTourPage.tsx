@@ -161,6 +161,8 @@ export default function ProductTourPage() {
       if (descriptionMeta && originalDescription) {
         descriptionMeta.content = originalDescription;
       }
+      if (canonicalEl && originalCanonical) canonicalEl.setAttribute('href', originalCanonical);
+      if (ogUrlEl && originalOgUrl) ogUrlEl.setAttribute('content', originalOgUrl);
     };
   }, []);
 
