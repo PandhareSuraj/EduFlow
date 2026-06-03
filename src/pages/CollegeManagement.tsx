@@ -69,11 +69,47 @@ export default function CollegeManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    const payload = {
+      name: formData.name.trim(),
+      code: formData.code.trim().toUpperCase(),
+      address: formData.address.trim(),
+      phone: formData.phone.trim(),
+      email: formData.email.trim(),
+      website: formData.website.trim(),
+    };
+
+    if (!payload.name || !payload.code) {
+      toast({
+        title: "Missing information",
+        description: "College name and code are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      // Pre-check for an existing college with the same code
+      const { data: existing, error: checkError } = await supabase
+        .from('colleges')
+        .select('id')
+        .eq('code', payload.code)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existing) {
+        toast({
+          title: "Duplicate college code",
+          description: `A college with code ${payload.code} already exists. Please use a different code.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('colleges')
-        .insert([formData]);
+        .insert([payload]);
 
       if (error) throw error;
 
@@ -92,11 +128,14 @@ export default function CollegeManagement() {
         website: ''
       });
       fetchColleges();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating college:', error);
+      const isDuplicate = error?.code === '23505' || error?.status === 409;
       toast({
         title: "Error",
-        description: "Failed to create college",
+        description: isDuplicate
+          ? `A college with code ${payload.code} already exists. Please use a different code.`
+          : "Failed to create college",
         variant: "destructive",
       });
     }
