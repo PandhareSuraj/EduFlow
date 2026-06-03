@@ -31,6 +31,7 @@ const Attendance = lazy(() => import("./pages/Attendance"));
 const Exams = lazy(() => import("./pages/Exams"));
 const Library = lazy(() => import("./pages/Library"));
 const IDCards = lazy(() => import("./pages/IDCards"));
+const Certificates = lazy(() => import("./pages/Certificates"));
 const Inventory = lazy(() => import("./pages/Inventory"));
 const Reports = lazy(() => import("./pages/Reports"));
 const Settings = lazy(() => import("./pages/Settings"));
