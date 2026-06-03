@@ -22,7 +22,8 @@ import {
   CalendarDays,
   Briefcase,
   PhoneCall,
-  ArrowUpCircle
+  ArrowUpCircle,
+  Award
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -97,6 +98,7 @@ export function AppSidebar() {
         { name: "Hostel", href: "/hostel", icon: Building },
         { name: "Transport", href: "/transport", icon: Bus },
         { name: "ID Cards", href: "/id-cards", icon: IdCard },
+        { name: "Certificates", href: "/certificates", icon: Award },
         { name: "Inventory", href: "/inventory", icon: Package },
         { name: "Reports", href: "/reports", icon: BarChart3 },
         { name: "Audit Trail", href: "/audit-trail", icon: Database },
@@ -126,6 +128,7 @@ export function AppSidebar() {
         { name: "Fees", href: "/fees", icon: CreditCard },
         { name: "Exams", href: "/exams", icon: FileText },
         { name: "ID Cards", href: "/id-cards", icon: IdCard },
+        { name: "Certificates", href: "/certificates", icon: Award },
         { name: "Inventory", href: "/inventory", icon: Package },
         { name: "Reports", href: "/reports", icon: BarChart3 },
         { name: "Events", href: "/events", icon: CalendarDays },
