@@ -128,6 +128,7 @@ export function AppSidebar() {
         { name: "Fees", href: "/fees", icon: CreditCard },
         { name: "Exams", href: "/exams", icon: FileText },
         { name: "ID Cards", href: "/id-cards", icon: IdCard },
+        { name: "Certificates", href: "/certificates", icon: Award },
         { name: "Inventory", href: "/inventory", icon: Package },
         { name: "Reports", href: "/reports", icon: BarChart3 },
         { name: "Events", href: "/events", icon: CalendarDays },
