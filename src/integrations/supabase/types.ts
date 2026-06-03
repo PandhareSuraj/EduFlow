@@ -609,6 +609,120 @@ export type Database = {
           },
         ]
       }
+      certificate_students: {
+        Row: {
+          academic_year: string | null
+          blood_group: string | null
+          bonafide_no: string | null
+          caste: string | null
+          character: string | null
+          class: string | null
+          college_code: string | null
+          college_id: string
+          conduct: string | null
+          course: string | null
+          created_at: string
+          created_by: string | null
+          date_of_admission: string | null
+          date_of_birth: string | null
+          date_of_birth_words: string | null
+          date_of_leaving: string | null
+          exam_appeared: boolean | null
+          exam_name: string | null
+          exam_session: string | null
+          father_name: string | null
+          full_name: string
+          gender: string | null
+          id: string
+          mother_name: string | null
+          nationality: string | null
+          place_of_birth: string | null
+          previous_exam_details: string | null
+          register_no: string | null
+          religion: string | null
+          remarks: string | null
+          result: string | null
+          seat_no: string | null
+          subjects: string | null
+          tc_no: string | null
+          updated_at: string
+        }
+        Insert: {
+          academic_year?: string | null
+          blood_group?: string | null
+          bonafide_no?: string | null
+          caste?: string | null
+          character?: string | null
+          class?: string | null
+          college_code?: string | null
+          college_id?: string
+          conduct?: string | null
+          course?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_of_admission?: string | null
+          date_of_birth?: string | null
+          date_of_birth_words?: string | null
+          date_of_leaving?: string | null
+          exam_appeared?: boolean | null
+          exam_name?: string | null
+          exam_session?: string | null
+          father_name?: string | null
+          full_name: string
+          gender?: string | null
+          id?: string
+          mother_name?: string | null
+          nationality?: string | null
+          place_of_birth?: string | null
+          previous_exam_details?: string | null
+          register_no?: string | null
+          religion?: string | null
+          remarks?: string | null
+          result?: string | null
+          seat_no?: string | null
+          subjects?: string | null
+          tc_no?: string | null
+          updated_at?: string
+        }
+        Update: {
+          academic_year?: string | null
+          blood_group?: string | null
+          bonafide_no?: string | null
+          caste?: string | null
+          character?: string | null
+          class?: string | null
+          college_code?: string | null
+          college_id?: string
+          conduct?: string | null
+          course?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_of_admission?: string | null
+          date_of_birth?: string | null
+          date_of_birth_words?: string | null
+          date_of_leaving?: string | null
+          exam_appeared?: boolean | null
+          exam_name?: string | null
+          exam_session?: string | null
+          father_name?: string | null
+          full_name?: string
+          gender?: string | null
+          id?: string
+          mother_name?: string | null
+          nationality?: string | null
+          place_of_birth?: string | null
+          previous_exam_details?: string | null
+          register_no?: string | null
+          religion?: string | null
+          remarks?: string | null
+          result?: string | null
+          seat_no?: string | null
+          subjects?: string | null
+          tc_no?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       class_schedules: {
         Row: {
           class_name: string
