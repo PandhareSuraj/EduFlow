@@ -217,6 +217,15 @@ const App = () => (
                       </Suspense>
                     </ProtectedRoute>
                   } />
+                  <Route path="/certificates" element={
+                    <ProtectedRoute allowedRoles={['admin', 'clerk', 'super_admin']}>
+                      <Suspense fallback={<TableFallback />}>
+                        <Layout>
+                          <Certificates />
+                        </Layout>
+                      </Suspense>
+                    </ProtectedRoute>
+                  } />
                   <Route path="/inventory" element={
                     <ProtectedRoute allowedRoles={['admin', 'clerk', 'librarian']}>
                       <Suspense fallback={<TableFallback />}>
