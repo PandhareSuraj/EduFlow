@@ -22,7 +22,8 @@ import {
   CalendarDays,
   Briefcase,
   PhoneCall,
-  ArrowUpCircle
+  ArrowUpCircle,
+  Award
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
