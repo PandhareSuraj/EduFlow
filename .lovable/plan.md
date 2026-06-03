@@ -1,63 +1,56 @@
-# Fix: Google indexing blank page on eduflow.mywebz.in
+# Certificates Module (TC & Bonafide)
 
-## Problem
+A new self-contained module to record certificate-specific student details and generate printable Transfer Certificate (TC) and Bonafide Certificate PDFs in English, styled after the uploaded samples. The college header (name, code, affiliation, address, logo) is pulled automatically from existing college settings.
 
-Lovable apps are client-rendered React SPAs. Lovable hosting does not support SSR or prerendering. When Googlebot fetches `https://eduflow.mywebz.in/`, it receives `index.html` with only `<title>` and meta tags — the `<div id="root">` is empty until JavaScript runs. Although Google can execute JS, it often indexes the pre-render snapshot, and other crawlers (Bing, Bytespider, social previewers, LLM bots) cannot. Result: a blank-looking page in the index.
+## What gets built
 
-Since we cannot enable real SSR on Lovable, the practical fix is a **static HTML fallback** baked into `index.html` that crawlers see immediately, plus richer structured data. The fallback is hidden the moment React mounts.
+### 1. New database table `certificate_students`
+A dedicated table (independent of the existing `students` table) holding every field needed by the TC and Bonafide certificates. Fields captured by the custom form:
 
-## Changes
+- Identity: full name, mother's name, father's/guardian name
+- Personal: gender, date of birth (date) + date of birth in words, place of birth, nationality, religion, caste/sub-caste, blood group
+- Academic: course/branch, class, register no / PRN (eligibility no), college code, academic year, date of admission, date of leaving, subjects (text), previous exam details
+- Certificate fields: conduct, character, exam appeared (yes/no), exam name, exam session (summer/winter), result (passed/failed/absent), seat no, remarks
+- Scoped to the user's college (`college_id`) with standard id/created_at/updated_at and created_by.
 
-### 1. `index.html` — inject static SEO content inside `<div id="root">`
+RLS: college-scoped access for `admin`, `clerk`, `super_admin` (read/write), following the existing role pattern. GRANTs added for `authenticated` and `service_role`.
 
-Add a `<div id="seo-fallback">` block inside `#root` containing real, indexable HTML:
-- `<h1>` with primary keyword: "EduFlow — Smart Education Management & College ERP Software"
-- `<h2>` subheading and 2-3 paragraphs describing the product (students, faculty, fees, attendance, hostel, transport, library, exams, placements)
-- A `<ul>` of feature highlights (mirrors the existing `featureList` JSON-LD)
-- Anchor links to `/product-tour`, `/auth`, `/privacy-policy`, `/terms-of-service` so crawlers discover routes
-- A short footer with copyright + company
+### 2. Certificates page + route
+- New page `src/pages/Certificates.tsx` at route `/certificates`, protected for `admin`, `clerk`, `super_admin`, wrapped in `Layout` like other modules.
+- Sidebar entry "Certificates" (FileText/Award icon) added to the `admin` and `clerk` menus in `AppSidebar.tsx`.
+- Lazy-loaded and routed in `App.tsx`.
 
-This block is plain HTML (no JS required) and lives inside `#root`. React's `createRoot(...).render(<App/>)` replaces the children of `#root` on mount, so end users never see it.
+Page layout (matches existing module style: header, stat cards, search, table):
+- Stat cards: total records, TCs generated, Bonafides generated.
+- "Add Student" button opening a dialog with the custom certificate-student form (zod-validated).
+- Searchable table of saved certificate-students with actions: Edit, Generate TC, Generate Bonafide, Delete.
 
-### 2. `index.html` — add comprehensive JSON-LD
+### 3. Custom student add/edit form
+- `src/components/certificates/CertificateStudentForm.tsx` — dialog form covering all fields above, English labels only, zod validation (length limits, required name/course), saving to `certificate_students`.
 
-Add inline `<script type="application/ld+json">` blocks to `<head>` (currently only set dynamically in ProductTourPage):
-- `Organization` (EduFlow, logo, sameAs social links)
-- `WebSite` with `SearchAction` (sitelinks search box)
-- `SoftwareApplication` with `aggregateRating`, `offers`, `featureList` (same as ProductTourPage so the home URL itself carries it)
-- `FAQPage` with 4-6 common questions
+### 4. PDF generators (printable download)
+Built with `jsPDF` (already used in the project), one A4 page each, laid out to mirror the samples:
+- `src/components/certificates/pdf/TransferCertificatePDF.tsx` — bordered TC layout: college header block (auto from college settings), "TRANSFER / LEAVING CERTIFICATE" title, numbered fields (name, mother's name, caste, religion, nationality, place of birth, DOB figures + words, admission/leaving dates with class, subjects, conduct, remarks with exam/result/seat no), footer with Date / Clerk / Principal.
+- `src/components/certificates/pdf/BonafideCertificatePDF.tsx` — bonafide layout: header block, "Bonafide Certificate" title, certifying sentence with name, register no, course/year, academic year, DOB, character, footer with Date / Clerk / Principal.
+- Both pull college name/address/code/affiliation/logo/signature from `useCollegeSettings` / `useBranding`, and save files as `TC_{name}_{date}.pdf` / `Bonafide_{name}_{date}.pdf` (matching the project's export naming convention).
 
-These are inert for users but greatly help SEO and AI crawlers.
+## Technical notes
+- Reuses existing patterns: `useCollegeSettings` for header, `usePageTitle`, shadcn `Dialog`/`Table`/`Card`, `useToast`, jsPDF (as in `CertificatePDF.tsx`).
+- All certificate text and form labels are English only.
+- The module does not read from or modify the existing `students` table.
 
-### 3. `index.html` — preload/SEO meta polish
+```text
+/certificates
+ ├─ Stat cards
+ ├─ [Add Student] → CertificateStudentForm dialog
+ └─ Table rows → [Edit] [Generate TC] [Generate Bonafide] [Delete]
+                         │                │
+                  TransferCertificatePDF  BonafideCertificatePDF  (jsPDF download)
+```
 
-- Add `<meta name="application-name">`, `<meta name="apple-mobile-web-app-title">`
-- Add `<link rel="alternate" type="application/rss+xml">` placeholder (optional, skip if no feed)
-- Ensure `<meta name="description">` is keyword-rich (already is — keep)
-- Add a visible `<noscript>` notice inside `#root` (after the SEO fallback) telling users JS is required
-
-### 4. `src/main.tsx` — clear fallback before mount (defensive)
-
-`createRoot().render()` already replaces `#root` children, but to be explicit and avoid a flash on slow connections, do `document.getElementById('seo-fallback')?.remove()` immediately before `createRoot(...).render(<App/>)`. Tiny change.
-
-### 5. `public/sitemap.xml` — verify it lists `/`, `/product-tour`, `/privacy-policy`, `/terms-of-service`
-
-If missing entries, add them. (Read-only mode — will check during implementation.)
-
-## What this does NOT do
-
-- Does not add real SSR (Lovable hosting does not support it; would require migrating off Lovable to Next.js/Remix/etc.).
-- Does not change runtime behavior for logged-in users.
-
-## Files touched
-
-- `index.html` (main change)
-- `src/main.tsx` (1-line cleanup)
-- `public/sitemap.xml` (verify/extend)
-
-## Expected outcome
-
-- Googlebot's raw HTML response now contains an `<h1>`, descriptive copy, feature list, and rich JSON-LD.
-- "View source" on `eduflow.mywebz.in` shows real content even with JS disabled.
-- Social previews (LinkedIn/Twitter) already work via OG tags; AI crawlers (GPTBot, ClaudeBot, PerplexityBot) now have substantive text to ingest.
-- No visual change for real users — React swaps in the SPA on mount.
+## Build order
+1. Migration: create `certificate_students` (+ GRANTs + RLS).
+2. Form component with zod validation.
+3. TC and Bonafide PDF generators.
+4. Certificates page (stats, search, table, actions).
+5. Wire route in `App.tsx` and sidebar entries in `AppSidebar.tsx`.
