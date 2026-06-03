@@ -98,6 +98,7 @@ export function AppSidebar() {
         { name: "Hostel", href: "/hostel", icon: Building },
         { name: "Transport", href: "/transport", icon: Bus },
         { name: "ID Cards", href: "/id-cards", icon: IdCard },
+        { name: "Certificates", href: "/certificates", icon: Award },
         { name: "Inventory", href: "/inventory", icon: Package },
         { name: "Reports", href: "/reports", icon: BarChart3 },
         { name: "Audit Trail", href: "/audit-trail", icon: Database },
