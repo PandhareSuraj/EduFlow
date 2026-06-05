@@ -11,7 +11,11 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: localStorage,
+    storageKey: 'sb-velhefqnjmevluskffzp-auth-token',
     persistSession: true,
     autoRefreshToken: true,
+    // Run the callback immediately instead of waiting on Navigator LockManager,
+    // which deadlocks across multiple tabs + the service worker (10s lock timeout).
+    lock: async (_name, _acquireTimeout, fn) => fn(),
   }
 });

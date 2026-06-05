@@ -1,33 +1,38 @@
-# Improve TC/LC & Bonafide Certificate Design
+# Fix "not able to login" (auth lock timeout)
 
-Redesign both certificate PDFs to a **classic, formal** government-document aesthetic, with the **college logo in the header** and a **Principal signature + seal** block. English only. No data/schema changes — purely the PDF generation layout.
+The login failure is caused by a `Navigator LockManager` lock timeout on the Supabase auth token, made worse by the service worker intercepting Supabase requests. Fix both.
 
-## Files changed
-- `src/components/certificates/pdf/TransferCertificatePDF.tsx`
-- `src/components/certificates/pdf/BonafideCertificatePDF.tsx`
+## 1. Bypass the Navigator lock — `src/integrations/supabase/client.ts`
+Add a custom `lock` to the auth config so `supabase-js` no longer relies on the exclusive cross-tab Web Lock that times out after 10s when multiple tabs / the service worker contend for it. Also set an explicit `storageKey`.
 
-## Shared visual language (applied to both)
-- **Double ornate border**: thick outer rule + thin inner rule in a deep accent tone (TC = maroon, Bonafide = navy), with small corner accent marks for a traditional look.
-- **Logo header**: load `college.logoUrl` and draw it (top-center/left) beside the college name. Use an async image loader (convert URL → dataURL via `Image`/canvas) with a graceful fallback to text-only header if the logo is missing or fails to load.
-- **Header block**: large bold college name, address line, contact line, separated from the body by a ruled divider.
-- **Title**: centered, bold, underlined certificate title with letter spacing for formality.
-- **Body**: improved line spacing, justified/wrapped paragraphs, bold field labels with aligned values, consistent margins.
-- **Footer signature area (Principal + seal)**:
-  - Left: a bordered "Seal" placeholder box ("Office Seal").
-  - Right: signature line with "Principal" label and `college.signatureTitle`.
-  - Date + place line above the footer.
+```ts
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    storage: localStorage,
+    storageKey: 'sb-velhefqnjmevluskffzp-auth-token',
+    persistSession: true,
+    autoRefreshToken: true,
+    // Run the callback immediately instead of waiting on Navigator LockManager,
+    // which deadlocks across multiple tabs + the service worker.
+    lock: async (_name, _acquireTimeout, fn) => fn(),
+  },
+});
+```
 
-## TC/LC specifics
-- Keep all existing fields (name, parents, caste/religion, nationality, DOB figures + words, admission/leaving dates, class, course, subjects, conduct, remarks, exam result block).
-- Tighten the numbered field rows into a clean aligned two-column rhythm and add a "Certified that the above information is true as per college records" closing line above the footer.
+This removes the `Acquiring an exclusive Navigator LockManager lock ... timed out` error and lets login proceed.
 
-## Bonafide specifics
-- Keep certifying paragraph, register no, course/class, academic year, DOB, character/conduct, remarks.
-- Add a formal closing line ("Issued on request for ____ purpose") and the same seal + Principal footer.
+## 2. Stop the service worker from handling Supabase requests — `public/service-worker.js`
+In the `fetch` handler, return early for any `supabase` host so auth/session requests always go straight to the network (no caching, no stale sessions, no `Revalidate fetch failed`). Replace the current `networkFirst` branch:
 
-## Technical notes
-- Add an internal `loadImageAsDataUrl(url)` helper in each file (or a small shared util) that resolves to `{ dataUrl, width, height }` and returns `null` on failure so generation never breaks.
-- Make `generate*PDF` await the logo load before drawing; keep the existing function signatures and `doc.save(...)` filenames unchanged so `Certificates.tsx` needs no edits.
+```js
+// Never intercept Supabase (auth/session/data) — always go to network.
+if (url.hostname.includes('supabase')) {
+  return;
+}
+```
+
+Also bump the cache version constants (e.g. `v3` -> `v4`) so existing clients drop the old caches that may hold stale Supabase responses.
 
 ## Verification
-- Build check, then generate a TC and a Bonafide from the Certificates page and visually confirm borders, logo, layout, and the seal/Principal footer render correctly (including the no-logo fallback).
+- Build check.
+- Reload the preview, confirm the LockManager error is gone from the console, and that signing in succeeds (including with the app open in a second tab).

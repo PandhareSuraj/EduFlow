@@ -1,6 +1,6 @@
-const CACHE_NAME = 'eduflow-v3';
-const STATIC_CACHE = 'eduflow-static-v3';
-const DYNAMIC_CACHE = 'eduflow-dynamic-v3';
+const CACHE_NAME = 'eduflow-v4';
+const STATIC_CACHE = 'eduflow-static-v4';
+const DYNAMIC_CACHE = 'eduflow-dynamic-v4';
 
 // Static assets - cache first strategy
 const staticAssets = [
@@ -62,9 +62,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API requests (Supabase) - network first with cache fallback
+  // Never intercept Supabase (auth/session/data) — always go straight to the
+  // network so the auth token is never served stale and locks never deadlock.
   if (url.hostname.includes('supabase')) {
-    event.respondWith(networkFirst(request));
     return;
   }
 
