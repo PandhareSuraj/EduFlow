@@ -62,9 +62,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API requests (Supabase) - network first with cache fallback
+  // Never intercept Supabase (auth/session/data) — always go straight to the
+  // network so the auth token is never served stale and locks never deadlock.
   if (url.hostname.includes('supabase')) {
-    event.respondWith(networkFirst(request));
     return;
   }
 
