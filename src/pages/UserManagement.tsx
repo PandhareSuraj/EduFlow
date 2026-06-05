@@ -368,6 +368,9 @@ export default function UserManagement() {
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       placeholder="Leave empty for auto-generated"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      If set: min 8 chars with uppercase, lowercase, and a number.
+                    </p>
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="role">Role</Label>
