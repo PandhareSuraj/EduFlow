@@ -1,19 +1,33 @@
-# Fix: "Failed to create college" error
+# Improve TC/LC & Bonafide Certificate Design
 
-## What's happening
-The college code **006677** already belongs to "NITYA COLLEGE OF ENGINEERING". The `colleges.code` column is unique, so saving a second college with the same code is rejected by the database (HTTP 409). Right now the app only shows a generic "Failed to create college" message, so it's not clear *why* it failed.
+Redesign both certificate PDFs to a **classic, formal** government-document aesthetic, with the **college logo in the header** and a **Principal signature + seal** block. English only. No data/schema changes — purely the PDF generation layout.
 
-## The fix
-In `src/pages/CollegeManagement.tsx` (the `handleSubmit` function):
+## Files changed
+- `src/components/certificates/pdf/TransferCertificatePDF.tsx`
+- `src/components/certificates/pdf/BonafideCertificatePDF.tsx`
 
-1. **Detect the duplicate-code error** — when Supabase returns the unique-violation error (Postgres code `23505` / HTTP 409), show a specific, friendly toast: e.g. *"A college with code 006677 already exists. Please use a different code."* instead of the generic message.
+## Shared visual language (applied to both)
+- **Double ornate border**: thick outer rule + thin inner rule in a deep accent tone (TC = maroon, Bonafide = navy), with small corner accent marks for a traditional look.
+- **Logo header**: load `college.logoUrl` and draw it (top-center/left) beside the college name. Use an async image loader (convert URL → dataURL via `Image`/canvas) with a graceful fallback to text-only header if the logo is missing or fails to load.
+- **Header block**: large bold college name, address line, contact line, separated from the body by a ruled divider.
+- **Title**: centered, bold, underlined certificate title with letter spacing for formality.
+- **Body**: improved line spacing, justified/wrapped paragraphs, bold field labels with aligned values, consistent margins.
+- **Footer signature area (Principal + seal)**:
+  - Left: a bordered "Seal" placeholder box ("Office Seal").
+  - Right: signature line with "Principal" label and `college.signatureTitle`.
+  - Date + place line above the footer.
 
-2. **Trim & normalize inputs** before insert (trim name/code/etc.) so stray spaces don't cause silent mismatches.
+## TC/LC specifics
+- Keep all existing fields (name, parents, caste/religion, nationality, DOB figures + words, admission/leaving dates, class, course, subjects, conduct, remarks, exam result block).
+- Tighten the numbered field rows into a clean aligned two-column rhythm and add a "Certified that the above information is true as per college records" closing line above the footer.
 
-3. **Optional pre-check** — before inserting, query `colleges` for the entered code and, if found, block submission with the same friendly message (avoids the network round-trip failure).
+## Bonafide specifics
+- Keep certifying paragraph, register no, course/class, academic year, DOB, character/conduct, remarks.
+- Add a formal closing line ("Issued on request for ____ purpose") and the same seal + Principal footer.
 
-## Notes
-- This is a UI/validation change only; no database schema change is needed (the unique constraint is correct and should stay).
-- The `placeholder-user.jpg` 404 and the `toLowerCase` console error are unrelated cosmetic/log noise from elsewhere; if you'd like, I can investigate those separately, but they are not the cause of the college-creation failure.
+## Technical notes
+- Add an internal `loadImageAsDataUrl(url)` helper in each file (or a small shared util) that resolves to `{ dataUrl, width, height }` and returns `null` on failure so generation never breaks.
+- Make `generate*PDF` await the logo load before drawing; keep the existing function signatures and `doc.save(...)` filenames unchanged so `Certificates.tsx` needs no edits.
 
-The actual remedy for the user right now: enter a **unique college code** (006677 is taken).
+## Verification
+- Build check, then generate a TC and a Bonafide from the Certificates page and visually confirm borders, logo, layout, and the seal/Principal footer render correctly (including the no-logo fallback).
