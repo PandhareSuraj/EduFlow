@@ -101,36 +101,71 @@ export default function UserManagement() {
     }
   };
 
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // Client-side validation
+    if (!formData.email.trim()) {
+      toast({ title: "Error", description: "Email is required", variant: "destructive" });
+      return;
+    }
+    if (!formData.role) {
+      toast({ title: "Error", description: "Please select a role", variant: "destructive" });
+      return;
+    }
+    if (formData.password) {
+      const pw = formData.password;
+      if (pw.length < 8 || !/[a-z]/.test(pw) || !/[A-Z]/.test(pw) || !/\d/.test(pw)) {
+        toast({
+          title: "Weak password",
+          description: "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number. Leave it empty to auto-generate one.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    setIsCreatingUser(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-general-user', {
         body: {
-          email: formData.email,
+          email: formData.email.trim(),
           password: formData.password || undefined,
           role: formData.role,
           college_id: formData.college_id || null
         }
       });
 
-      if (error) throw error;
+      // The backend sends a descriptive error in the response body even on non-2xx.
+      const backendError =
+        (data && (data.error || (Array.isArray(data.details) && data.details.map((d: any) => d.error).join(', ')))) ||
+        null;
+
+      if (error || backendError) {
+        throw new Error(backendError || error?.message || 'Failed to create user');
+      }
 
       toast({
         title: "Success",
-        description: "User created successfully",
+        description: data?.password
+          ? `User created. Temporary password: ${data.password}`
+          : "User created successfully",
       });
 
       setIsDialogOpen(false);
       setFormData({ email: '', password: '', role: '', college_id: '' });
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating user:', error);
       toast({
         title: "Error",
-        description: "Failed to create user",
+        description: error?.message || "Failed to create user",
         variant: "destructive",
       });
+    } finally {
+      setIsCreatingUser(false);
     }
   };
 

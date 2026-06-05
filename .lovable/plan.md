@@ -1,38 +1,25 @@
-# Fix "not able to login" (auth lock timeout)
+I found the failing flow: `create-general-user` is returning `400 Bad Request`, but the UI always replaces the real backend message with a generic `Failed to create user`. The edge function also validates passwords more strictly than the form explains, so a manually entered password can trigger a hidden validation failure.
 
-The login failure is caused by a `Navigator LockManager` lock timeout on the Supabase auth token, made worse by the service worker intercepting Supabase requests. Fix both.
+Plan:
 
-## 1. Bypass the Navigator lock — `src/integrations/supabase/client.ts`
-Add a custom `lock` to the auth config so `supabase-js` no longer relies on the exclusive cross-tab Web Lock that times out after 10s when multiple tabs / the service worker contend for it. Also set an explicit `storageKey`.
+1. Improve the Create User form validation
+   - Validate email, role, college, and password before calling the edge function.
+   - If a password is entered, show the exact requirements: at least 8 characters, one uppercase letter, one lowercase letter, and one number.
+   - Disable duplicate submissions while the request is running.
 
-```ts
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: localStorage,
-    storageKey: 'sb-velhefqnjmevluskffzp-auth-token',
-    persistSession: true,
-    autoRefreshToken: true,
-    // Run the callback immediately instead of waiting on Navigator LockManager,
-    // which deadlocks across multiple tabs + the service worker.
-    lock: async (_name, _acquireTimeout, fn) => fn(),
-  },
-});
-```
+2. Show the real backend error in the UI
+   - Update `src/pages/UserManagement.tsx` so the toast displays the edge function response message/details instead of always saying `Failed to create user`.
+   - If the backend says “User already exists”, “Validation failed”, or another specific issue, show that directly.
 
-This removes the `Acquiring an exclusive Navigator LockManager lock ... timed out` error and lets login proceed.
+3. Harden `create-general-user`
+   - Normalize validated values before use: lowercase/trim email and role, convert empty college to `null`.
+   - Add clear validation logging and response messages.
+   - Add environment-secret checks for `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` without logging secret values.
+   - Add the same super-admin caller verification pattern already used in `list-all-users`, so only super admins can create accounts.
 
-## 2. Stop the service worker from handling Supabase requests — `public/service-worker.js`
-In the `fetch` handler, return early for any `supabase` host so auth/session requests always go straight to the network (no caching, no stale sessions, no `Revalidate fetch failed`). Replace the current `networkFirst` branch:
+4. Verify the fix
+   - Deploy/test the updated edge function.
+   - Confirm invalid passwords show a helpful message and valid user creation no longer returns a hidden generic error.
 
-```js
-// Never intercept Supabase (auth/session/data) — always go to network.
-if (url.hostname.includes('supabase')) {
-  return;
-}
-```
-
-Also bump the cache version constants (e.g. `v3` -> `v4`) so existing clients drop the old caches that may hold stale Supabase responses.
-
-## Verification
-- Build check.
-- Reload the preview, confirm the LockManager error is gone from the console, and that signing in succeeds (including with the app open in a second tab).
+Technical note:
+The screenshot’s `FunctionsHttpError: Edge Function returned a non-2xx status code` is a wrapper error from `supabase.functions.invoke`; the underlying `400` response is likely being produced by validation before the function reaches the auth-user creation step.
