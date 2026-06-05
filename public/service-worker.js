@@ -1,6 +1,6 @@
-const CACHE_NAME = 'eduflow-v3';
-const STATIC_CACHE = 'eduflow-static-v3';
-const DYNAMIC_CACHE = 'eduflow-dynamic-v3';
+const CACHE_NAME = 'eduflow-v4';
+const STATIC_CACHE = 'eduflow-static-v4';
+const DYNAMIC_CACHE = 'eduflow-dynamic-v4';
 
 // Static assets - cache first strategy
 const staticAssets = [
