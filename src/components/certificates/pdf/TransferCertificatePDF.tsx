@@ -189,7 +189,7 @@ export async function generateTransferCertificatePDF(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(`Date: ${format(new Date(), "dd/MM/yyyy")}`, left, footerY - 6);
-  doc.text(`Place: ${val(college.code ? (college.address?.split(",").slice(-1)[0]?.trim() || "") : "")}`.replace(": ________________", ": ____________"), left, footerY);
+  doc.text("Place: ____________", left, footerY);
 
   // Seal box (left)
   doc.setDrawColor(120);
