@@ -406,7 +406,9 @@ export default function UserManagement() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit">Create User</Button>
+                  <Button type="submit" disabled={isCreatingUser}>
+                    {isCreatingUser ? 'Creating...' : 'Create User'}
+                  </Button>
                 </DialogFooter>
               </form>
             </DialogContent>
