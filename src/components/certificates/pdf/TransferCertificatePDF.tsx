@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import { format } from "date-fns";
 import type { CertificateStudent } from "../CertificateStudentForm";
+import { loadImageAsDataUrl } from "./pdfUtils";
 
 export interface CertificateCollege {
   name: string;
@@ -16,6 +17,9 @@ export interface CertificateCollege {
 const fmtDate = (d?: string | null) => (d ? format(new Date(d), "dd/MM/yyyy") : "________________");
 const val = (v?: string | null) => (v && v.trim() !== "" ? v : "________________");
 
+// Classic maroon accent tone
+const ACCENT: [number, number, number] = [120, 20, 20];
+
 export async function generateTransferCertificatePDF(
   student: CertificateStudent,
   college: CertificateCollege
@@ -23,29 +27,54 @@ export async function generateTransferCertificatePDF(
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const left = 18;
-  const right = pageWidth - 18;
+  const left = 20;
+  const right = pageWidth - 20;
+  const center = pageWidth / 2;
 
-  // Outer border
-  doc.setDrawColor(120, 20, 20);
-  doc.setLineWidth(0.8);
-  doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+  const logo = await loadImageAsDataUrl(college.logoUrl);
+
+  // ---- Double ornate border ----
+  doc.setDrawColor(...ACCENT);
+  doc.setLineWidth(1.1);
+  doc.rect(9, 9, pageWidth - 18, pageHeight - 18);
   doc.setLineWidth(0.3);
-  doc.rect(12.5, 12.5, pageWidth - 25, pageHeight - 25);
+  doc.rect(12, 12, pageWidth - 24, pageHeight - 24);
 
-  // Header
-  let y = 22;
-  doc.setTextColor(120, 20, 20);
+  // Corner accent marks
+  const corner = (x: number, y: number, dx: number, dy: number) => {
+    doc.setLineWidth(0.8);
+    doc.line(x, y, x + dx, y);
+    doc.line(x, y, x, y + dy);
+  };
+  corner(14, 14, 8, 8);
+  corner(pageWidth - 14, 14, -8, 8);
+  corner(14, pageHeight - 14, 8, -8);
+  corner(pageWidth - 14, pageHeight - 14, -8, -8);
+
+  // ---- Header ----
+  let y = 20;
+  const hasLogo = !!logo;
+  if (hasLogo && logo) {
+    const lw = 22;
+    const lh = (logo.height / logo.width) * lw || lw;
+    try {
+      doc.addImage(logo.dataUrl, "PNG", left, y, lw, Math.min(lh, 24));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  doc.setTextColor(...ACCENT);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.text(college.name || "College Name", pageWidth / 2, y, { align: "center" });
-  y += 7;
+  doc.setFontSize(19);
+  doc.text(college.name || "College Name", center, y + 6, { align: "center" });
+  y += 12;
   doc.setTextColor(40);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   if (college.address) {
-    doc.text(college.address, pageWidth / 2, y, { align: "center" });
-    y += 5;
+    doc.text(college.address, center, y, { align: "center" });
+    y += 4.5;
   }
   const contact = [
     college.phone ? `Phone: ${college.phone}` : "",
@@ -55,34 +84,47 @@ export async function generateTransferCertificatePDF(
     .join("   |   ");
   if (contact) {
     doc.setFontSize(9);
-    doc.text(contact, pageWidth / 2, y, { align: "center" });
-    y += 5;
+    doc.text(contact, center, y, { align: "center" });
+    y += 4.5;
+  }
+  if (college.code) {
+    doc.setFontSize(8.5);
+    doc.setTextColor(90);
+    doc.text(`College Code: ${college.code}`, center, y, { align: "center" });
+    y += 4.5;
   }
 
-  // Title
-  doc.setDrawColor(120, 20, 20);
-  doc.setLineWidth(0.4);
+  // Header divider
+  y += 1;
+  doc.setDrawColor(...ACCENT);
+  doc.setLineWidth(0.6);
   doc.line(left, y, right, y);
-  y += 7;
-  doc.setTextColor(120, 20, 20);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("TRANSFER / LEAVING CERTIFICATE", pageWidth / 2, y, { align: "center" });
   y += 8;
 
-  // T.C. No and College Code row
+  // ---- Title ----
+  doc.setTextColor(...ACCENT);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  const title = "TRANSFER / LEAVING CERTIFICATE";
+  doc.text(title, center, y, { align: "center", charSpace: 0.6 });
+  const titleW = doc.getTextWidth(title) + 0.6 * (title.length - 1);
+  doc.setLineWidth(0.4);
+  doc.line(center - titleW / 2, y + 1.8, center + titleW / 2, y + 1.8);
+  y += 10;
+
+  // ---- Reference row ----
   doc.setTextColor(0);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(`T.C. No: ${val(student.tc_no)}`, left, y);
-  doc.text(`College Code: ${val(student.college_code)}`, right, y, { align: "right" });
-  y += 6;
-  doc.text(`Register No / PRN: ${val(student.register_no)}`, left, y);
+  doc.text(`Register No / PRN: ${val(student.register_no)}`, right, y, { align: "right" });
   y += 8;
 
-  const lineH = 8;
+  // ---- Fields ----
+  const lineH = 7.6;
   const writeRow = (label: string, value: string) => {
     doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
     doc.text(label, left, y);
     const labelW = doc.getTextWidth(label);
     doc.setFont("helvetica", "normal");
@@ -130,12 +172,47 @@ export async function generateTransferCertificatePDF(
     y += lineH * bLines.length;
   }
 
-  // Footer signatures
-  const footerY = pageHeight - 30;
+  // Closing certification line
+  y += 2;
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(9.5);
+  doc.setTextColor(60);
+  const closing = doc.splitTextToSize(
+    "Certified that the above information is true as per the college records.",
+    right - left
+  );
+  doc.text(closing, left, y);
+
+  // ---- Footer: Seal + Principal ----
+  const footerY = pageHeight - 42;
+  doc.setTextColor(0);
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text(`Date: ${format(new Date(), "dd/MM/yyyy")}`, left, footerY);
-  doc.text("Clerk", pageWidth / 2, footerY, { align: "center" });
-  doc.text(college.signatureTitle || "Principal", right, footerY, { align: "right" });
+  doc.text(`Date: ${format(new Date(), "dd/MM/yyyy")}`, left, footerY - 6);
+  doc.text(`Place: ${val(college.code ? (college.address?.split(",").slice(-1)[0]?.trim() || "") : "")}`.replace(": ________________", ": ____________"), left, footerY);
+
+  // Seal box (left)
+  doc.setDrawColor(120);
+  doc.setLineWidth(0.4);
+  doc.circle(left + 14, footerY + 14, 13);
+  doc.setFontSize(8);
+  doc.setTextColor(120);
+  doc.text("Office Seal", left + 14, footerY + 14, { align: "center" });
+
+  // Principal signature (right)
+  doc.setDrawColor(0);
+  doc.setLineWidth(0.4);
+  doc.line(right - 55, footerY + 16, right, footerY + 16);
+  doc.setTextColor(0);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("Principal", right, footerY + 21, { align: "right" });
+  if (college.signatureTitle && college.signatureTitle !== "Principal") {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(90);
+    doc.text(college.signatureTitle, right, footerY + 26, { align: "right" });
+  }
 
   doc.save(`TC_${(student.full_name || "student").replace(/\s+/g, "_")}_${format(new Date(), "yyyy-MM-dd")}.pdf`);
 }
