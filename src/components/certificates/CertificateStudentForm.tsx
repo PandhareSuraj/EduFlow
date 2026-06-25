@@ -148,6 +148,13 @@ const emptyForm: CertificateStudent = {
   district: "",
   state: "Maharashtra",
   residence_years: "",
+  mother_tongue: "",
+  sub_caste: "",
+  previous_school: "",
+  study_progress: "Good",
+  leaving_reason: "",
+  studying_since: "",
+  general_register_no: "",
 };
 
 interface Props {
