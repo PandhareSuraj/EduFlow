@@ -35,6 +35,15 @@ import {
   type CertificateCollege,
 } from "@/components/certificates/pdf/TransferCertificatePDF";
 import { generateBonafideCertificatePDF } from "@/components/certificates/pdf/BonafideCertificatePDF";
+import { generateDomicileCertificatePDF } from "@/components/certificates/pdf/DomicileCertificatePDF";
+import type { CertificateLang } from "@/components/certificates/pdf/pdfUtils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Certificates() {
   usePageTitle("Certificates");
@@ -47,6 +56,7 @@ export default function Certificates() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CertificateStudent | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [language, setLanguage] = useState<CertificateLang>("en");
 
   const debouncedSearch = useDebounce(searchTerm, 300);
 
@@ -100,6 +110,7 @@ export default function Certificates() {
       total: students.length,
       tc: students.filter((s) => s.tc_no && s.tc_no.trim() !== "").length,
       bonafide: students.filter((s) => s.bonafide_no && s.bonafide_no.trim() !== "").length,
+      domicile: students.filter((s) => s.domicile_no && s.domicile_no.trim() !== "").length,
     }),
     [students]
   );
@@ -120,7 +131,7 @@ export default function Certificates() {
 
   const handleTC = async (s: CertificateStudent) => {
     try {
-      await generateTransferCertificatePDF(s, college);
+      await generateTransferCertificatePDF(s, college, language);
       toast({ title: "TC generated", description: "Download started" });
     } catch (e: any) {
       toast({ title: "Error", description: "Failed to generate TC", variant: "destructive" });
@@ -129,12 +140,22 @@ export default function Certificates() {
 
   const handleBonafide = async (s: CertificateStudent) => {
     try {
-      await generateBonafideCertificatePDF(s, college);
+      await generateBonafideCertificatePDF(s, college, language);
       toast({ title: "Bonafide generated", description: "Download started" });
     } catch (e: any) {
       toast({ title: "Error", description: "Failed to generate Bonafide", variant: "destructive" });
     }
   };
+
+  const handleDomicile = async (s: CertificateStudent) => {
+    try {
+      await generateDomicileCertificatePDF(s, college, language);
+      toast({ title: "Domicile generated", description: "Download started" });
+    } catch (e: any) {
+      toast({ title: "Error", description: "Failed to generate Domicile", variant: "destructive" });
+    }
+  };
+
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -142,21 +163,33 @@ export default function Certificates() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Certificates</h1>
           <p className="text-muted-foreground">
-            Manage student records and generate Transfer (TC) & Bonafide certificates
+            Manage student records and generate TC, Bonafide & Domicile certificates
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditing(null);
-            setFormOpen(true);
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Student
-        </Button>
+        <div className="flex items-center gap-3">
+          <Select value={language} onValueChange={(v) => setLanguage(v as CertificateLang)}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Language" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="mr">मराठी (Marathi)</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setFormOpen(true);
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Student
+          </Button>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+
+      <div className="grid gap-6 md:grid-cols-4">
         <Card className="bg-gradient-card shadow-card">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -190,7 +223,19 @@ export default function Certificates() {
             </div>
           </CardContent>
         </Card>
+        <Card className="bg-gradient-card shadow-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Domicile Issued</p>
+                <p className="text-3xl font-bold text-primary">{stats.domicile}</p>
+              </div>
+              <FileText className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
 
       <Card className="shadow-card">
         <CardContent className="p-6">
@@ -249,6 +294,11 @@ export default function Certificates() {
                           <Award className="mr-1 h-3.5 w-3.5" />
                           Bonafide
                         </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleDomicile(s)}>
+                          <FileDown className="mr-1 h-3.5 w-3.5" />
+                          Domicile
+                        </Button>
+
                         <Button
                           size="sm"
                           variant="ghost"

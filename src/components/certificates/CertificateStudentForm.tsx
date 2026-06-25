@@ -54,6 +54,11 @@ export interface CertificateStudent {
   remarks?: string | null;
   tc_no?: string | null;
   bonafide_no?: string | null;
+  domicile_no?: string | null;
+  taluka?: string | null;
+  district?: string | null;
+  state?: string | null;
+  residence_years?: string | null;
 }
 
 const schema = z.object({
@@ -86,6 +91,11 @@ const schema = z.object({
   remarks: z.string().trim().max(500).optional().or(z.literal("")),
   tc_no: z.string().trim().max(50).optional().or(z.literal("")),
   bonafide_no: z.string().trim().max(50).optional().or(z.literal("")),
+  domicile_no: z.string().trim().max(50).optional().or(z.literal("")),
+  taluka: z.string().trim().max(100).optional().or(z.literal("")),
+  district: z.string().trim().max(100).optional().or(z.literal("")),
+  state: z.string().trim().max(100).optional().or(z.literal("")),
+  residence_years: z.string().trim().max(20).optional().or(z.literal("")),
 });
 
 const emptyForm: CertificateStudent = {
@@ -119,6 +129,11 @@ const emptyForm: CertificateStudent = {
   remarks: "",
   tc_no: "",
   bonafide_no: "",
+  domicile_no: "",
+  taluka: "",
+  district: "",
+  state: "Maharashtra",
+  residence_years: "",
 };
 
 interface Props {
@@ -320,7 +335,26 @@ export function CertificateStudentForm({ open, onOpenChange, student, onSaved }:
               </div>
             </div>
           </section>
+
+          <section>
+            <h3 className="text-sm font-semibold text-muted-foreground mb-3">
+              Domicile Details
+            </h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              The Domicile certificate uses "Place of Birth" (from the Personal
+              section) as the Village / Town.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {field("Domicile No", "domicile_no")}
+              {field("Taluka", "taluka")}
+              {field("District", "district")}
+              {field("State", "state")}
+              {field("Years of Residence", "residence_years")}
+            </div>
+
+          </section>
         </div>
+
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>

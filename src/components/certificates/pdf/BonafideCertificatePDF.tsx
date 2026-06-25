@@ -2,7 +2,8 @@ import jsPDF from "jspdf";
 import { format } from "date-fns";
 import type { CertificateStudent } from "../CertificateStudentForm";
 import type { CertificateCollege } from "./TransferCertificatePDF";
-import { loadImageAsDataUrl } from "./pdfUtils";
+import { loadImageAsDataUrl, setLangFont, type CertificateLang } from "./pdfUtils";
+import { getCertStrings } from "./certificateStrings";
 
 const val = (v?: string | null) => (v && v.trim() !== "" ? v : "________________");
 const fmtDate = (d?: string | null) => (d ? format(new Date(d), "dd/MM/yyyy") : "________________");
@@ -12,8 +13,10 @@ const ACCENT: [number, number, number] = [30, 30, 90];
 
 export async function generateBonafideCertificatePDF(
   student: CertificateStudent,
-  college: CertificateCollege
+  college: CertificateCollege,
+  lang: CertificateLang = "en"
 ): Promise<void> {
+  const t = getCertStrings(lang);
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -54,20 +57,20 @@ export async function generateBonafideCertificatePDF(
   }
 
   doc.setTextColor(...ACCENT);
-  doc.setFont("helvetica", "bold");
+  setLangFont(doc, lang, "bold");
   doc.setFontSize(19);
   doc.text(college.name || "College Name", center, y + 6, { align: "center" });
   y += 12;
   doc.setTextColor(40);
-  doc.setFont("helvetica", "normal");
+  setLangFont(doc, lang, "normal");
   doc.setFontSize(9.5);
   if (college.address) {
     doc.text(college.address, center, y, { align: "center" });
     y += 4.5;
   }
   const contact = [
-    college.phone ? `Phone: ${college.phone}` : "",
-    college.email ? `Email: ${college.email}` : "",
+    college.phone ? `${t.phone}: ${college.phone}` : "",
+    college.email ? `${t.email}: ${college.email}` : "",
   ]
     .filter(Boolean)
     .join("   |   ");
@@ -79,7 +82,7 @@ export async function generateBonafideCertificatePDF(
   if (college.code) {
     doc.setFontSize(8.5);
     doc.setTextColor(90);
-    doc.text(`College Code: ${college.code}`, center, y, { align: "center" });
+    doc.text(t.collegeCode(college.code), center, y, { align: "center" });
     y += 4.5;
   }
 
@@ -92,34 +95,37 @@ export async function generateBonafideCertificatePDF(
 
   // ---- Title ----
   doc.setTextColor(...ACCENT);
-  doc.setFont("helvetica", "bold");
+  setLangFont(doc, lang, "bold");
   doc.setFontSize(16);
-  const title = "BONAFIDE CERTIFICATE";
-  doc.text(title, center, y, { align: "center", charSpace: 0.8 });
-  const titleW = doc.getTextWidth(title) + 0.8 * (title.length - 1);
+  const title = t.bonafideTitle;
+  doc.text(title, center, y, { align: "center" });
+  const titleW = doc.getTextWidth(title);
   doc.setLineWidth(0.4);
   doc.line(center - titleW / 2, y + 1.8, center + titleW / 2, y + 1.8);
   y += 8;
 
   // ---- Reference row ----
   doc.setTextColor(0);
-  doc.setFont("helvetica", "normal");
+  setLangFont(doc, lang, "normal");
   doc.setFontSize(10);
-  doc.text(`No: ${val(student.bonafide_no)}`, left, y);
-  doc.text(`Date: ${format(new Date(), "dd/MM/yyyy")}`, right, y, { align: "right" });
+  doc.text(`${t.no}: ${val(student.bonafide_no)}`, left, y);
+  doc.text(`${t.date}: ${format(new Date(), "dd/MM/yyyy")}`, right, y, { align: "right" });
   y += 14;
 
   // ---- Body ----
   doc.setTextColor(0);
-  doc.setFont("helvetica", "normal");
+  setLangFont(doc, lang, "normal");
   doc.setFontSize(12);
 
-  const body =
-    `This is to certify that Mr./Miss. ${val(student.full_name)}, Register No. ${val(student.register_no)}, ` +
-    `is/was a bonafide student of ${val(student.course)}${student.class ? " (" + student.class + ")" : ""} ` +
-    `in this institution during the academic year ${val(student.academic_year)}. ` +
-    `His/Her Date of Birth as per the college register is ${fmtDate(student.date_of_birth)}. ` +
-    `His/Her character and conduct is ${val(student.character || student.conduct)}.`;
+  const body = t.bonafideBody({
+    name: val(student.full_name),
+    registerNo: val(student.register_no),
+    course: val(student.course),
+    cls: student.class || "",
+    academicYear: val(student.academic_year),
+    dob: fmtDate(student.date_of_birth),
+    conduct: val(student.character || student.conduct),
+  });
 
   const lines = doc.splitTextToSize(body, right - left);
   doc.text(lines, left, y, { lineHeightFactor: 1.9 });
@@ -127,16 +133,12 @@ export async function generateBonafideCertificatePDF(
 
   // Formal closing line
   doc.setFontSize(11);
-  doc.text(
-    "This certificate is issued on request for the purpose mentioned below:",
-    left,
-    y
-  );
+  doc.text(t.bonafidePurposeLine, left, y);
   y += 8;
-  doc.setFont("helvetica", "italic");
+  setLangFont(doc, lang, "normal");
   doc.setTextColor(60);
   doc.setFontSize(10.5);
-  doc.text(`Purpose / Remarks: ${val(student.remarks)}`, left, y);
+  doc.text(t.bonafidePurpose(val(student.remarks)), left, y);
   y += 6;
 
   // ---- Footer: Seal + Principal ----
@@ -148,18 +150,18 @@ export async function generateBonafideCertificatePDF(
   doc.circle(left + 14, footerY + 14, 13);
   doc.setFontSize(8);
   doc.setTextColor(120);
-  doc.text("Office Seal", left + 14, footerY + 14, { align: "center" });
+  doc.text(t.officeSeal, left + 14, footerY + 14, { align: "center" });
 
   // Principal signature (right)
   doc.setDrawColor(0);
   doc.setLineWidth(0.4);
   doc.line(right - 55, footerY + 16, right, footerY + 16);
   doc.setTextColor(0);
-  doc.setFont("helvetica", "bold");
+  setLangFont(doc, lang, "bold");
   doc.setFontSize(10);
-  doc.text("Principal", right, footerY + 21, { align: "right" });
-  if (college.signatureTitle && college.signatureTitle !== "Principal") {
-    doc.setFont("helvetica", "normal");
+  doc.text(t.principal, right, footerY + 21, { align: "right" });
+  if (lang === "en" && college.signatureTitle && college.signatureTitle !== "Principal") {
+    setLangFont(doc, lang, "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(90);
     doc.text(college.signatureTitle, right, footerY + 26, { align: "right" });

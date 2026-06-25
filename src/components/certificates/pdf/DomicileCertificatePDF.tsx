@@ -1,27 +1,17 @@
 import jsPDF from "jspdf";
 import { format } from "date-fns";
 import type { CertificateStudent } from "../CertificateStudentForm";
+import type { CertificateCollege } from "./TransferCertificatePDF";
 import { loadImageAsDataUrl, setLangFont, type CertificateLang } from "./pdfUtils";
 import { getCertStrings } from "./certificateStrings";
 
-export interface CertificateCollege {
-  name: string;
-  code?: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  logoUrl?: string;
-  signatureTitle?: string;
-}
-
-const fmtDate = (d?: string | null) => (d ? format(new Date(d), "dd/MM/yyyy") : "________________");
 const val = (v?: string | null) => (v && v.trim() !== "" ? v : "________________");
+const fmtDate = (d?: string | null) => (d ? format(new Date(d), "dd/MM/yyyy") : "________________");
 
-// Classic maroon accent tone
-const ACCENT: [number, number, number] = [120, 20, 20];
+// Classic green accent tone
+const ACCENT: [number, number, number] = [20, 80, 40];
 
-export async function generateTransferCertificatePDF(
+export async function generateDomicileCertificatePDF(
   student: CertificateStudent,
   college: CertificateCollege,
   lang: CertificateLang = "en"
@@ -101,103 +91,55 @@ export async function generateTransferCertificatePDF(
   doc.setDrawColor(...ACCENT);
   doc.setLineWidth(0.6);
   doc.line(left, y, right, y);
-  y += 8;
+  y += 10;
 
   // ---- Title ----
   doc.setTextColor(...ACCENT);
   setLangFont(doc, lang, "bold");
-  doc.setFontSize(15);
-  const title = t.tcTitle;
+  doc.setFontSize(16);
+  const title = t.domicileTitle;
   doc.text(title, center, y, { align: "center" });
   const titleW = doc.getTextWidth(title);
   doc.setLineWidth(0.4);
   doc.line(center - titleW / 2, y + 1.8, center + titleW / 2, y + 1.8);
-  y += 10;
+  y += 8;
 
   // ---- Reference row ----
   doc.setTextColor(0);
   setLangFont(doc, lang, "normal");
   doc.setFontSize(10);
-  doc.text(`${t.tcNo}: ${val(student.tc_no)}`, left, y);
-  doc.text(`${t.registerNo}: ${val(student.register_no)}`, right, y, { align: "right" });
-  y += 8;
+  doc.text(`${t.domicileNo}: ${val(student.domicile_no)}`, left, y);
+  doc.text(`${t.date}: ${format(new Date(), "dd/MM/yyyy")}`, right, y, { align: "right" });
+  y += 14;
 
-  // ---- Fields ----
-  const lineH = 7.6;
-  const writeRow = (label: string, value: string) => {
-    setLangFont(doc, lang, "bold");
-    doc.setFontSize(10);
-    doc.text(label, left, y);
-    const labelW = doc.getTextWidth(label);
-    setLangFont(doc, lang, "normal");
-    doc.text(value, left + labelW + 2, y);
-    y += lineH;
-  };
-
-  writeRow(t.tcName, val(student.full_name));
-  writeRow(t.tcMother, val(student.mother_name));
-  writeRow(t.tcFather, val(student.father_name));
-  // Caste / Nationality combined rows
+  // ---- Body ----
+  doc.setTextColor(0);
   setLangFont(doc, lang, "normal");
-  doc.text(t.tcCaste(val(student.caste), val(student.religion)), left, y);
-  y += lineH;
-  doc.text(t.tcNationality(val(student.nationality), val(student.place_of_birth)), left, y);
-  y += lineH;
-  writeRow(t.tcDobFigures, fmtDate(student.date_of_birth));
-  writeRow(t.tcDobWords, val(student.date_of_birth_words));
-  setLangFont(doc, lang, "normal");
-  doc.text(t.tcAdmission(fmtDate(student.date_of_admission), val(student.class)), left, y);
-  y += lineH;
-  doc.text(t.tcLeaving(fmtDate(student.date_of_leaving), val(student.course)), left, y);
-  y += lineH;
+  doc.setFontSize(12);
 
-  // Subjects (wrapped)
-  setLangFont(doc, lang, "bold");
-  doc.text(t.tcSubjects, left, y);
-  const subjLabelW = doc.getTextWidth(t.tcSubjects);
-  setLangFont(doc, lang, "normal");
-  const subjLines = doc.splitTextToSize(val(student.subjects), right - left - subjLabelW - 2);
-  doc.text(subjLines, left + subjLabelW + 2, y);
-  y += lineH * Math.max(1, subjLines.length);
-
-  writeRow(t.tcConduct, val(student.conduct));
-
-  // Remarks block
-  setLangFont(doc, lang, "bold");
-  doc.text(t.tcRemarks, left, y);
-  y += lineH;
-  setLangFont(doc, lang, "normal");
-  const remarkText = t.tcRemarkBody({
-    appeared: !!student.exam_appeared,
-    examName: val(student.exam_name),
-    session: val(student.exam_session),
-    result: student.result || "",
-    seatNo: val(student.seat_no),
+  const body = t.domicileBody({
+    name: val(student.full_name),
+    father: val(student.father_name),
+    village: val(student.place_of_birth),
+    taluka: val(student.taluka),
+    district: val(student.district),
+    state: student.state || "Maharashtra",
+    years: val(student.residence_years),
+    dob: fmtDate(student.date_of_birth),
   });
-  const remarkLines = doc.splitTextToSize(remarkText, right - left - 6);
-  doc.text(remarkLines, left + 6, y);
-  y += lineH * remarkLines.length;
-  if (student.remarks) {
-    const bLines = doc.splitTextToSize(`b) ${student.remarks}`, right - left - 6);
-    doc.text(bLines, left + 6, y);
-    y += lineH * bLines.length;
-  }
 
-  // Closing certification line
-  y += 2;
+  const lines = doc.splitTextToSize(body, right - left);
+  doc.text(lines, left, y, { lineHeightFactor: 1.9 });
+  y += lines.length * 8.5 + 10;
+
   setLangFont(doc, lang, "normal");
-  doc.setFontSize(9.5);
   doc.setTextColor(60);
-  const closing = doc.splitTextToSize(t.tcClosing, right - left);
+  doc.setFontSize(10.5);
+  const closing = doc.splitTextToSize(t.domicileClosing, right - left);
   doc.text(closing, left, y);
 
   // ---- Footer: Seal + Principal ----
   const footerY = pageHeight - 42;
-  doc.setTextColor(0);
-  setLangFont(doc, lang, "normal");
-  doc.setFontSize(10);
-  doc.text(`${t.date}: ${format(new Date(), "dd/MM/yyyy")}`, left, footerY - 6);
-  doc.text(`${t.place}: ____________`, left, footerY);
 
   // Seal box (left)
   doc.setDrawColor(120);
@@ -222,5 +164,7 @@ export async function generateTransferCertificatePDF(
     doc.text(college.signatureTitle, right, footerY + 26, { align: "right" });
   }
 
-  doc.save(`TC_${(student.full_name || "student").replace(/\s+/g, "_")}_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+  doc.save(
+    `Domicile_${(student.full_name || "student").replace(/\s+/g, "_")}_${format(new Date(), "yyyy-MM-dd")}.pdf`
+  );
 }
