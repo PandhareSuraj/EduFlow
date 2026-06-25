@@ -395,13 +395,10 @@ export function CertificateStudentForm({ open, onOpenChange, student, onSaved }:
             </h3>
             <p className="text-xs text-muted-foreground mb-3">
               The Domicile certificate uses "Place of Birth" (from the Personal
-              section) as the Village / Town.
+              section) as the Village / Town, along with Taluka / District / State.
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               {field("Domicile No", "domicile_no")}
-              {field("Taluka", "taluka")}
-              {field("District", "district")}
-              {field("State", "state")}
               {field("Years of Residence", "residence_years")}
             </div>
 
