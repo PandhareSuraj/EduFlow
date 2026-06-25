@@ -223,7 +223,19 @@ export default function Certificates() {
             </div>
           </CardContent>
         </Card>
+        <Card className="bg-gradient-card shadow-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Domicile Issued</p>
+                <p className="text-3xl font-bold text-primary">{stats.domicile}</p>
+              </div>
+              <FileText className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
 
       <Card className="shadow-card">
         <CardContent className="p-6">
