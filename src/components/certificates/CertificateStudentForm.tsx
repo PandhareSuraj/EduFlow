@@ -129,6 +129,11 @@ const emptyForm: CertificateStudent = {
   remarks: "",
   tc_no: "",
   bonafide_no: "",
+  domicile_no: "",
+  taluka: "",
+  district: "",
+  state: "Maharashtra",
+  residence_years: "",
 };
 
 interface Props {
