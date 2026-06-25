@@ -293,6 +293,33 @@ export function CertificateStudentForm({ open, onOpenChange, student, onSaved }:
               {field("Academic Year", "academic_year")}
               {field("Date of Admission", "date_of_admission", "date")}
               {field("Date of Leaving", "date_of_leaving", "date")}
+              {field("Progress in Studies", "study_progress")}
+              {field("General Register No.", "general_register_no")}
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="previous_school">Previous School &amp; Class</Label>
+                <Textarea
+                  id="previous_school"
+                  value={form.previous_school ?? ""}
+                  onChange={(e) => set("previous_school", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="studying_since">Class studied in &amp; since when</Label>
+                <Textarea
+                  id="studying_since"
+                  value={form.studying_since ?? ""}
+                  onChange={(e) => set("studying_since", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="leaving_reason">Reason for Leaving School</Label>
+                <Textarea
+                  id="leaving_reason"
+                  value={form.leaving_reason ?? ""}
+                  onChange={(e) => set("leaving_reason", e.target.value)}
+                  placeholder="e.g. On request of student / parent"
+                />
+              </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="subjects">Subjects</Label>
                 <Textarea
