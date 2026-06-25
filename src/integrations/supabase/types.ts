@@ -635,11 +635,15 @@ export type Database = {
           father_name: string | null
           full_name: string
           gender: string | null
+          general_register_no: string | null
           id: string
+          leaving_reason: string | null
           mother_name: string | null
+          mother_tongue: string | null
           nationality: string | null
           place_of_birth: string | null
           previous_exam_details: string | null
+          previous_school: string | null
           register_no: string | null
           religion: string | null
           remarks: string | null
@@ -647,6 +651,9 @@ export type Database = {
           result: string | null
           seat_no: string | null
           state: string | null
+          study_progress: string | null
+          studying_since: string | null
+          sub_caste: string | null
           subjects: string | null
           taluka: string | null
           tc_no: string | null
@@ -677,11 +684,15 @@ export type Database = {
           father_name?: string | null
           full_name: string
           gender?: string | null
+          general_register_no?: string | null
           id?: string
+          leaving_reason?: string | null
           mother_name?: string | null
+          mother_tongue?: string | null
           nationality?: string | null
           place_of_birth?: string | null
           previous_exam_details?: string | null
+          previous_school?: string | null
           register_no?: string | null
           religion?: string | null
           remarks?: string | null
@@ -689,6 +700,9 @@ export type Database = {
           result?: string | null
           seat_no?: string | null
           state?: string | null
+          study_progress?: string | null
+          studying_since?: string | null
+          sub_caste?: string | null
           subjects?: string | null
           taluka?: string | null
           tc_no?: string | null
@@ -719,11 +733,15 @@ export type Database = {
           father_name?: string | null
           full_name?: string
           gender?: string | null
+          general_register_no?: string | null
           id?: string
+          leaving_reason?: string | null
           mother_name?: string | null
+          mother_tongue?: string | null
           nationality?: string | null
           place_of_birth?: string | null
           previous_exam_details?: string | null
+          previous_school?: string | null
           register_no?: string | null
           religion?: string | null
           remarks?: string | null
@@ -731,6 +749,9 @@ export type Database = {
           result?: string | null
           seat_no?: string | null
           state?: string | null
+          study_progress?: string | null
+          studying_since?: string | null
+          sub_caste?: string | null
           subjects?: string | null
           taluka?: string | null
           tc_no?: string | null
