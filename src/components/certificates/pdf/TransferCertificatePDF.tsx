@@ -122,74 +122,50 @@ export async function generateTransferCertificatePDF(
   doc.text(`${t.registerNo}: ${val(student.register_no)}`, right, y, { align: "right" });
   y += 8;
 
-  // ---- Fields ----
-  const lineH = 7.6;
-  const writeRow = (label: string, value: string) => {
-    setLangFont(doc, lang, "bold");
-    doc.setFontSize(10);
-    doc.text(label, left, y);
-    const labelW = doc.getTextWidth(label);
-    setLangFont(doc, lang, "normal");
-    doc.text(value, left + labelW + 2, y);
-    y += lineH;
+  // ---- Fields (official 21-point format) ----
+  const lineH = 6.8;
+  setLangFont(doc, lang, "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+
+  const writeLine = (text: string) => {
+    const lines = doc.splitTextToSize(text, right - left);
+    doc.text(lines, left, y);
+    y += lineH * lines.length;
   };
 
-  writeRow(t.tcName, val(student.full_name));
-  writeRow(t.tcMother, val(student.mother_name));
-  writeRow(t.tcFather, val(student.father_name));
-  // Caste / Nationality combined rows
-  setLangFont(doc, lang, "normal");
-  doc.text(t.tcCaste(val(student.caste), val(student.religion)), left, y);
-  y += lineH;
-  doc.text(t.tcNationality(val(student.nationality), val(student.place_of_birth)), left, y);
-  y += lineH;
-  writeRow(t.tcDobFigures, fmtDate(student.date_of_birth));
-  writeRow(t.tcDobWords, val(student.date_of_birth_words));
-  setLangFont(doc, lang, "normal");
-  doc.text(t.tcAdmission(fmtDate(student.date_of_admission), val(student.class)), left, y);
-  y += lineH;
-  doc.text(t.tcLeaving(fmtDate(student.date_of_leaving), val(student.course)), left, y);
-  y += lineH;
-
-  // Subjects (wrapped)
-  setLangFont(doc, lang, "bold");
-  doc.text(t.tcSubjects, left, y);
-  const subjLabelW = doc.getTextWidth(t.tcSubjects);
-  setLangFont(doc, lang, "normal");
-  const subjLines = doc.splitTextToSize(val(student.subjects), right - left - subjLabelW - 2);
-  doc.text(subjLines, left + subjLabelW + 2, y);
-  y += lineH * Math.max(1, subjLines.length);
-
-  writeRow(t.tcConduct, val(student.conduct));
-
-  // Remarks block
-  setLangFont(doc, lang, "bold");
-  doc.text(t.tcRemarks, left, y);
-  y += lineH;
-  setLangFont(doc, lang, "normal");
-  const remarkText = t.tcRemarkBody({
-    appeared: !!student.exam_appeared,
-    examName: val(student.exam_name),
-    session: val(student.exam_session),
-    result: student.result || "",
-    seatNo: val(student.seat_no),
-  });
-  const remarkLines = doc.splitTextToSize(remarkText, right - left - 6);
-  doc.text(remarkLines, left + 6, y);
-  y += lineH * remarkLines.length;
-  if (student.remarks) {
-    const bLines = doc.splitTextToSize(`b) ${student.remarks}`, right - left - 6);
-    doc.text(bLines, left + 6, y);
-    y += lineH * bLines.length;
-  }
+  writeLine(t.tcRowName(val(student.full_name)));
+  writeLine(t.tcRowFather(val(student.father_name)));
+  writeLine(t.tcRowMother(val(student.mother_name)));
+  writeLine(t.tcNationality(val(student.nationality)));
+  writeLine(t.tcMotherTongue(val(student.mother_tongue)));
+  writeLine(t.tcReligionCasteSub(val(student.religion), val(student.caste), val(student.sub_caste)));
+  writeLine(t.tcBirthplaceTaluka(val(student.place_of_birth), val(student.taluka)));
+  writeLine(
+    t.tcDistrictStateCountry(
+      val(student.district),
+      student.state && student.state.trim() !== "" ? student.state : (lang === "mr" ? "महाराष्ट्र" : "Maharashtra"),
+      lang === "mr" ? "भारत" : "India"
+    )
+  );
+  writeLine(t.tcDobFigures(fmtDate(student.date_of_birth)));
+  writeLine(t.tcDobWords(val(student.date_of_birth_words)));
+  writeLine(t.tcPrevSchool(val(student.previous_school)));
+  writeLine(t.tcAdmissionClass(fmtDate(student.date_of_admission), val(student.class)));
+  writeLine(t.tcProgressConduct(val(student.study_progress), val(student.conduct)));
+  writeLine(t.tcLeavingDate(fmtDate(student.date_of_leaving)));
+  writeLine(t.tcStudyingSince(val(student.studying_since)));
+  writeLine(t.tcLeavingReason(val(student.leaving_reason)));
+  writeLine(t.tcRemarks(val(student.remarks)));
 
   // Closing certification line
   y += 2;
   setLangFont(doc, lang, "normal");
   doc.setFontSize(9.5);
   doc.setTextColor(60);
-  const closing = doc.splitTextToSize(t.tcClosing, right - left);
+  const closing = doc.splitTextToSize(t.tcClosing(val(student.general_register_no)), right - left);
   doc.text(closing, left, y);
+
 
   // ---- Footer: Seal + Principal ----
   const footerY = pageHeight - 42;
