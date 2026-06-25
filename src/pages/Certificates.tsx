@@ -163,19 +163,31 @@ export default function Certificates() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Certificates</h1>
           <p className="text-muted-foreground">
-            Manage student records and generate Transfer (TC) & Bonafide certificates
+            Manage student records and generate TC, Bonafide & Domicile certificates
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditing(null);
-            setFormOpen(true);
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Student
-        </Button>
+        <div className="flex items-center gap-3">
+          <Select value={language} onValueChange={(v) => setLanguage(v as CertificateLang)}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Language" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="mr">मराठी (Marathi)</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setFormOpen(true);
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Student
+          </Button>
+        </div>
       </div>
+
 
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="bg-gradient-card shadow-card">
