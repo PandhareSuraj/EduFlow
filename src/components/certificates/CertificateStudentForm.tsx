@@ -91,6 +91,11 @@ const schema = z.object({
   remarks: z.string().trim().max(500).optional().or(z.literal("")),
   tc_no: z.string().trim().max(50).optional().or(z.literal("")),
   bonafide_no: z.string().trim().max(50).optional().or(z.literal("")),
+  domicile_no: z.string().trim().max(50).optional().or(z.literal("")),
+  taluka: z.string().trim().max(100).optional().or(z.literal("")),
+  district: z.string().trim().max(100).optional().or(z.literal("")),
+  state: z.string().trim().max(100).optional().or(z.literal("")),
+  residence_years: z.string().trim().max(20).optional().or(z.literal("")),
 });
 
 const emptyForm: CertificateStudent = {
