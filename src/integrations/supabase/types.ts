@@ -627,6 +627,8 @@ export type Database = {
           date_of_birth: string | null
           date_of_birth_words: string | null
           date_of_leaving: string | null
+          district: string | null
+          domicile_no: string | null
           exam_appeared: boolean | null
           exam_name: string | null
           exam_session: string | null
@@ -641,9 +643,12 @@ export type Database = {
           register_no: string | null
           religion: string | null
           remarks: string | null
+          residence_years: string | null
           result: string | null
           seat_no: string | null
+          state: string | null
           subjects: string | null
+          taluka: string | null
           tc_no: string | null
           updated_at: string
         }
@@ -664,6 +669,8 @@ export type Database = {
           date_of_birth?: string | null
           date_of_birth_words?: string | null
           date_of_leaving?: string | null
+          district?: string | null
+          domicile_no?: string | null
           exam_appeared?: boolean | null
           exam_name?: string | null
           exam_session?: string | null
@@ -678,9 +685,12 @@ export type Database = {
           register_no?: string | null
           religion?: string | null
           remarks?: string | null
+          residence_years?: string | null
           result?: string | null
           seat_no?: string | null
+          state?: string | null
           subjects?: string | null
+          taluka?: string | null
           tc_no?: string | null
           updated_at?: string
         }
@@ -701,6 +711,8 @@ export type Database = {
           date_of_birth?: string | null
           date_of_birth_words?: string | null
           date_of_leaving?: string | null
+          district?: string | null
+          domicile_no?: string | null
           exam_appeared?: boolean | null
           exam_name?: string | null
           exam_session?: string | null
@@ -715,9 +727,12 @@ export type Database = {
           register_no?: string | null
           religion?: string | null
           remarks?: string | null
+          residence_years?: string | null
           result?: string | null
           seat_no?: string | null
+          state?: string | null
           subjects?: string | null
+          taluka?: string | null
           tc_no?: string | null
           updated_at?: string
         }
