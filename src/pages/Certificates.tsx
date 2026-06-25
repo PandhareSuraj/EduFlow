@@ -110,6 +110,7 @@ export default function Certificates() {
       total: students.length,
       tc: students.filter((s) => s.tc_no && s.tc_no.trim() !== "").length,
       bonafide: students.filter((s) => s.bonafide_no && s.bonafide_no.trim() !== "").length,
+      domicile: students.filter((s) => s.domicile_no && s.domicile_no.trim() !== "").length,
     }),
     [students]
   );
@@ -130,7 +131,7 @@ export default function Certificates() {
 
   const handleTC = async (s: CertificateStudent) => {
     try {
-      await generateTransferCertificatePDF(s, college);
+      await generateTransferCertificatePDF(s, college, language);
       toast({ title: "TC generated", description: "Download started" });
     } catch (e: any) {
       toast({ title: "Error", description: "Failed to generate TC", variant: "destructive" });
@@ -139,12 +140,22 @@ export default function Certificates() {
 
   const handleBonafide = async (s: CertificateStudent) => {
     try {
-      await generateBonafideCertificatePDF(s, college);
+      await generateBonafideCertificatePDF(s, college, language);
       toast({ title: "Bonafide generated", description: "Download started" });
     } catch (e: any) {
       toast({ title: "Error", description: "Failed to generate Bonafide", variant: "destructive" });
     }
   };
+
+  const handleDomicile = async (s: CertificateStudent) => {
+    try {
+      await generateDomicileCertificatePDF(s, college, language);
+      toast({ title: "Domicile generated", description: "Download started" });
+    } catch (e: any) {
+      toast({ title: "Error", description: "Failed to generate Domicile", variant: "destructive" });
+    }
+  };
+
 
   return (
     <div className="space-y-6 animate-fade-in">
