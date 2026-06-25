@@ -59,6 +59,13 @@ export interface CertificateStudent {
   district?: string | null;
   state?: string | null;
   residence_years?: string | null;
+  mother_tongue?: string | null;
+  sub_caste?: string | null;
+  previous_school?: string | null;
+  study_progress?: string | null;
+  leaving_reason?: string | null;
+  studying_since?: string | null;
+  general_register_no?: string | null;
 }
 
 const schema = z.object({
