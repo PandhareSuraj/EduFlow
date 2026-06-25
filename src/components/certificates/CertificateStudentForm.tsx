@@ -54,6 +54,11 @@ export interface CertificateStudent {
   remarks?: string | null;
   tc_no?: string | null;
   bonafide_no?: string | null;
+  domicile_no?: string | null;
+  taluka?: string | null;
+  district?: string | null;
+  state?: string | null;
+  residence_years?: string | null;
 }
 
 const schema = z.object({
