@@ -1,7 +1,8 @@
 import jsPDF from "jspdf";
 import { format } from "date-fns";
 import type { CertificateStudent } from "../CertificateStudentForm";
-import { loadImageAsDataUrl } from "./pdfUtils";
+import { loadImageAsDataUrl, setLangFont, type CertificateLang } from "./pdfUtils";
+import { getCertStrings } from "./certificateStrings";
 
 export interface CertificateCollege {
   name: string;
@@ -22,8 +23,10 @@ const ACCENT: [number, number, number] = [120, 20, 20];
 
 export async function generateTransferCertificatePDF(
   student: CertificateStudent,
-  college: CertificateCollege
+  college: CertificateCollege,
+  lang: CertificateLang = "en"
 ): Promise<void> {
+  const t = getCertStrings(lang);
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -53,8 +56,7 @@ export async function generateTransferCertificatePDF(
 
   // ---- Header ----
   let y = 20;
-  const hasLogo = !!logo;
-  if (hasLogo && logo) {
+  if (logo) {
     const lw = 22;
     const lh = (logo.height / logo.width) * lw || lw;
     try {
@@ -65,20 +67,20 @@ export async function generateTransferCertificatePDF(
   }
 
   doc.setTextColor(...ACCENT);
-  doc.setFont("helvetica", "bold");
+  setLangFont(doc, lang, "bold");
   doc.setFontSize(19);
   doc.text(college.name || "College Name", center, y + 6, { align: "center" });
   y += 12;
   doc.setTextColor(40);
-  doc.setFont("helvetica", "normal");
+  setLangFont(doc, lang, "normal");
   doc.setFontSize(9.5);
   if (college.address) {
     doc.text(college.address, center, y, { align: "center" });
     y += 4.5;
   }
   const contact = [
-    college.phone ? `Phone: ${college.phone}` : "",
-    college.email ? `Email: ${college.email}` : "",
+    college.phone ? `${t.phone}: ${college.phone}` : "",
+    college.email ? `${t.email}: ${college.email}` : "",
   ]
     .filter(Boolean)
     .join("   |   ");
@@ -90,7 +92,7 @@ export async function generateTransferCertificatePDF(
   if (college.code) {
     doc.setFontSize(8.5);
     doc.setTextColor(90);
-    doc.text(`College Code: ${college.code}`, center, y, { align: "center" });
+    doc.text(t.collegeCode(college.code), center, y, { align: "center" });
     y += 4.5;
   }
 
@@ -103,66 +105,75 @@ export async function generateTransferCertificatePDF(
 
   // ---- Title ----
   doc.setTextColor(...ACCENT);
-  doc.setFont("helvetica", "bold");
+  setLangFont(doc, lang, "bold");
   doc.setFontSize(15);
-  const title = "TRANSFER / LEAVING CERTIFICATE";
-  doc.text(title, center, y, { align: "center", charSpace: 0.6 });
-  const titleW = doc.getTextWidth(title) + 0.6 * (title.length - 1);
+  const title = t.tcTitle;
+  doc.text(title, center, y, { align: "center" });
+  const titleW = doc.getTextWidth(title);
   doc.setLineWidth(0.4);
   doc.line(center - titleW / 2, y + 1.8, center + titleW / 2, y + 1.8);
   y += 10;
 
   // ---- Reference row ----
   doc.setTextColor(0);
-  doc.setFont("helvetica", "normal");
+  setLangFont(doc, lang, "normal");
   doc.setFontSize(10);
-  doc.text(`T.C. No: ${val(student.tc_no)}`, left, y);
-  doc.text(`Register No / PRN: ${val(student.register_no)}`, right, y, { align: "right" });
+  doc.text(`${t.tcNo}: ${val(student.tc_no)}`, left, y);
+  doc.text(`${t.registerNo}: ${val(student.register_no)}`, right, y, { align: "right" });
   y += 8;
 
   // ---- Fields ----
   const lineH = 7.6;
   const writeRow = (label: string, value: string) => {
-    doc.setFont("helvetica", "bold");
+    setLangFont(doc, lang, "bold");
     doc.setFontSize(10);
     doc.text(label, left, y);
     const labelW = doc.getTextWidth(label);
-    doc.setFont("helvetica", "normal");
+    setLangFont(doc, lang, "normal");
     doc.text(value, left + labelW + 2, y);
     y += lineH;
   };
 
-  writeRow("1) Name of the Student: ", val(student.full_name));
-  writeRow("2) Mother's Name: ", val(student.mother_name));
-  writeRow("3) Father's / Guardian Name: ", val(student.father_name));
-  writeRow("4) Caste / Sub-Caste: ", `${val(student.caste)}    Religion: ${val(student.religion)}`);
-  writeRow("5) Nationality: ", `${val(student.nationality)}    Place of Birth: ${val(student.place_of_birth)}`);
-  writeRow("6) Date of Birth (figures): ", fmtDate(student.date_of_birth));
-  writeRow("    Date of Birth (in words): ", val(student.date_of_birth_words));
-  writeRow("7) Date of Admission: ", `${fmtDate(student.date_of_admission)}    Class: ${val(student.class)}`);
-  writeRow("8) Date of Leaving: ", `${fmtDate(student.date_of_leaving)}    Course: ${val(student.course)}`);
+  writeRow(t.tcName, val(student.full_name));
+  writeRow(t.tcMother, val(student.mother_name));
+  writeRow(t.tcFather, val(student.father_name));
+  // Caste / Nationality combined rows
+  setLangFont(doc, lang, "normal");
+  doc.text(t.tcCaste(val(student.caste), val(student.religion)), left, y);
+  y += lineH;
+  doc.text(t.tcNationality(val(student.nationality), val(student.place_of_birth)), left, y);
+  y += lineH;
+  writeRow(t.tcDobFigures, fmtDate(student.date_of_birth));
+  writeRow(t.tcDobWords, val(student.date_of_birth_words));
+  setLangFont(doc, lang, "normal");
+  doc.text(t.tcAdmission(fmtDate(student.date_of_admission), val(student.class)), left, y);
+  y += lineH;
+  doc.text(t.tcLeaving(fmtDate(student.date_of_leaving), val(student.course)), left, y);
+  y += lineH;
 
   // Subjects (wrapped)
-  doc.setFont("helvetica", "bold");
-  doc.text("9) Subjects studied: ", left, y);
-  const subjLabelW = doc.getTextWidth("9) Subjects studied: ");
-  doc.setFont("helvetica", "normal");
+  setLangFont(doc, lang, "bold");
+  doc.text(t.tcSubjects, left, y);
+  const subjLabelW = doc.getTextWidth(t.tcSubjects);
+  setLangFont(doc, lang, "normal");
   const subjLines = doc.splitTextToSize(val(student.subjects), right - left - subjLabelW - 2);
   doc.text(subjLines, left + subjLabelW + 2, y);
   y += lineH * Math.max(1, subjLines.length);
 
-  writeRow("10) Conduct: ", val(student.conduct));
+  writeRow(t.tcConduct, val(student.conduct));
 
   // Remarks block
-  doc.setFont("helvetica", "bold");
-  doc.text("11) Remarks:", left, y);
+  setLangFont(doc, lang, "bold");
+  doc.text(t.tcRemarks, left, y);
   y += lineH;
-  doc.setFont("helvetica", "normal");
-  const appeared = student.exam_appeared ? "has appeared" : "has not appeared";
-  const result = student.result ? `and has ${student.result}` : "";
-  const remarkText = `a) He/She ${appeared} for the ${val(student.exam_name)} examination held in ${val(
-    student.exam_session
-  )} ${result} under Seat No. ${val(student.seat_no)}.`;
+  setLangFont(doc, lang, "normal");
+  const remarkText = t.tcRemarkBody({
+    appeared: !!student.exam_appeared,
+    examName: val(student.exam_name),
+    session: val(student.exam_session),
+    result: student.result || "",
+    seatNo: val(student.seat_no),
+  });
   const remarkLines = doc.splitTextToSize(remarkText, right - left - 6);
   doc.text(remarkLines, left + 6, y);
   y += lineH * remarkLines.length;
@@ -174,22 +185,19 @@ export async function generateTransferCertificatePDF(
 
   // Closing certification line
   y += 2;
-  doc.setFont("helvetica", "italic");
+  setLangFont(doc, lang, "normal");
   doc.setFontSize(9.5);
   doc.setTextColor(60);
-  const closing = doc.splitTextToSize(
-    "Certified that the above information is true as per the college records.",
-    right - left
-  );
+  const closing = doc.splitTextToSize(t.tcClosing, right - left);
   doc.text(closing, left, y);
 
   // ---- Footer: Seal + Principal ----
   const footerY = pageHeight - 42;
   doc.setTextColor(0);
-  doc.setFont("helvetica", "normal");
+  setLangFont(doc, lang, "normal");
   doc.setFontSize(10);
-  doc.text(`Date: ${format(new Date(), "dd/MM/yyyy")}`, left, footerY - 6);
-  doc.text("Place: ____________", left, footerY);
+  doc.text(`${t.date}: ${format(new Date(), "dd/MM/yyyy")}`, left, footerY - 6);
+  doc.text(`${t.place}: ____________`, left, footerY);
 
   // Seal box (left)
   doc.setDrawColor(120);
@@ -197,18 +205,18 @@ export async function generateTransferCertificatePDF(
   doc.circle(left + 14, footerY + 14, 13);
   doc.setFontSize(8);
   doc.setTextColor(120);
-  doc.text("Office Seal", left + 14, footerY + 14, { align: "center" });
+  doc.text(t.officeSeal, left + 14, footerY + 14, { align: "center" });
 
   // Principal signature (right)
   doc.setDrawColor(0);
   doc.setLineWidth(0.4);
   doc.line(right - 55, footerY + 16, right, footerY + 16);
   doc.setTextColor(0);
-  doc.setFont("helvetica", "bold");
+  setLangFont(doc, lang, "bold");
   doc.setFontSize(10);
-  doc.text("Principal", right, footerY + 21, { align: "right" });
-  if (college.signatureTitle && college.signatureTitle !== "Principal") {
-    doc.setFont("helvetica", "normal");
+  doc.text(t.principal, right, footerY + 21, { align: "right" });
+  if (lang === "en" && college.signatureTitle && college.signatureTitle !== "Principal") {
+    setLangFont(doc, lang, "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(90);
     doc.text(college.signatureTitle, right, footerY + 26, { align: "right" });
