@@ -294,6 +294,11 @@ export default function Certificates() {
                           <Award className="mr-1 h-3.5 w-3.5" />
                           Bonafide
                         </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleDomicile(s)}>
+                          <FileDown className="mr-1 h-3.5 w-3.5" />
+                          Domicile
+                        </Button>
+
                         <Button
                           size="sm"
                           variant="ghost"
