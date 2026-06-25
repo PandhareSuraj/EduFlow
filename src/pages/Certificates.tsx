@@ -56,6 +56,7 @@ export default function Certificates() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CertificateStudent | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [language, setLanguage] = useState<CertificateLang>("en");
 
   const debouncedSearch = useDebounce(searchTerm, 300);
 
