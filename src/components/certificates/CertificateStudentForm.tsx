@@ -335,7 +335,22 @@ export function CertificateStudentForm({ open, onOpenChange, student, onSaved }:
               </div>
             </div>
           </section>
+
+          <section>
+            <h3 className="text-sm font-semibold text-muted-foreground mb-3">
+              Domicile Details
+            </h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {field("Domicile No", "domicile_no")}
+              {field("Village / Town (Place of Birth)", "place_of_birth")}
+              {field("Taluka", "taluka")}
+              {field("District", "district")}
+              {field("State", "state")}
+              {field("Years of Residence", "residence_years")}
+            </div>
+          </section>
         </div>
+
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
