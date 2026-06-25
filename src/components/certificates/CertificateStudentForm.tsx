@@ -103,6 +103,13 @@ const schema = z.object({
   district: z.string().trim().max(100).optional().or(z.literal("")),
   state: z.string().trim().max(100).optional().or(z.literal("")),
   residence_years: z.string().trim().max(20).optional().or(z.literal("")),
+  mother_tongue: z.string().trim().max(100).optional().or(z.literal("")),
+  sub_caste: z.string().trim().max(100).optional().or(z.literal("")),
+  previous_school: z.string().trim().max(300).optional().or(z.literal("")),
+  study_progress: z.string().trim().max(150).optional().or(z.literal("")),
+  leaving_reason: z.string().trim().max(300).optional().or(z.literal("")),
+  studying_since: z.string().trim().max(300).optional().or(z.literal("")),
+  general_register_no: z.string().trim().max(50).optional().or(z.literal("")),
 });
 
 const emptyForm: CertificateStudent = {
