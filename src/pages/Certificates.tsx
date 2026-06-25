@@ -35,6 +35,15 @@ import {
   type CertificateCollege,
 } from "@/components/certificates/pdf/TransferCertificatePDF";
 import { generateBonafideCertificatePDF } from "@/components/certificates/pdf/BonafideCertificatePDF";
+import { generateDomicileCertificatePDF } from "@/components/certificates/pdf/DomicileCertificatePDF";
+import type { CertificateLang } from "@/components/certificates/pdf/pdfUtils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Certificates() {
   usePageTitle("Certificates");
