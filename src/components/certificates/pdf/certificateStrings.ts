@@ -18,9 +18,11 @@ export interface CertStrings {
   tcNo: string;
   domicileNo: string;
   principal: string;
+  classTeacher: string;
+  clerk: string;
   officeSeal: string;
   blank: string;
-  // Bonafide
+  // Bonafide (matches sample "बोनाफाईड प्रमाणपत्र" / Character Certificate)
   bonafideBody: (a: {
     name: string;
     registerNo: string;
@@ -28,31 +30,31 @@ export interface CertStrings {
     cls: string;
     academicYear: string;
     dob: string;
+    dobWords: string;
+    caste: string;
     conduct: string;
   }) => string;
   bonafidePurposeLine: string;
   bonafidePurpose: (purpose: string) => string;
-  // TC field rows
-  tcName: string;
-  tcMother: string;
-  tcFather: string;
-  tcCaste: (caste: string, religion: string) => string;
-  tcNationality: (nat: string, pob: string) => string;
-  tcDobFigures: string;
-  tcDobWords: string;
-  tcAdmission: (date: string, cls: string) => string;
-  tcLeaving: (date: string, course: string) => string;
-  tcSubjects: string;
-  tcConduct: string;
-  tcRemarks: string;
-  tcRemarkBody: (a: {
-    appeared: boolean;
-    examName: string;
-    session: string;
-    result: string;
-    seatNo: string;
-  }) => string;
-  tcClosing: string;
+  // TC — official Maharashtra "शाळा सोडण्याचे प्रमाणपत्र" 21-point format
+  tcRowName: (name: string) => string;
+  tcRowFather: (father: string) => string;
+  tcRowMother: (mother: string) => string;
+  tcNationality: (nat: string) => string;
+  tcMotherTongue: (mt: string) => string;
+  tcReligionCasteSub: (religion: string, caste: string, sub: string) => string;
+  tcBirthplaceTaluka: (pob: string, taluka: string) => string;
+  tcDistrictStateCountry: (district: string, state: string, country: string) => string;
+  tcDobFigures: (d: string) => string;
+  tcDobWords: (w: string) => string;
+  tcPrevSchool: (s: string) => string;
+  tcAdmissionClass: (date: string, cls: string) => string;
+  tcProgressConduct: (progress: string, conduct: string) => string;
+  tcLeavingDate: (d: string) => string;
+  tcStudyingSince: (s: string) => string;
+  tcLeavingReason: (r: string) => string;
+  tcRemarks: (r: string) => string;
+  tcClosing: (genReg: string) => string;
   // Domicile
   domicileBody: (a: {
     name: string;
@@ -72,43 +74,48 @@ const en: CertStrings = {
   phone: "Phone",
   email: "Email",
   bonafideTitle: "BONAFIDE CERTIFICATE",
-  tcTitle: "TRANSFER / LEAVING CERTIFICATE",
+  tcTitle: "SCHOOL LEAVING CERTIFICATE",
   domicileTitle: "DOMICILE CERTIFICATE",
   no: "No",
   date: "Date",
   place: "Place",
   refNo: "No",
   registerNo: "Register No / PRN",
-  tcNo: "T.C. No",
+  tcNo: "Certificate No",
   domicileNo: "Domicile No",
-  principal: "Principal",
+  principal: "Principal / Head Master",
+  classTeacher: "Class Teacher",
+  clerk: "Clerk",
   officeSeal: "Office Seal",
   blank: "________________",
   bonafideBody: (a) =>
-    `This is to certify that Mr./Miss. ${a.name}, Register No. ${a.registerNo}, ` +
-    `is/was a bonafide student of ${a.course}${a.cls ? " (" + a.cls + ")" : ""} ` +
-    `in this institution during the academic year ${a.academicYear}. ` +
-    `His/Her Date of Birth as per the college register is ${a.dob}. ` +
-    `His/Her character and conduct is ${a.conduct}.`,
+    `This is to certify that Mr./Miss. ${a.name} was/is a bonafide student of this institution, ` +
+    `Register No. ${a.registerNo}, studying in ${a.course}${a.cls ? " (" + a.cls + ")" : ""} ` +
+    `during the academic year ${a.academicYear}. ` +
+    `His/Her Date of Birth as per the school register is ${a.dob}${a.dobWords ? " (" + a.dobWords + ")" : ""}. ` +
+    `His/Her caste as per our register is ${a.caste}. ` +
+    `To the best of our knowledge, he/she bears a good moral character (${a.conduct}).`,
   bonafidePurposeLine: "This certificate is issued on request for the purpose mentioned below:",
   bonafidePurpose: (p) => `Purpose / Remarks: ${p}`,
-  tcName: "1) Name of the Student: ",
-  tcMother: "2) Mother's Name: ",
-  tcFather: "3) Father's / Guardian Name: ",
-  tcCaste: (c, r) => `4) Caste / Sub-Caste: ${c}    Religion: ${r}`,
-  tcNationality: (n, p) => `5) Nationality: ${n}    Place of Birth: ${p}`,
-  tcDobFigures: "6) Date of Birth (figures): ",
-  tcDobWords: "    Date of Birth (in words): ",
-  tcAdmission: (d, c) => `7) Date of Admission: ${d}    Class: ${c}`,
-  tcLeaving: (d, c) => `8) Date of Leaving: ${d}    Course: ${c}`,
-  tcSubjects: "9) Subjects studied: ",
-  tcConduct: "10) Conduct: ",
-  tcRemarks: "11) Remarks:",
-  tcRemarkBody: (a) =>
-    `a) He/She ${a.appeared ? "has appeared" : "has not appeared"} for the ${a.examName} examination held in ${a.session} ${
-      a.result ? "and has " + a.result : ""
-    } under Seat No. ${a.seatNo}.`,
-  tcClosing: "Certified that the above information is true as per the college records.",
+  tcRowName: (n) => `1) Name of the Student: ${n}`,
+  tcRowFather: (f) => `   Father's Name: ${f}`,
+  tcRowMother: (m) => `   Mother's Name: ${m}`,
+  tcNationality: (n) => `2) Nationality: ${n}`,
+  tcMotherTongue: (mt) => `3) Mother Tongue: ${mt}`,
+  tcReligionCasteSub: (r, c, s) => `4) Religion: ${r}    5) Caste: ${c}    6) Sub-Caste: ${s}`,
+  tcBirthplaceTaluka: (p, t) => `7) Place of Birth (Village/Town): ${p}    8) Taluka: ${t}`,
+  tcDistrictStateCountry: (d, s, c) => `9) District: ${d}    10) State: ${s}    11) Country: ${c}`,
+  tcDobFigures: (d) => `12) Date of Birth (in figures): ${d}`,
+  tcDobWords: (w) => `    Date of Birth (in words): ${w}`,
+  tcPrevSchool: (s) => `13) Previous School & Class: ${s}`,
+  tcAdmissionClass: (d, c) => `14) Date of Admission in this School: ${d}    15) Class: ${c}`,
+  tcProgressConduct: (p, c) => `16) Progress in Studies: ${p}    17) Conduct: ${c}`,
+  tcLeavingDate: (d) => `18) Date of Leaving School: ${d}`,
+  tcStudyingSince: (s) => `19) Class studied in and since when: ${s}`,
+  tcLeavingReason: (r) => `20) Reason for Leaving School: ${r}`,
+  tcRemarks: (r) => `21) Remarks: ${r}`,
+  tcClosing: (g) =>
+    `Certified that the above information is as per General Register No. ${g} of this school.`,
   domicileBody: (a) =>
     `This is to certify that Mr./Miss. ${a.name}, son/daughter of ${a.father}, ` +
     `is a permanent resident of Village/Town ${a.village}, Taluka ${a.taluka}, District ${a.district}, ${a.state}. ` +
@@ -122,43 +129,48 @@ const mr: CertStrings = {
   phone: "दूरध्वनी",
   email: "ईमेल",
   bonafideTitle: "बोनाफाईड प्रमाणपत्र",
-  tcTitle: "स्थानांतर / शाळा सोडल्याचा दाखला",
+  tcTitle: "शाळा सोडण्याचे प्रमाणपत्र",
   domicileTitle: "अधिवास प्रमाणपत्र",
   no: "क्रमांक",
   date: "दिनांक",
   place: "ठिकाण",
   refNo: "क्रमांक",
-  registerNo: "नोंदणी क्र. / पीआरएन",
-  tcNo: "दाखला क्र.",
+  registerNo: "प्रवेश क्र.",
+  tcNo: "प्रमाणपत्र क्रमांक",
   domicileNo: "अधिवास क्र.",
-  principal: "प्राचार्य",
+  principal: "मुख्याध्यापिका",
+  classTeacher: "वर्ग शिक्षक",
+  clerk: "लिपीक",
   officeSeal: "कार्यालयीन शिक्का",
   blank: "________________",
   bonafideBody: (a) =>
-    `प्रमाणित करण्यात येते की, श्री./कु. ${a.name}, नोंदणी क्र. ${a.registerNo}, ` +
-    `हे/ही शैक्षणिक वर्ष ${a.academicYear} मध्ये या संस्थेमध्ये ${a.course}${a.cls ? " (" + a.cls + ")" : ""} ` +
-    `या वर्गाचे/चा नियमित विद्यार्थी/विद्यार्थिनी आहेत/होते. ` +
-    `महाविद्यालयाच्या नोंदीनुसार त्यांची जन्मतारीख ${a.dob} आहे. ` +
-    `त्यांचे चारित्र्य व वर्तणूक ${a.conduct} आहे.`,
+    `प्रमाणित करण्यात येते की, हा/ही विद्यार्थी/विद्यार्थिनी श्री./कु. ${a.name} ` +
+    `(प्रवेश क्र. ${a.registerNo}) सन ${a.academicYear} या वर्षी इयत्ता ${a.cls || a.course} ` +
+    `या वर्गात शिक्षण घेत आहे/होता. ` +
+    `त्याचा/तिचा जन्म दिनांक ${a.dob}${a.dobWords ? " (अक्षरी: " + a.dobWords + ")" : ""} हा आहे ` +
+    `व त्याची/तिची जात ${a.caste} आहे. करिता प्रमाणपत्र देण्यात येते. ` +
+    `त्याचे/तिचे वर्तन ${a.conduct} आहे.`,
   bonafidePurposeLine: "हा दाखला मागणीनुसार खालील कारणासाठी देण्यात येत आहे:",
   bonafidePurpose: (p) => `कारण / शेरा: ${p}`,
-  tcName: "१) विद्यार्थ्याचे नाव: ",
-  tcMother: "२) आईचे नाव: ",
-  tcFather: "३) वडिलांचे / पालकाचे नाव: ",
-  tcCaste: (c, r) => `४) जात / पोटजात: ${c}    धर्म: ${r}`,
-  tcNationality: (n, p) => `५) राष्ट्रीयत्व: ${n}    जन्मस्थळ: ${p}`,
-  tcDobFigures: "६) जन्मतारीख (अंकात): ",
-  tcDobWords: "    जन्मतारीख (अक्षरात): ",
-  tcAdmission: (d, c) => `७) प्रवेश दिनांक: ${d}    वर्ग: ${c}`,
-  tcLeaving: (d, c) => `८) शाळा सोडल्याचा दिनांक: ${d}    अभ्यासक्रम: ${c}`,
-  tcSubjects: "९) अभ्यासलेले विषय: ",
-  tcConduct: "१०) वर्तणूक: ",
-  tcRemarks: "११) शेरा:",
-  tcRemarkBody: (a) =>
-    `अ) ते/त्या ${a.session} मध्ये घेण्यात आलेल्या ${a.examName} परीक्षेस ${
-      a.appeared ? "बसले होते" : "बसले नव्हते"
-    } ${a.result ? "व ते " + a.result : ""} आसन क्र. ${a.seatNo} अंतर्गत.`,
-  tcClosing: "वरील माहिती महाविद्यालयाच्या नोंदीनुसार खरी असल्याचे प्रमाणित करण्यात येते.",
+  tcRowName: (n) => `१) विद्यार्थ्याचे नांव: ${n}`,
+  tcRowFather: (f) => `   वडिलांचे नांव: ${f}`,
+  tcRowMother: (m) => `   आईचे नांव: ${m}`,
+  tcNationality: (n) => `२) राष्ट्रीयत्व: ${n}`,
+  tcMotherTongue: (mt) => `३) मातृभाषा: ${mt}`,
+  tcReligionCasteSub: (r, c, s) => `४) धर्म: ${r}    ५) जात: ${c}    ६) पोटजात: ${s}`,
+  tcBirthplaceTaluka: (p, t) => `७) जन्मस्थळ (गांव/शहर): ${p}    ८) तालुका: ${t}`,
+  tcDistrictStateCountry: (d, s, c) => `९) जिल्हा: ${d}    १०) राज्य: ${s}    ११) देश: ${c}`,
+  tcDobFigures: (d) => `१२) जन्म दिनांक (अंकी): ${d}`,
+  tcDobWords: (w) => `    जन्म दिनांक (अक्षरी): ${w}`,
+  tcPrevSchool: (s) => `१३) या पूर्वीची शाळा व इयत्ता: ${s}`,
+  tcAdmissionClass: (d, c) => `१४) या शाळेत प्रवेश घेतल्याचा दिनांक: ${d}    १५) इयत्ता: ${c}`,
+  tcProgressConduct: (p, c) => `१६) अभ्यासातील प्रगती: ${p}    १७) वर्तणूक: ${c}`,
+  tcLeavingDate: (d) => `१८) शाळा सोडल्याचा दिनांक: ${d}`,
+  tcStudyingSince: (s) => `१९) कोणत्या इयत्तेत शिकत होता व केव्हा पासुन: ${s}`,
+  tcLeavingReason: (r) => `२०) शाळा सोडण्याचे कारण: ${r}`,
+  tcRemarks: (r) => `२१) शेरा: ${r}`,
+  tcClosing: (g) =>
+    `दाखला देण्यात येते की, वरील सर्व माहिती शाळेतील जनरल रजिस्टर नं. ${g} प्रमाणे आहे.`,
   domicileBody: (a) =>
     `प्रमाणित करण्यात येते की, श्री./कु. ${a.name}, ${a.father} यांचे/यांची मुलगा/मुलगी, ` +
     `हे/ही गाव/शहर ${a.village}, तालुका ${a.taluka}, जिल्हा ${a.district}, ${a.state} येथील कायमचे रहिवासी आहेत. ` +

@@ -59,6 +59,13 @@ export interface CertificateStudent {
   district?: string | null;
   state?: string | null;
   residence_years?: string | null;
+  mother_tongue?: string | null;
+  sub_caste?: string | null;
+  previous_school?: string | null;
+  study_progress?: string | null;
+  leaving_reason?: string | null;
+  studying_since?: string | null;
+  general_register_no?: string | null;
 }
 
 const schema = z.object({
@@ -96,6 +103,13 @@ const schema = z.object({
   district: z.string().trim().max(100).optional().or(z.literal("")),
   state: z.string().trim().max(100).optional().or(z.literal("")),
   residence_years: z.string().trim().max(20).optional().or(z.literal("")),
+  mother_tongue: z.string().trim().max(100).optional().or(z.literal("")),
+  sub_caste: z.string().trim().max(100).optional().or(z.literal("")),
+  previous_school: z.string().trim().max(300).optional().or(z.literal("")),
+  study_progress: z.string().trim().max(150).optional().or(z.literal("")),
+  leaving_reason: z.string().trim().max(300).optional().or(z.literal("")),
+  studying_since: z.string().trim().max(300).optional().or(z.literal("")),
+  general_register_no: z.string().trim().max(50).optional().or(z.literal("")),
 });
 
 const emptyForm: CertificateStudent = {
@@ -134,6 +148,13 @@ const emptyForm: CertificateStudent = {
   district: "",
   state: "Maharashtra",
   residence_years: "",
+  mother_tongue: "",
+  sub_caste: "",
+  previous_school: "",
+  study_progress: "Good",
+  leaving_reason: "",
+  studying_since: "",
+  general_register_no: "",
 };
 
 interface Props {
@@ -251,9 +272,14 @@ export function CertificateStudentForm({ open, onOpenChange, student, onSaved }:
               {field("Date of Birth (in words)", "date_of_birth_words")}
               {field("Place of Birth", "place_of_birth")}
               {field("Nationality", "nationality")}
+              {field("Mother Tongue", "mother_tongue")}
               {field("Religion", "religion")}
-              {field("Caste / Sub-Caste", "caste")}
+              {field("Caste", "caste")}
+              {field("Sub-Caste", "sub_caste")}
               {field("Blood Group", "blood_group")}
+              {field("Taluka", "taluka")}
+              {field("District", "district")}
+              {field("State", "state")}
             </div>
           </section>
 
@@ -267,6 +293,33 @@ export function CertificateStudentForm({ open, onOpenChange, student, onSaved }:
               {field("Academic Year", "academic_year")}
               {field("Date of Admission", "date_of_admission", "date")}
               {field("Date of Leaving", "date_of_leaving", "date")}
+              {field("Progress in Studies", "study_progress")}
+              {field("General Register No.", "general_register_no")}
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="previous_school">Previous School &amp; Class</Label>
+                <Textarea
+                  id="previous_school"
+                  value={form.previous_school ?? ""}
+                  onChange={(e) => set("previous_school", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="studying_since">Class studied in &amp; since when</Label>
+                <Textarea
+                  id="studying_since"
+                  value={form.studying_since ?? ""}
+                  onChange={(e) => set("studying_since", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="leaving_reason">Reason for Leaving School</Label>
+                <Textarea
+                  id="leaving_reason"
+                  value={form.leaving_reason ?? ""}
+                  onChange={(e) => set("leaving_reason", e.target.value)}
+                  placeholder="e.g. On request of student / parent"
+                />
+              </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="subjects">Subjects</Label>
                 <Textarea
@@ -342,13 +395,10 @@ export function CertificateStudentForm({ open, onOpenChange, student, onSaved }:
             </h3>
             <p className="text-xs text-muted-foreground mb-3">
               The Domicile certificate uses "Place of Birth" (from the Personal
-              section) as the Village / Town.
+              section) as the Village / Town, along with Taluka / District / State.
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               {field("Domicile No", "domicile_no")}
-              {field("Taluka", "taluka")}
-              {field("District", "district")}
-              {field("State", "state")}
               {field("Years of Residence", "residence_years")}
             </div>
 

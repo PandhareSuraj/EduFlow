@@ -124,6 +124,8 @@ export async function generateBonafideCertificatePDF(
     cls: student.class || "",
     academicYear: val(student.academic_year),
     dob: fmtDate(student.date_of_birth),
+    dobWords: student.date_of_birth_words || "",
+    caste: val(student.caste),
     conduct: val(student.character || student.conduct),
   });
 
