@@ -272,9 +272,14 @@ export function CertificateStudentForm({ open, onOpenChange, student, onSaved }:
               {field("Date of Birth (in words)", "date_of_birth_words")}
               {field("Place of Birth", "place_of_birth")}
               {field("Nationality", "nationality")}
+              {field("Mother Tongue", "mother_tongue")}
               {field("Religion", "religion")}
-              {field("Caste / Sub-Caste", "caste")}
+              {field("Caste", "caste")}
+              {field("Sub-Caste", "sub_caste")}
               {field("Blood Group", "blood_group")}
+              {field("Taluka", "taluka")}
+              {field("District", "district")}
+              {field("State", "state")}
             </div>
           </section>
 
