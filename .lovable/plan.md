@@ -1,25 +1,48 @@
-I found the failing flow: `create-general-user` is returning `400 Bad Request`, but the UI always replaces the real backend message with a generic `Failed to create user`. The edge function also validates passwords more strictly than the form explains, so a manually entered password can trigger a hidden validation failure.
+# Multi-language Certificates (English / Marathi) + Domicile Certificate
 
-Plan:
+## Goal
+On the Certificates page, add a language selector. When **Marathi** is selected, the Transfer (TC), Bonafide, and new **Domicile** certificates generate fully in Marathi (Devanagari). When **English** is selected, the current English layout is used. Add a new **Domicile certificate** type alongside TC and Bonafide.
 
-1. Improve the Create User form validation
-   - Validate email, role, college, and password before calling the edge function.
-   - If a password is entered, show the exact requirements: at least 8 characters, one uppercase letter, one lowercase letter, and one number.
-   - Disable duplicate submissions while the request is running.
+## Important technical note
+The current PDFs use jsPDF's built-in Helvetica font, which **cannot render Marathi (Devanagari)** — it prints blank boxes. To fix this we embed a Unicode Devanagari font (Noto Sans Devanagari) into jsPDF and switch to it whenever the language is Marathi.
 
-2. Show the real backend error in the UI
-   - Update `src/pages/UserManagement.tsx` so the toast displays the edge function response message/details instead of always saying `Failed to create user`.
-   - If the backend says “User already exists”, “Validation failed”, or another specific issue, show that directly.
+## What will be built
 
-3. Harden `create-general-user`
-   - Normalize validated values before use: lowercase/trim email and role, convert empty college to `null`.
-   - Add clear validation logging and response messages.
-   - Add environment-secret checks for `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` without logging secret values.
-   - Add the same super-admin caller verification pattern already used in `list-all-users`, so only super admins can create accounts.
+### 1. Devanagari font embedding
+- Add `Noto Sans Devanagari` (regular + bold) as base64 font files bundled with the PDF utils.
+- A helper registers the font into each jsPDF document and exposes a `setFont` switch so English keeps Helvetica and Marathi uses Devanagari.
 
-4. Verify the fix
-   - Deploy/test the updated edge function.
-   - Confirm invalid passwords show a helpful message and valid user creation no longer returns a hidden generic error.
+### 2. Language selector on the Certificates page
+- A dropdown (English / मराठी) in the Certificates page header, default English.
+- The selected language is passed into every PDF generator call (TC, Bonafide, Domicile).
+- (Optional sensible default: prefill from the app's current i18n language, still overridable.)
 
-Technical note:
-The screenshot’s `FunctionsHttpError: Edge Function returned a non-2xx status code` is a wrapper error from `supabase.functions.invoke`; the underlying `400` response is likely being produced by validation before the function reaches the auth-user creation step.
+### 3. Translation layer
+- A single `certificateStrings` module holding every label / sentence template for both `en` and `mr` (titles, field labels, body sentences, footer like "Principal", "Office Seal", "Date", "Place").
+- Each PDF generator reads strings from this module based on the chosen language instead of hardcoded English.
+- Exact Marathi wording will be taken from the sample you upload, so the phrasing matches your official format.
+
+### 4. New Domicile Certificate
+- New PDF generator `DomicileCertificatePDF.tsx` (same classic bordered, logo + Principal/seal style as TC).
+- New "Domicile" action button in the Student Records table (next to TC / Bonafide).
+- A `domicile_no` field added to the student form and tracked in stats (new "Domicile Issued" card).
+- Typical Domicile fields surfaced in the form if not already present: place/village, taluka, district, state, years of residence. (Final field list confirmed against your sample.)
+
+### 5. Database
+- Add a `domicile_no` column (and any missing Domicile fields like `taluka`, `district`, `state`, `residence_years`) to the `certificate_students` table via migration.
+
+## Files affected
+```text
+src/pages/Certificates.tsx                              (language dropdown, Domicile button, stats card)
+src/components/certificates/CertificateStudentForm.tsx  (domicile_no + domicile fields)
+src/components/certificates/pdf/pdfUtils.ts             (Devanagari font register helper)
+src/components/certificates/pdf/certificateStrings.ts   (NEW: en + mr string tables)
+src/components/certificates/pdf/fonts/NotoDevanagari.ts  (NEW: base64 font)
+src/components/certificates/pdf/TransferCertificatePDF.tsx   (use lang strings/font)
+src/components/certificates/pdf/BonafideCertificatePDF.tsx   (use lang strings/font)
+src/components/certificates/pdf/DomicileCertificatePDF.tsx   (NEW)
++ Supabase migration for new columns
+```
+
+## Open dependency
+I'll match the Marathi TC and Domicile wording exactly to the sample you upload. Once approved, please attach the Marathi sample so the phrasing and field order are correct; I can scaffold with a standard Maharashtra format first and refine to your sample after.
