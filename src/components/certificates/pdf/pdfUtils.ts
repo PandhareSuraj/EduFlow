@@ -41,6 +41,23 @@ export interface LoadedImage {
   height: number;
 }
 
+export function buildCertificateFileName(
+  studentName: string | null | undefined,
+  certificateName: string,
+  lang: CertificateLang
+): string {
+  const safe = (value: string) =>
+    value
+      .trim()
+      .replace(/[\\/:*?"<>|]+/g, "")
+      .replace(/\s+/g, "_");
+  const name = safe(studentName || "student") || "student";
+  const certificate = safe(certificateName) || "certificate";
+  const language = lang === "mr" ? "Marathi" : "English";
+
+  return `${name}_${certificate}_${language}.pdf`;
+}
+
 /**
  * Loads an image URL and converts it to a PNG data URL using a canvas.
  * Returns null on any failure so PDF generation never breaks.

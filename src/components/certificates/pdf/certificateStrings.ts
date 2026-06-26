@@ -1,15 +1,13 @@
 import type { CertificateLang } from "./pdfUtils";
 
 export interface CertStrings {
-  // Header
   collegeCode: (code: string) => string;
   phone: string;
   email: string;
-  // Titles
   bonafideTitle: string;
   tcTitle: string;
   domicileTitle: string;
-  // Common
+  safeDrinkingWaterTitle: string;
   no: string;
   date: string;
   place: string;
@@ -17,12 +15,12 @@ export interface CertStrings {
   registerNo: string;
   tcNo: string;
   domicileNo: string;
+  safeDrinkingWaterNo: string;
   principal: string;
   classTeacher: string;
   clerk: string;
   officeSeal: string;
   blank: string;
-  // Bonafide (matches sample "बोनाफाईड प्रमाणपत्र" / Character Certificate)
   bonafideBody: (a: {
     name: string;
     registerNo: string;
@@ -36,7 +34,6 @@ export interface CertStrings {
   }) => string;
   bonafidePurposeLine: string;
   bonafidePurpose: (purpose: string) => string;
-  // TC — official Maharashtra "शाळा सोडण्याचे प्रमाणपत्र" 21-point format
   tcRowName: (name: string) => string;
   tcRowFather: (father: string) => string;
   tcRowMother: (mother: string) => string;
@@ -55,7 +52,6 @@ export interface CertStrings {
   tcLeavingReason: (r: string) => string;
   tcRemarks: (r: string) => string;
   tcClosing: (genReg: string) => string;
-  // Domicile
   domicileBody: (a: {
     name: string;
     father: string;
@@ -67,6 +63,15 @@ export interface CertStrings {
     dob: string;
   }) => string;
   domicileClosing: string;
+  safeDrinkingWaterBody: (a: {
+    name: string;
+    registerNo: string;
+    course: string;
+    cls: string;
+    academicYear: string;
+    admissionDate: string;
+  }) => string;
+  safeDrinkingWaterClosing: string;
 }
 
 const en: CertStrings = {
@@ -74,8 +79,9 @@ const en: CertStrings = {
   phone: "Phone",
   email: "Email",
   bonafideTitle: "BONAFIDE CERTIFICATE",
-  tcTitle: "SCHOOL LEAVING CERTIFICATE",
+  tcTitle: "TRANSFER CERTIFICATE",
   domicileTitle: "DOMICILE CERTIFICATE",
+  safeDrinkingWaterTitle: "SAFE DRINKING WATER CERTIFICATE",
   no: "No",
   date: "Date",
   place: "Place",
@@ -83,6 +89,7 @@ const en: CertStrings = {
   registerNo: "Register No / PRN",
   tcNo: "Certificate No",
   domicileNo: "Domicile No",
+  safeDrinkingWaterNo: "Certificate No",
   principal: "Principal / Head Master",
   classTeacher: "Class Teacher",
   clerk: "Clerk",
@@ -115,13 +122,21 @@ const en: CertStrings = {
   tcLeavingReason: (r) => `20) Reason for Leaving School: ${r}`,
   tcRemarks: (r) => `21) Remarks: ${r}`,
   tcClosing: (g) =>
-    `Certified that the above information is as per General Register No. ${g} of this school.`,
+    `Certified that the above information is as per General Register No. ${g} of this institution.`,
   domicileBody: (a) =>
     `This is to certify that Mr./Miss. ${a.name}, son/daughter of ${a.father}, ` +
     `is a permanent resident of Village/Town ${a.village}, Taluka ${a.taluka}, District ${a.district}, ${a.state}. ` +
     `His/Her Date of Birth as per the records is ${a.dob}. ` +
     `He/She has been residing at the above place for ${a.years} years and is a domicile of ${a.state}.`,
-  domicileClosing: "This certificate is issued for the purpose of education / official requirements.",
+  domicileClosing: "This certificate is issued for education / official requirements.",
+  safeDrinkingWaterBody: (a) =>
+    `This is to certify that Mr./Miss. ${a.name}, Register No. ${a.registerNo}, ` +
+    `studying in ${a.course}${a.cls ? " (" + a.cls + ")" : ""} during the academic year ${a.academicYear}, ` +
+    `has been provided safe and potable drinking water facilities on the college premises. ` +
+    `The institution maintains clean drinking water arrangements for students as part of its regular campus facilities. ` +
+    `The student's admission date as per record is ${a.admissionDate}.`,
+  safeDrinkingWaterClosing:
+    "This certificate is issued on request for education / official requirements.",
 };
 
 const mr: CertStrings = {
@@ -129,54 +144,62 @@ const mr: CertStrings = {
   phone: "दूरध्वनी",
   email: "ईमेल",
   bonafideTitle: "बोनाफाईड प्रमाणपत्र",
-  tcTitle: "शाळा सोडण्याचे प्रमाणपत्र",
+  tcTitle: "स्थानांतरण प्रमाणपत्र",
   domicileTitle: "अधिवास प्रमाणपत्र",
+  safeDrinkingWaterTitle: "सुरक्षित पिण्याच्या पाण्याचे प्रमाणपत्र",
   no: "क्रमांक",
   date: "दिनांक",
   place: "ठिकाण",
   refNo: "क्रमांक",
-  registerNo: "प्रवेश क्र.",
+  registerNo: "नोंदणी क्रमांक / पी.आर.एन.",
   tcNo: "प्रमाणपत्र क्रमांक",
-  domicileNo: "अधिवास क्र.",
-  principal: "मुख्याध्यापिका",
-  classTeacher: "वर्ग शिक्षक",
-  clerk: "लिपीक",
+  domicileNo: "अधिवास क्रमांक",
+  safeDrinkingWaterNo: "प्रमाणपत्र क्रमांक",
+  principal: "प्राचार्य / मुख्याध्यापक",
+  classTeacher: "वर्गशिक्षक",
+  clerk: "लिपिक",
   officeSeal: "कार्यालयीन शिक्का",
   blank: "________________",
   bonafideBody: (a) =>
-    `प्रमाणित करण्यात येते की, हा/ही विद्यार्थी/विद्यार्थिनी श्री./कु. ${a.name} ` +
-    `(प्रवेश क्र. ${a.registerNo}) सन ${a.academicYear} या वर्षी इयत्ता ${a.cls || a.course} ` +
-    `या वर्गात शिक्षण घेत आहे/होता. ` +
-    `त्याचा/तिचा जन्म दिनांक ${a.dob}${a.dobWords ? " (अक्षरी: " + a.dobWords + ")" : ""} हा आहे ` +
-    `व त्याची/तिची जात ${a.caste} आहे. करिता प्रमाणपत्र देण्यात येते. ` +
-    `त्याचे/तिचे वर्तन ${a.conduct} आहे.`,
-  bonafidePurposeLine: "हा दाखला मागणीनुसार खालील कारणासाठी देण्यात येत आहे:",
+    `प्रमाणित करण्यात येते की श्री/कु. ${a.name} हा/ही या संस्थेचा/संस्थेची नियमित विद्यार्थी/विद्यार्थिनी आहे/होता/होती. ` +
+    `नोंदणी क्रमांक ${a.registerNo} असून तो/ती ${a.course}${a.cls ? " (" + a.cls + ")" : ""} मध्ये शैक्षणिक वर्ष ${a.academicYear} दरम्यान शिकत आहे/होता/होती. ` +
+    `शालेय नोंदीनुसार जन्म दिनांक ${a.dob}${a.dobWords ? " (" + a.dobWords + ")" : ""} आहे. ` +
+    `नोंदीनुसार जात ${a.caste} आहे. आमच्या माहितीनुसार त्याचे/तिचे वर्तन ${a.conduct} आहे.`,
+  bonafidePurposeLine: "सदर प्रमाणपत्र विद्यार्थ्याच्या विनंतीनुसार खालील कारणासाठी देण्यात येत आहे:",
   bonafidePurpose: (p) => `कारण / शेरा: ${p}`,
-  tcRowName: (n) => `१) विद्यार्थ्याचे नांव: ${n}`,
-  tcRowFather: (f) => `   वडिलांचे नांव: ${f}`,
-  tcRowMother: (m) => `   आईचे नांव: ${m}`,
+  tcRowName: (n) => `१) विद्यार्थ्याचे नाव: ${n}`,
+  tcRowFather: (f) => `   वडिलांचे / पालकाचे नाव: ${f}`,
+  tcRowMother: (m) => `   आईचे नाव: ${m}`,
   tcNationality: (n) => `२) राष्ट्रीयत्व: ${n}`,
   tcMotherTongue: (mt) => `३) मातृभाषा: ${mt}`,
   tcReligionCasteSub: (r, c, s) => `४) धर्म: ${r}    ५) जात: ${c}    ६) पोटजात: ${s}`,
-  tcBirthplaceTaluka: (p, t) => `७) जन्मस्थळ (गांव/शहर): ${p}    ८) तालुका: ${t}`,
+  tcBirthplaceTaluka: (p, t) => `७) जन्मस्थळ (गाव/शहर): ${p}    ८) तालुका: ${t}`,
   tcDistrictStateCountry: (d, s, c) => `९) जिल्हा: ${d}    १०) राज्य: ${s}    ११) देश: ${c}`,
   tcDobFigures: (d) => `१२) जन्म दिनांक (अंकी): ${d}`,
   tcDobWords: (w) => `    जन्म दिनांक (अक्षरी): ${w}`,
-  tcPrevSchool: (s) => `१३) या पूर्वीची शाळा व इयत्ता: ${s}`,
-  tcAdmissionClass: (d, c) => `१४) या शाळेत प्रवेश घेतल्याचा दिनांक: ${d}    १५) इयत्ता: ${c}`,
-  tcProgressConduct: (p, c) => `१६) अभ्यासातील प्रगती: ${p}    १७) वर्तणूक: ${c}`,
-  tcLeavingDate: (d) => `१८) शाळा सोडल्याचा दिनांक: ${d}`,
-  tcStudyingSince: (s) => `१९) कोणत्या इयत्तेत शिकत होता व केव्हा पासुन: ${s}`,
-  tcLeavingReason: (r) => `२०) शाळा सोडण्याचे कारण: ${r}`,
+  tcPrevSchool: (s) => `१३) पूर्वीची शाळा / महाविद्यालय व वर्ग: ${s}`,
+  tcAdmissionClass: (d, c) => `१४) या संस्थेत प्रवेश घेतल्याचा दिनांक: ${d}    १५) वर्ग: ${c}`,
+  tcProgressConduct: (p, c) => `१६) अभ्यासातील प्रगती: ${p}    १७) वर्तन: ${c}`,
+  tcLeavingDate: (d) => `१८) संस्था सोडल्याचा दिनांक: ${d}`,
+  tcStudyingSince: (s) => `१९) कोणत्या वर्गात शिकत होता/होती व केव्हापासून: ${s}`,
+  tcLeavingReason: (r) => `२०) संस्था सोडण्याचे कारण: ${r}`,
   tcRemarks: (r) => `२१) शेरा: ${r}`,
   tcClosing: (g) =>
-    `दाखला देण्यात येते की, वरील सर्व माहिती शाळेतील जनरल रजिस्टर नं. ${g} प्रमाणे आहे.`,
+    `प्रमाणित करण्यात येते की वरील सर्व माहिती संस्थेच्या जनरल रजिस्टर क्रमांक ${g} नुसार खरी आहे.`,
   domicileBody: (a) =>
-    `प्रमाणित करण्यात येते की, श्री./कु. ${a.name}, ${a.father} यांचे/यांची मुलगा/मुलगी, ` +
-    `हे/ही गाव/शहर ${a.village}, तालुका ${a.taluka}, जिल्हा ${a.district}, ${a.state} येथील कायमचे रहिवासी आहेत. ` +
-    `नोंदीनुसार त्यांची जन्मतारीख ${a.dob} आहे. ` +
-    `ते/त्या वरील ठिकाणी ${a.years} वर्षांपासून वास्तव्यास असून ${a.state} राज्याचे अधिवासी आहेत.`,
-  domicileClosing: "हा दाखला शैक्षणिक / शासकीय कारणासाठी देण्यात येत आहे.",
+    `प्रमाणित करण्यात येते की श्री/कु. ${a.name}, वडील / पालक ${a.father}, ` +
+    `हा/ही गाव/शहर ${a.village}, तालुका ${a.taluka}, जिल्हा ${a.district}, ${a.state} येथील कायमचा/कायमची रहिवासी आहे. ` +
+    `नोंदीनुसार जन्म दिनांक ${a.dob} आहे. ` +
+    `तो/ती वरील ठिकाणी ${a.years} वर्षांपासून वास्तव्यास असून ${a.state} राज्याचा/राज्याची अधिवासी आहे.`,
+  domicileClosing: "सदर प्रमाणपत्र शैक्षणिक / शासकीय कामासाठी विद्यार्थ्याच्या विनंतीनुसार देण्यात येत आहे.",
+  safeDrinkingWaterBody: (a) =>
+    `प्रमाणित करण्यात येते की श्री/कु. ${a.name}, नोंदणी क्रमांक ${a.registerNo}, ` +
+    `हा/ही शैक्षणिक वर्ष ${a.academicYear} मध्ये ${a.course}${a.cls ? " (" + a.cls + ")" : ""} मध्ये शिकत आहे/होता/होती. ` +
+    `महाविद्यालय परिसरात विद्यार्थ्यांसाठी सुरक्षित व स्वच्छ पिण्याच्या पाण्याची सुविधा उपलब्ध आहे. ` +
+    `संस्था नियमितपणे पिण्याच्या पाण्याची स्वच्छता व उपलब्धता राखते. ` +
+    `नोंदीनुसार प्रवेश दिनांक ${a.admissionDate} आहे.`,
+  safeDrinkingWaterClosing:
+    "सदर प्रमाणपत्र शैक्षणिक / अधिकृत कामासाठी विद्यार्थ्याच्या विनंतीनुसार देण्यात येत आहे.",
 };
 
 export function getCertStrings(lang: CertificateLang): CertStrings {

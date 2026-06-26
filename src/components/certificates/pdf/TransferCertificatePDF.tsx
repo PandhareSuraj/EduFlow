@@ -1,7 +1,12 @@
 import jsPDF from "jspdf";
 import { format } from "date-fns";
 import type { CertificateStudent } from "../CertificateStudentForm";
-import { loadImageAsDataUrl, setLangFont, type CertificateLang } from "./pdfUtils";
+import {
+  buildCertificateFileName,
+  loadImageAsDataUrl,
+  setLangFont,
+  type CertificateLang,
+} from "./pdfUtils";
 import { getCertStrings } from "./certificateStrings";
 
 export interface CertificateCollege {
@@ -198,5 +203,5 @@ export async function generateTransferCertificatePDF(
     doc.text(college.signatureTitle, right, footerY + 26, { align: "right" });
   }
 
-  doc.save(`TC_${(student.full_name || "student").replace(/\s+/g, "_")}_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+  doc.save(buildCertificateFileName(student.full_name, "TC Certificate", lang));
 }

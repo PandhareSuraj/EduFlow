@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { FileText, Award, Plus, Search, Loader2, Pencil, Trash2, FileDown } from "lucide-react";
+import { Award, ChevronDown, FileDown, FileText, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,12 +30,8 @@ import {
   CertificateStudentForm,
   type CertificateStudent,
 } from "@/components/certificates/CertificateStudentForm";
-import {
-  generateTransferCertificatePDF,
-  type CertificateCollege,
-} from "@/components/certificates/pdf/TransferCertificatePDF";
-import { generateBonafideCertificatePDF } from "@/components/certificates/pdf/BonafideCertificatePDF";
-import { generateDomicileCertificatePDF } from "@/components/certificates/pdf/DomicileCertificatePDF";
+import type { CertificateCollege } from "@/components/certificates/pdf/TransferCertificatePDF";
+import { certificateOptions, type CertificateOption } from "@/components/certificates/pdf/certificateRegistry";
 import type { CertificateLang } from "@/components/certificates/pdf/pdfUtils";
 import {
   Select,
@@ -44,6 +40,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Certificates() {
   usePageTitle("Certificates");
@@ -129,30 +131,16 @@ export default function Certificates() {
     }
   };
 
-  const handleTC = async (s: CertificateStudent) => {
+  const handleCertificate = async (s: CertificateStudent, certificate: CertificateOption) => {
     try {
-      await generateTransferCertificatePDF(s, college, language);
-      toast({ title: "TC generated", description: "Download started" });
+      await certificate.generate(s, college, language);
+      toast({ title: `${certificate.name} generated`, description: "Download started" });
     } catch (e: any) {
-      toast({ title: "Error", description: "Failed to generate TC", variant: "destructive" });
-    }
-  };
-
-  const handleBonafide = async (s: CertificateStudent) => {
-    try {
-      await generateBonafideCertificatePDF(s, college, language);
-      toast({ title: "Bonafide generated", description: "Download started" });
-    } catch (e: any) {
-      toast({ title: "Error", description: "Failed to generate Bonafide", variant: "destructive" });
-    }
-  };
-
-  const handleDomicile = async (s: CertificateStudent) => {
-    try {
-      await generateDomicileCertificatePDF(s, college, language);
-      toast({ title: "Domicile generated", description: "Download started" });
-    } catch (e: any) {
-      toast({ title: "Error", description: "Failed to generate Domicile", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: `Failed to generate ${certificate.name}`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -163,7 +151,7 @@ export default function Certificates() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Certificates</h1>
           <p className="text-muted-foreground">
-            Manage student records and generate TC, Bonafide & Domicile certificates
+            Manage student records and generate hardcoded student certificates
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -286,18 +274,25 @@ export default function Certificates() {
                     <TableCell>{s.academic_year || "-"}</TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2 flex-wrap">
-                        <Button size="sm" variant="outline" onClick={() => handleTC(s)}>
-                          <FileDown className="mr-1 h-3.5 w-3.5" />
-                          TC
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleBonafide(s)}>
-                          <Award className="mr-1 h-3.5 w-3.5" />
-                          Bonafide
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleDomicile(s)}>
-                          <FileDown className="mr-1 h-3.5 w-3.5" />
-                          Domicile
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <FileDown className="mr-1 h-3.5 w-3.5" />
+                              Choose Certificate
+                              <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-64">
+                            {certificateOptions.map((certificate) => (
+                              <DropdownMenuItem
+                                key={certificate.id}
+                                onClick={() => handleCertificate(s, certificate)}
+                              >
+                                {certificate.name}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
 
                         <Button
                           size="sm"

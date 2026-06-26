@@ -2,7 +2,12 @@ import jsPDF from "jspdf";
 import { format } from "date-fns";
 import type { CertificateStudent } from "../CertificateStudentForm";
 import type { CertificateCollege } from "./TransferCertificatePDF";
-import { loadImageAsDataUrl, setLangFont, type CertificateLang } from "./pdfUtils";
+import {
+  buildCertificateFileName,
+  loadImageAsDataUrl,
+  setLangFont,
+  type CertificateLang,
+} from "./pdfUtils";
 import { getCertStrings } from "./certificateStrings";
 
 const val = (v?: string | null) => (v && v.trim() !== "" ? v : "________________");
@@ -169,7 +174,5 @@ export async function generateBonafideCertificatePDF(
     doc.text(college.signatureTitle, right, footerY + 26, { align: "right" });
   }
 
-  doc.save(
-    `Bonafide_${(student.full_name || "student").replace(/\s+/g, "_")}_${format(new Date(), "yyyy-MM-dd")}.pdf`
-  );
+  doc.save(buildCertificateFileName(student.full_name, "Bonafide Certificate", lang));
 }
