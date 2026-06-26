@@ -1,178 +1,163 @@
 import jsPDF from "jspdf";
 import { format } from "date-fns";
+import i18n from "@/i18n";
 import type { CertificateStudent } from "../CertificateStudentForm";
 import type { CertificateCollege } from "./TransferCertificatePDF";
-import {
-  buildCertificateFileName,
-  loadImageAsDataUrl,
-  setLangFont,
-  type CertificateLang,
-} from "./pdfUtils";
-import { getCertStrings } from "./certificateStrings";
+import { loadImageAsDataUrl, setLangFont, type CertificateLang } from "./pdfUtils";
 
-const val = (v?: string | null) => (v && v.trim() !== "" ? v : "________________");
+const RED: [number, number, number] = [135, 28, 38];
+const DARK: [number, number, number] = [35, 35, 35];
+
+const val = (v?: string | null) => (v && v.trim() !== "" ? v.trim() : "________________");
 const fmtDate = (d?: string | null) => (d ? format(new Date(d), "dd/MM/yyyy") : "________________");
-
-// Classic navy accent tone
-const ACCENT: [number, number, number] = [30, 30, 90];
+const safeFilePart = (value: string) =>
+  value
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, "")
+    .replace(/\s+/g, "_");
 
 export async function generateBonafideCertificatePDF(
   student: CertificateStudent,
   college: CertificateCollege,
   lang: CertificateLang = "en"
 ): Promise<void> {
-  const t = getCertStrings(lang);
+  const lng = lang === "mr" ? "mr" : "en";
+  const t = (key: string, options?: Record<string, string>) =>
+    i18n.t(`certificates.bonafide.${key}`, { lng, ...options });
+
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const left = 20;
-  const right = pageWidth - 20;
-  const center = pageWidth / 2;
+  const boxW = 190;
+  const boxH = 136;
+  const boxX = (pageWidth - boxW) / 2;
+  const boxY = (pageHeight - boxH) / 2;
+  const left = boxX + 8;
+  const right = boxX + boxW - 8;
+  const center = boxX + boxW / 2;
 
   const logo = await loadImageAsDataUrl(college.logoUrl);
+  const date = format(new Date(), "dd/MM/yyyy");
+  const name = val(student.full_name);
+  const admissionNo = val(student.register_no);
+  const cls = val(student.class);
+  const course = val(student.course);
+  const academicYear = val(student.academic_year);
+  const dob = fmtDate(student.date_of_birth);
+  const dobWords = val(student.date_of_birth_words);
+  const certNo = val(student.bonafide_no);
+  const signature = college.signatureTitle || t("signature");
 
-  // ---- Double ornate border ----
-  doc.setDrawColor(...ACCENT);
-  doc.setLineWidth(1.1);
-  doc.rect(9, 9, pageWidth - 18, pageHeight - 18);
-  doc.setLineWidth(0.3);
-  doc.rect(12, 12, pageWidth - 24, pageHeight - 24);
+  doc.setFillColor(255, 255, 248);
+  doc.rect(boxX, boxY, boxW, boxH, "F");
 
-  // Corner accent marks
-  const corner = (x: number, y: number, dx: number, dy: number) => {
-    doc.setLineWidth(0.8);
-    doc.line(x, y, x + dx, y);
-    doc.line(x, y, x, y + dy);
-  };
-  corner(14, 14, 8, 8);
-  corner(pageWidth - 14, 14, -8, 8);
-  corner(14, pageHeight - 14, 8, -8);
-  corner(pageWidth - 14, pageHeight - 14, -8, -8);
+  doc.setDrawColor(...RED);
+  doc.setLineWidth(0.9);
+  doc.rect(boxX, boxY, boxW, boxH);
+  doc.setLineWidth(0.35);
+  doc.rect(boxX + 3, boxY + 3, boxW - 6, boxH - 6);
 
-  // ---- Header ----
-  let y = 20;
+  const logoX = left;
+  const logoY = boxY + 11;
+  const logoSize = 22;
   if (logo) {
-    const lw = 22;
-    const lh = (logo.height / logo.width) * lw || lw;
     try {
-      doc.addImage(logo.dataUrl, "PNG", left, y, lw, Math.min(lh, 24));
+      doc.addImage(logo.dataUrl, "PNG", logoX, logoY, logoSize, logoSize);
     } catch {
-      /* ignore */
+      doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2);
     }
+  } else {
+    doc.setDrawColor(100);
+    doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2);
+    setLangFont(doc, lang, "normal");
+    doc.setFontSize(7);
+    doc.text(t("logo"), logoX + logoSize / 2, logoY + 13, { align: "center" });
   }
 
-  doc.setTextColor(...ACCENT);
+  const photoX = right - 25;
+  const photoY = boxY + 10;
+  doc.setDrawColor(...DARK);
+  doc.setLineWidth(0.45);
+  doc.roundedRect(photoX, photoY, 22, 30, 2, 2);
+
+  setLangFont(doc, lang, "normal");
+  doc.setTextColor(...DARK);
+  doc.setFontSize(lang === "mr" ? 10 : 11);
+  doc.text(t("management"), center, boxY + 16, { align: "center" });
+
   setLangFont(doc, lang, "bold");
-  doc.setFontSize(19);
-  doc.text(college.name || "College Name", center, y + 6, { align: "center" });
-  y += 12;
-  doc.setTextColor(40);
-  setLangFont(doc, lang, "normal");
-  doc.setFontSize(9.5);
-  if (college.address) {
-    doc.text(college.address, center, y, { align: "center" });
-    y += 4.5;
-  }
-  const contact = [
-    college.phone ? `${t.phone}: ${college.phone}` : "",
-    college.email ? `${t.email}: ${college.email}` : "",
-  ]
-    .filter(Boolean)
-    .join("   |   ");
-  if (contact) {
-    doc.setFontSize(9);
-    doc.text(contact, center, y, { align: "center" });
-    y += 4.5;
-  }
-  if (college.code) {
-    doc.setFontSize(8.5);
-    doc.setTextColor(90);
-    doc.text(t.collegeCode(college.code), center, y, { align: "center" });
-    y += 4.5;
-  }
-
-  // Header divider
-  y += 1;
-  doc.setDrawColor(...ACCENT);
-  doc.setLineWidth(0.6);
-  doc.line(left, y, right, y);
-  y += 10;
-
-  // ---- Title ----
-  doc.setTextColor(...ACCENT);
-  setLangFont(doc, lang, "bold");
-  doc.setFontSize(16);
-  const title = t.bonafideTitle;
-  doc.text(title, center, y, { align: "center" });
-  const titleW = doc.getTextWidth(title);
-  doc.setLineWidth(0.4);
-  doc.line(center - titleW / 2, y + 1.8, center + titleW / 2, y + 1.8);
-  y += 8;
-
-  // ---- Reference row ----
-  doc.setTextColor(0);
-  setLangFont(doc, lang, "normal");
-  doc.setFontSize(10);
-  doc.text(`${t.no}: ${val(student.bonafide_no)}`, left, y);
-  doc.text(`${t.date}: ${format(new Date(), "dd/MM/yyyy")}`, right, y, { align: "right" });
-  y += 14;
-
-  // ---- Body ----
-  doc.setTextColor(0);
-  setLangFont(doc, lang, "normal");
-  doc.setFontSize(12);
-
-  const body = t.bonafideBody({
-    name: val(student.full_name),
-    registerNo: val(student.register_no),
-    course: val(student.course),
-    cls: student.class || "",
-    academicYear: val(student.academic_year),
-    dob: fmtDate(student.date_of_birth),
-    dobWords: student.date_of_birth_words || "",
-    caste: val(student.caste),
-    conduct: val(student.character || student.conduct),
+  doc.setTextColor(...RED);
+  doc.setFontSize(lang === "mr" ? 17 : 18);
+  const schoolName = college.name || t("schoolNameFallback");
+  doc.text(doc.splitTextToSize(schoolName, 105), center, boxY + 26, {
+    align: "center",
+    lineHeightFactor: 1.1,
   });
 
-  const lines = doc.splitTextToSize(body, right - left);
-  doc.text(lines, left, y, { lineHeightFactor: 1.9 });
-  y += lines.length * 8.5 + 8;
-
-  // Formal closing line
-  doc.setFontSize(11);
-  doc.text(t.bonafidePurposeLine, left, y);
-  y += 8;
   setLangFont(doc, lang, "normal");
-  doc.setTextColor(60);
-  doc.setFontSize(10.5);
-  doc.text(t.bonafidePurpose(val(student.remarks)), left, y);
-  y += 6;
+  doc.setTextColor(...DARK);
+  doc.setFontSize(11);
+  doc.text(college.address || t("placeFallback"), center, boxY + 44, { align: "center" });
 
-  // ---- Footer: Seal + Principal ----
-  const footerY = pageHeight - 42;
-
-  // Seal box (left)
-  doc.setDrawColor(120);
-  doc.setLineWidth(0.4);
-  doc.circle(left + 14, footerY + 14, 13);
-  doc.setFontSize(8);
-  doc.setTextColor(120);
-  doc.text(t.officeSeal, left + 14, footerY + 14, { align: "center" });
-
-  // Principal signature (right)
-  doc.setDrawColor(0);
-  doc.setLineWidth(0.4);
-  doc.line(right - 55, footerY + 16, right, footerY + 16);
-  doc.setTextColor(0);
   setLangFont(doc, lang, "bold");
   doc.setFontSize(10);
-  doc.text(t.principal, right, footerY + 21, { align: "right" });
-  if (lang === "en" && college.signatureTitle && college.signatureTitle !== "Principal") {
-    setLangFont(doc, lang, "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(90);
-    doc.text(college.signatureTitle, right, footerY + 26, { align: "right" });
-  }
+  doc.text(`${t("numberLabel")}:`, left, boxY + 50);
+  doc.setTextColor(...RED);
+  doc.setFontSize(15);
+  doc.text(certNo, left + 17, boxY + 50);
 
-  doc.save(buildCertificateFileName(student.full_name, "Bonafide Certificate", lang));
+  doc.setTextColor(...DARK);
+  setLangFont(doc, lang, "bold");
+  doc.setFontSize(9.5);
+  const admY = boxY + 61;
+  doc.rect(left, admY - 6, 22, 8);
+  doc.rect(left + 22, admY - 6, 26, 8);
+  doc.text(t("admissionNoLabel"), left + 2, admY - 1);
+  setLangFont(doc, lang, "normal");
+  doc.text(admissionNo, left + 24, admY - 1);
+
+  const pillW = 74;
+  const pillH = 13;
+  const pillX = center - pillW / 2;
+  const pillY = boxY + 55;
+  doc.setFillColor(...RED);
+  doc.setDrawColor(...RED);
+  doc.roundedRect(pillX, pillY, pillW, pillH, 6, 6, "FD");
+  setLangFont(doc, lang, "bold");
+  doc.setFontSize(lang === "mr" ? 14 : 15);
+  doc.setTextColor(255, 255, 255);
+  doc.text(t("title"), center, pillY + 8.8, { align: "center" });
+
+  const bodyTop = boxY + 78;
+  const lineW = right - left;
+  setLangFont(doc, lang, "normal");
+  doc.setTextColor(...DARK);
+  doc.setFontSize(lang === "mr" ? 10.8 : 11);
+
+  const body = t("body", {
+    name,
+    admissionNo,
+    class: cls,
+    course,
+    academicYear,
+    dob,
+    dobWords,
+  });
+  const lines = doc.splitTextToSize(body, lineW);
+  doc.text(lines, left, bodyTop, { lineHeightFactor: 1.65 });
+
+  const ruleY = bodyTop + Math.min(lines.length, 5) * 7.2 + 4;
+  doc.setDrawColor(...DARK);
+  doc.setLineWidth(0.3);
+  doc.line(left + 45, bodyTop - 1.5, right - 3, bodyTop - 1.5);
+  doc.line(left + 20, ruleY, right - 4, ruleY);
+
+  const footerY = boxY + boxH - 14;
+  setLangFont(doc, lang, "bold");
+  doc.setTextColor(...RED);
+  doc.setFontSize(10);
+  doc.text(`${t("dateLabel")}: ${date}`, left, footerY);
+  doc.text(signature, right - 11, footerY, { align: "right" });
+
+  doc.save(`${safeFilePart(student.full_name || "student")}_bonafide_${lng === "mr" ? "marathi" : "english"}.pdf`);
 }
