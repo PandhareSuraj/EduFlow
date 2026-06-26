@@ -1,5 +1,8 @@
 # Welcome to your Lovable project
 
+<!-- Synced with Lovable: 2026-06-26 -->
+
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/9b7f61d5-2a94-459a-a654-b9be73b1a3d0
