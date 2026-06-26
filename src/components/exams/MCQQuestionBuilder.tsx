@@ -9,10 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Edit, Trash2, Save, FileText, Loader2, HelpCircle, Upload, Download } from "lucide-react";
+import { Plus, Edit, Trash2, Save, FileText, Loader2, HelpCircle, Upload, Download, FileJson } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ExcelImportDialog } from "./ExcelImportDialog";
+import { JsonQuestionImportDialog } from "./JsonQuestionImportDialog";
 import * as XLSX from 'xlsx';
 
 interface MCQOption {
@@ -462,7 +463,7 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
                   Questions added to this exam
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -497,6 +498,53 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
                   <Download className="h-4 w-4 mr-2" />
                   Template
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (questions.length === 0) {
+                      toast({
+                        title: "No Questions",
+                        description: "Add questions first before downloading",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    
+                    const exportData = {
+                      exam_name: exam.name,
+                      exported_at: new Date().toISOString(),
+                      total_questions: questions.length,
+                      questions: questions.map(q => ({
+                        question_number: q.question_number,
+                        question_text: q.question_text,
+                        options: q.options,
+                        correct_answer: q.correct_answer,
+                        marks: q.marks,
+                        difficulty: q.difficulty,
+                        explanation: q.explanation || null
+                      }))
+                    };
+                    
+                    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Questions_${exam.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    toast({
+                      title: "Questions Downloaded",
+                      description: `${questions.length} questions exported as JSON`,
+                    });
+                  }}
+                >
+                  <FileJson className="h-4 w-4 mr-2" />
+                  Download JSON
+                </Button>
                 <ExcelImportDialog 
                   examId={exam.id}
                   examName={exam.name}
@@ -508,6 +556,22 @@ export function MCQQuestionBuilder({ exam, onQuestionsUpdated }: MCQQuestionBuil
                     <Button variant="outline" size="sm">
                       <Upload className="h-4 w-4 mr-2" />
                       Import Excel
+                    </Button>
+                  }
+                />
+                <JsonQuestionImportDialog
+                  examId={exam.id}
+                  examName={exam.name}
+                  existingQuestionNumbers={questions.map(q => q.question_number)}
+                  totalQuestions={exam.total_questions || 30}
+                  onImportComplete={() => {
+                    fetchQuestions();
+                    onQuestionsUpdated?.();
+                  }}
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      <FileJson className="h-4 w-4 mr-2" />
+                      Import JSON
                     </Button>
                   }
                 />

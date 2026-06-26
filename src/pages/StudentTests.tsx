@@ -9,7 +9,7 @@ import { CountdownTimer } from "@/components/ui/countdown-timer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { RoleGuard } from "@/components/permissions/RoleGuard";
-import { getExamStatus, formatISTDate } from "@/utils/dateUtils";
+import { getExamStatus, formatISTDate, getCurrentISTTime, convertToIST, isCurrentISTBefore } from "@/utils/dateUtils";
 
 interface MCQTest {
   id: string;
@@ -285,6 +285,31 @@ export default function StudentTests() {
       }
       
       if (exam) {
+        // Check if exam has started (IST timezone aware)
+        if (exam.start_time && isCurrentISTBefore(exam.start_time)) {
+          const startTimeIST = formatISTDate(exam.start_time, 'hh:mm a');
+          toast({
+            title: "Exam Not Started Yet",
+            description: `This exam will start at ${startTimeIST} IST. Please wait until the scheduled time.`,
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Check if exam has ended
+        if (exam.end_time) {
+          const currentTime = getCurrentISTTime();
+          const endTime = convertToIST(exam.end_time);
+          if (currentTime > endTime) {
+            toast({
+              title: "Exam Expired",
+              description: "This exam has already ended. You cannot start it now.",
+              variant: "destructive"
+            });
+            return;
+          }
+        }
+        
         console.log('Exam found, starting interface:', exam.name);
         setCurrentExam({ ...exam, studentId: studentId });
       } else {
