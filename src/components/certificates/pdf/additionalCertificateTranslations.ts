@@ -17,9 +17,11 @@ export interface AdditionalCertificateText {
     form: string;
     title: string;
     certify: string;
+    honorific: string;
     studentOf: string;
     year: string;
     studying: string;
+    standard: string;
     faculty: string;
     register: string;
     caste: string;
@@ -79,13 +81,15 @@ const en: AdditionalCertificateText = {
   form15a: {
     form: "Form-15A",
     title: "Certificate to be given by Principal of the School/College",
-    certify: "This is to certify that Shri/Kum.",
-    studentOf: "is a student of this School/College",
-    year: "in the academic year",
-    studying: "and is studying in",
-    faculty: "faculty. The student's name and other information are recorded at number",
-    register: "in the General Register.",
-    caste: "The caste stated in our General Register is",
+    certify: "This is to Certify that",
+    honorific: "Shri/Kum.",
+    studentOf: "is a Student of this School / College",
+    year: "in Year",
+    studying: "and he/she is studying in",
+    standard: "Std.",
+    faculty: "His/her name and other information is as mentioned at number",
+    register: "in General Register. And the caste stated as per our General Register is",
+    caste: "Caste",
     strike: "(Strike out if not applicable)",
     place: "Place",
     date: "Date",
@@ -142,13 +146,15 @@ const mr: AdditionalCertificateText = {
   form15a: {
     form: "नमुना-१५ अ",
     title: "शाळा/महाविद्यालयाच्या प्राचार्यांनी द्यावयाचे प्रमाणपत्र",
-    certify: "प्रमाणित करण्यात येते की श्री./कु.",
+    certify: "प्रमाणित करण्यात येते की",
+    honorific: "श्री./कु.",
     studentOf: "हा/ही या शाळेचा/महाविद्यालयाचा विद्यार्थी/विद्यार्थिनी आहे.",
     year: "शैक्षणिक वर्ष",
-    studying: "मध्ये इयत्ता",
-    faculty: "या शाखेत शिक्षण घेत आहे. त्याचे/तिचे नाव व इतर माहिती",
-    register: "या क्रमांकावर जनरल रजिस्टरमध्ये नोंदविलेली आहे.",
-    caste: "आमच्या जनरल रजिस्टरनुसार त्याची/तिची जात",
+    studying: "मध्ये शिक्षण घेत आहे आणि इयत्ता",
+    standard: "इयत्ता",
+    faculty: "त्याचे/तिचे नाव व इतर माहिती खालील क्रमांकावर नोंदविलेली आहे.",
+    register: "हा क्रमांक जनरल रजिस्टरमध्ये नोंदविलेला आहे. जनरल रजिस्टरनुसार जात",
+    caste: "जात",
     strike: "(लागू नसलेला मजकूर खोडावा)",
     place: "ठिकाण",
     date: "दिनांक",

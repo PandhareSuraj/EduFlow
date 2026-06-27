@@ -152,49 +152,95 @@ export async function generateForm15ACertificatePDF(
   const left = 24;
   const right = width - 24;
   const lineWidth = right - left;
+  const center = width / 2;
 
-  setLangFont(doc, lang, "bold");
+  const setFormFont = (style: "normal" | "bold" = "normal") => {
+    if (lang === "mr") {
+      setLangFont(doc, lang, style);
+    } else {
+      doc.setFont("times", style);
+    }
+  };
+
+  const drawFormValue = (text: string, x: number, y: number, fieldWidth: number) => {
+    if (text) {
+      setFormFont("bold");
+      const fitted = doc.splitTextToSize(text, fieldWidth - 2)[0] || text;
+      doc.text(fitted, x + 1, y);
+    } else {
+      doc.setDrawColor(35);
+      doc.setLineWidth(0.25);
+      doc.line(x, y + 1.2, x + fieldWidth, y + 1.2);
+    }
+  };
+
+  setFormFont("bold");
   doc.setTextColor(...BLACK);
-  doc.setFontSize(16);
-  doc.text(t.form, width / 2, 31, { align: "center" });
-  doc.setFontSize(lang === "mr" ? 14 : 15);
-  doc.text(t.title, width / 2, 43, { align: "center" });
-  doc.line(35, 46, width - 35, 46);
+  doc.setFontSize(lang === "mr" ? 15 : 16);
+  doc.text(t.form, center, 31, { align: "center" });
+  doc.setFontSize(lang === "mr" ? 14 : 15.5);
+  doc.text(t.title, center, 43, { align: "center" });
+  const headingWidth = doc.getTextWidth(t.title);
+  doc.setLineWidth(0.4);
+  doc.line(center - headingWidth / 2, 45.5, center + headingWidth / 2, 45.5);
 
-  setLangFont(doc, lang, "normal");
-  doc.setFontSize(12.5);
-  doc.text(t.certify, left, 80);
-  drawValueOrBlank(doc, lang, value(student.full_name), left + 66, 80, lineWidth - 66);
+  setFormFont("normal");
+  doc.setFontSize(lang === "mr" ? 11.5 : 13);
+  doc.text(t.certify, left, 79);
 
-  setLangFont(doc, lang, "normal");
-  doc.text(t.studentOf, left, 96);
-  doc.text(t.year, left, 110);
-  drawValueOrBlank(doc, lang, value(student.academic_year), left + 42, 110, 36);
-  setLangFont(doc, lang, "normal");
-  doc.text(t.studying, left + 82, 110);
-  drawValueOrBlank(doc, lang, value(student.class), left + 122, 110, 39);
+  setFormFont("normal");
+  doc.text(`${t.honorific}:`, left, 94);
+  drawFormValue(value(student.full_name), left + 25, 94, 113);
+  setFormFont("normal");
+  doc.text(lang === "mr" ? "आहे." : "is", right, 94, { align: "right" });
 
-  drawValueOrBlank(doc, lang, value(student.course), left, 125, 48);
-  setLangFont(doc, lang, "normal");
-  doc.text(t.faculty, left + 51, 125);
-  drawValueOrBlank(doc, lang, value(student.general_register_no || student.register_no), left, 140, 48);
-  setLangFont(doc, lang, "normal");
-  doc.text(t.register, left + 51, 140);
+  setFormFont("normal");
+  doc.text(t.studentOf, left, 108);
+  doc.text(t.year, left, 121);
+  drawFormValue(value(student.academic_year), left + 27, 121, 34);
+  setFormFont("normal");
+  doc.text(t.studying, left + 65, 121);
 
-  doc.text(t.caste, left, 159);
-  drawValueOrBlank(doc, lang, value(student.caste), left, 174, 112);
-  setLangFont(doc, lang, "normal");
-  doc.setFontSize(10.5);
-  doc.text(t.strike, left + 116, 174);
+  setFormFont("normal");
+  doc.text(`${t.standard}:`, left, 135);
+  drawFormValue(value(student.class), left + 23, 135, 31);
+  drawFormValue(value(student.course), left + 58, 135, 54);
+  setFormFont("normal");
+  doc.text(lang === "mr" ? "शाखेत." : "faculty.", left + 116, 135);
 
-  doc.setFontSize(11.5);
-  setLangFont(doc, lang, "bold");
+  setFormFont("normal");
+  doc.setFontSize(lang === "mr" ? 10.8 : 12.5);
+  const facultyLines = doc.splitTextToSize(t.faculty, lineWidth);
+  doc.text(facultyLines, left, 149, { lineHeightFactor: 1.25 });
+
+  const registerY = 149 + facultyLines.length * 6.2 + 3;
+  drawFormValue(
+    value(student.general_register_no || student.register_no),
+    left,
+    registerY,
+    46
+  );
+  setFormFont("normal");
+  const registerLines = doc.splitTextToSize(t.register, lineWidth - 50);
+  doc.text(registerLines, left + 50, registerY, { lineHeightFactor: 1.25 });
+
+  const casteY = registerY + Math.max(1, registerLines.length) * 6.2 + 7;
+  setFormFont("normal");
+  doc.text(`${t.caste}:`, left, casteY);
+  drawFormValue(value(student.caste), left + 18, casteY, 103);
+  setFormFont("normal");
+  doc.setFontSize(lang === "mr" ? 9.5 : 10.5);
+  doc.text(t.strike, right, casteY, { align: "right" });
+
+  doc.setFontSize(lang === "mr" ? 11 : 12.5);
+  setFormFont("normal");
   doc.text(`${t.place}:`, left, 223);
-  drawValueOrBlank(doc, lang, "", left + 22, 223, 48);
+  drawFormValue("", left + 22, 223, 48);
   doc.text(`${t.date}:`, left, 238);
-  drawValueOrBlank(doc, lang, format(new Date(), "dd/MM/yyyy"), left + 22, 238, 48);
+  drawFormValue(format(new Date(), "dd/MM/yyyy"), left + 22, 238, 48);
 
-  doc.text(t.signature, right, 242, { align: "right" });
+  setFormFont("normal");
+  doc.text(t.signature, right, 243, { align: "right" });
   doc.save(buildCertificateFileName(student.full_name, "Form 15A Certificate", lang));
 }
 
