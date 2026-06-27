@@ -493,6 +493,13 @@
        "admissionNoLabel": "Admi. No.",
        "title": "Bonafide Certificate",
        "body": "This is to certify that {{name}} is/was a bonafide student of this institution. He/She is/was studying in {{class}} {{course}} class during the academic year {{academicYear}}. To the best of my knowledge, he/she bears a good and moral character. His/Her date of birth is {{dob}} and in words {{dobWords}}.",
+       "bodyPrefix": "This is to certify that ",
+       "bodyAfterName": " is/was a bonafide student of this institution. He/She is/was studying in ",
+       "bodyBetweenClassCourse": " ",
+       "bodyAfterCourse": " class during the academic year ",
+       "bodyAfterAcademicYear": ". To the best of my knowledge, he/she bears a good and moral character. His/Her date of birth is ",
+       "bodyAfterDob": " and in words ",
+       "bodyAfterDobWords": ".",
        "dateLabel": "Date",
        "signature": "Headmistress"
      }

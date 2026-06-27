@@ -7,7 +7,6 @@ export interface CertStrings {
   bonafideTitle: string;
   tcTitle: string;
   domicileTitle: string;
-  safeDrinkingWaterTitle: string;
   no: string;
   date: string;
   place: string;
@@ -15,7 +14,6 @@ export interface CertStrings {
   registerNo: string;
   tcNo: string;
   domicileNo: string;
-  safeDrinkingWaterNo: string;
   principal: string;
   classTeacher: string;
   clerk: string;
@@ -63,15 +61,6 @@ export interface CertStrings {
     dob: string;
   }) => string;
   domicileClosing: string;
-  safeDrinkingWaterBody: (a: {
-    name: string;
-    registerNo: string;
-    course: string;
-    cls: string;
-    academicYear: string;
-    admissionDate: string;
-  }) => string;
-  safeDrinkingWaterClosing: string;
 }
 
 const en: CertStrings = {
@@ -81,7 +70,6 @@ const en: CertStrings = {
   bonafideTitle: "BONAFIDE CERTIFICATE",
   tcTitle: "TRANSFER CERTIFICATE",
   domicileTitle: "DOMICILE CERTIFICATE",
-  safeDrinkingWaterTitle: "SAFE DRINKING WATER CERTIFICATE",
   no: "No",
   date: "Date",
   place: "Place",
@@ -89,7 +77,6 @@ const en: CertStrings = {
   registerNo: "Register No / PRN",
   tcNo: "Certificate No",
   domicileNo: "Domicile No",
-  safeDrinkingWaterNo: "Certificate No",
   principal: "Principal / Head Master",
   classTeacher: "Class Teacher",
   clerk: "Clerk",
@@ -129,14 +116,6 @@ const en: CertStrings = {
     `His/Her Date of Birth as per the records is ${a.dob}. ` +
     `He/She has been residing at the above place for ${a.years} years and is a domicile of ${a.state}.`,
   domicileClosing: "This certificate is issued for education / official requirements.",
-  safeDrinkingWaterBody: (a) =>
-    `This is to certify that Mr./Miss. ${a.name}, Register No. ${a.registerNo}, ` +
-    `studying in ${a.course}${a.cls ? " (" + a.cls + ")" : ""} during the academic year ${a.academicYear}, ` +
-    `has been provided safe and potable drinking water facilities on the college premises. ` +
-    `The institution maintains clean drinking water arrangements for students as part of its regular campus facilities. ` +
-    `The student's admission date as per record is ${a.admissionDate}.`,
-  safeDrinkingWaterClosing:
-    "This certificate is issued on request for education / official requirements.",
 };
 
 const mr: CertStrings = {
@@ -146,7 +125,6 @@ const mr: CertStrings = {
   bonafideTitle: "बोनाफाईड प्रमाणपत्र",
   tcTitle: "स्थानांतरण प्रमाणपत्र",
   domicileTitle: "अधिवास प्रमाणपत्र",
-  safeDrinkingWaterTitle: "सुरक्षित पिण्याच्या पाण्याचे प्रमाणपत्र",
   no: "क्रमांक",
   date: "दिनांक",
   place: "ठिकाण",
@@ -154,7 +132,6 @@ const mr: CertStrings = {
   registerNo: "नोंदणी क्रमांक / पी.आर.एन.",
   tcNo: "प्रमाणपत्र क्रमांक",
   domicileNo: "अधिवास क्रमांक",
-  safeDrinkingWaterNo: "प्रमाणपत्र क्रमांक",
   principal: "प्राचार्य / मुख्याध्यापक",
   classTeacher: "वर्गशिक्षक",
   clerk: "लिपिक",
@@ -192,14 +169,6 @@ const mr: CertStrings = {
     `नोंदीनुसार जन्म दिनांक ${a.dob} आहे. ` +
     `तो/ती वरील ठिकाणी ${a.years} वर्षांपासून वास्तव्यास असून ${a.state} राज्याचा/राज्याची अधिवासी आहे.`,
   domicileClosing: "सदर प्रमाणपत्र शैक्षणिक / शासकीय कामासाठी विद्यार्थ्याच्या विनंतीनुसार देण्यात येत आहे.",
-  safeDrinkingWaterBody: (a) =>
-    `प्रमाणित करण्यात येते की श्री/कु. ${a.name}, नोंदणी क्रमांक ${a.registerNo}, ` +
-    `हा/ही शैक्षणिक वर्ष ${a.academicYear} मध्ये ${a.course}${a.cls ? " (" + a.cls + ")" : ""} मध्ये शिकत आहे/होता/होती. ` +
-    `महाविद्यालय परिसरात विद्यार्थ्यांसाठी सुरक्षित व स्वच्छ पिण्याच्या पाण्याची सुविधा उपलब्ध आहे. ` +
-    `संस्था नियमितपणे पिण्याच्या पाण्याची स्वच्छता व उपलब्धता राखते. ` +
-    `नोंदीनुसार प्रवेश दिनांक ${a.admissionDate} आहे.`,
-  safeDrinkingWaterClosing:
-    "सदर प्रमाणपत्र शैक्षणिक / अधिकृत कामासाठी विद्यार्थ्याच्या विनंतीनुसार देण्यात येत आहे.",
 };
 
 export function getCertStrings(lang: CertificateLang): CertStrings {

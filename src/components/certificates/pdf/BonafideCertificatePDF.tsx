@@ -8,13 +8,18 @@ import { loadImageAsDataUrl, setLangFont, type CertificateLang } from "./pdfUtil
 const RED: [number, number, number] = [135, 28, 38];
 const DARK: [number, number, number] = [35, 35, 35];
 
-const val = (v?: string | null) => (v && v.trim() !== "" ? v.trim() : "________________");
-const fmtDate = (d?: string | null) => (d ? format(new Date(d), "dd/MM/yyyy") : "________________");
+const val = (v?: string | null) => (v && v.trim() !== "" ? v.trim() : "");
+const fmtDate = (d?: string | null) => (d ? format(new Date(d), "dd/MM/yyyy") : "");
 const safeFilePart = (value: string) =>
   value
     .trim()
     .replace(/[\\/:*?"<>|]+/g, "")
     .replace(/\s+/g, "_");
+
+interface RichTextSegment {
+  text: string;
+  bold?: boolean;
+}
 
 export async function generateBonafideCertificatePDF(
   student: CertificateStudent,
@@ -46,7 +51,40 @@ export async function generateBonafideCertificatePDF(
   const dob = fmtDate(student.date_of_birth);
   const dobWords = val(student.date_of_birth_words);
   const certNo = val(student.bonafide_no);
-  const signature = college.signatureTitle || t("signature");
+  const signature = t("signature");
+
+  const writeRichText = (
+    segments: RichTextSegment[],
+    x: number,
+    y: number,
+    maxWidth: number,
+    lineHeight: number
+  ) => {
+    let cursorX = x;
+    let cursorY = y;
+
+    segments.forEach((segment) => {
+      setLangFont(doc, lang, segment.bold ? "bold" : "normal");
+      const tokens = segment.text.split(/(\s+)/);
+
+      tokens.forEach((token) => {
+        if (!token) return;
+        const isSpace = /^\s+$/.test(token);
+        if (isSpace && cursorX === x) return;
+
+        const tokenWidth = doc.getTextWidth(token);
+        if (cursorX + tokenWidth > x + maxWidth && !isSpace) {
+          cursorX = x;
+          cursorY += lineHeight;
+        }
+
+        doc.text(token, cursorX, cursorY);
+        cursorX += tokenWidth;
+      });
+    });
+
+    return cursorY;
+  };
 
   doc.setFillColor(255, 255, 248);
   doc.rect(boxX, boxY, boxW, boxH, "F");
@@ -113,7 +151,7 @@ export async function generateBonafideCertificatePDF(
   doc.rect(left, admY - 6, 22, 8);
   doc.rect(left + 22, admY - 6, 26, 8);
   doc.text(t("admissionNoLabel"), left + 2, admY - 1);
-  setLangFont(doc, lang, "normal");
+  setLangFont(doc, lang, "bold");
   doc.text(admissionNo, left + 24, admY - 1);
 
   const pillW = 74;
@@ -130,27 +168,30 @@ export async function generateBonafideCertificatePDF(
 
   const bodyTop = boxY + 78;
   const lineW = right - left;
-  setLangFont(doc, lang, "normal");
   doc.setTextColor(...DARK);
   doc.setFontSize(lang === "mr" ? 10.8 : 11);
 
-  const body = t("body", {
-    name,
-    admissionNo,
-    class: cls,
-    course,
-    academicYear,
-    dob,
-    dobWords,
-  });
-  const lines = doc.splitTextToSize(body, lineW);
-  doc.text(lines, left, bodyTop, { lineHeightFactor: 1.65 });
-
-  const ruleY = bodyTop + Math.min(lines.length, 5) * 7.2 + 4;
-  doc.setDrawColor(...DARK);
-  doc.setLineWidth(0.3);
-  doc.line(left + 45, bodyTop - 1.5, right - 3, bodyTop - 1.5);
-  doc.line(left + 20, ruleY, right - 4, ruleY);
+  writeRichText(
+    [
+      { text: t("bodyPrefix") },
+      { text: name, bold: true },
+      { text: t("bodyAfterName") },
+      { text: cls, bold: true },
+      { text: t("bodyBetweenClassCourse") },
+      { text: course, bold: true },
+      { text: t("bodyAfterCourse") },
+      { text: academicYear, bold: true },
+      { text: t("bodyAfterAcademicYear") },
+      { text: dob, bold: true },
+      { text: t("bodyAfterDob") },
+      { text: dobWords, bold: true },
+      { text: t("bodyAfterDobWords") },
+    ],
+    left,
+    bodyTop,
+    lineW,
+    7.2
+  );
 
   const footerY = boxY + boxH - 14;
   setLangFont(doc, lang, "bold");

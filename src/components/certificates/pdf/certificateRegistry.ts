@@ -1,7 +1,6 @@
 import type { CertificateStudent } from "../CertificateStudentForm";
 import { generateBonafideCertificatePDF } from "./BonafideCertificatePDF";
 import { generateDomicileCertificatePDF } from "./DomicileCertificatePDF";
-import { generateSafeDrinkingWaterCertificatePDF } from "./SafeDrinkingWaterCertificatePDF";
 import { generateTransferCertificatePDF, type CertificateCollege } from "./TransferCertificatePDF";
 import type { CertificateLang } from "./pdfUtils";
 
@@ -30,10 +29,5 @@ export const certificateOptions: CertificateOption[] = [
     id: "domicile",
     name: "Domicile Certificate",
     generate: generateDomicileCertificatePDF,
-  },
-  {
-    id: "safe-drinking-water",
-    name: "Safe Drinking Water Certificate",
-    generate: generateSafeDrinkingWaterCertificatePDF,
   },
 ];
