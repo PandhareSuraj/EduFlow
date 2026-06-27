@@ -376,7 +376,7 @@ export function CertificateStudentForm({ open, onOpenChange, student, onSaved }:
                 </Select>
               </div>
               {field("Seat No", "seat_no")}
-              {field("T.C. No", "tc_no")}
+              {field("LC No", "tc_no")}
               {field("Bonafide No", "bonafide_no")}
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="remarks">Remarks</Label>

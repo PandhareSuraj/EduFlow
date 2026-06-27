@@ -6,7 +6,7 @@ import {
   generateCharacterCertificatePDF,
   generateForm15ACertificatePDF,
 } from "./AdditionalCertificatesPDF";
-import { generateTransferCertificatePDF, type CertificateCollege } from "./TransferCertificatePDF";
+import { generateLeavingCertificatePDF, type CertificateCollege } from "./TransferCertificatePDF";
 import type { CertificateLang } from "./pdfUtils";
 
 export interface CertificateOption {
@@ -21,9 +21,9 @@ export interface CertificateOption {
 
 export const certificateOptions: CertificateOption[] = [
   {
-    id: "tc",
-    name: "TC Certificate",
-    generate: generateTransferCertificatePDF,
+    id: "lc",
+    name: "LC Certificate",
+    generate: generateLeavingCertificatePDF,
   },
   {
     id: "bonafide",

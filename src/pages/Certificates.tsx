@@ -193,7 +193,7 @@ export default function Certificates() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">TC Issued</p>
+                <p className="text-sm font-medium text-muted-foreground">LC Issued</p>
                 <p className="text-3xl font-bold text-success">{stats.tc}</p>
               </div>
               <FileText className="h-8 w-8 text-success" />
