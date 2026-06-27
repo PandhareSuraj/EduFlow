@@ -21,7 +21,7 @@ export interface CertificateCollege {
 }
 
 const fmtDate = (d?: string | null) => (d ? format(new Date(d), "dd/MM/yyyy") : "________________");
-const val = (v?: string | null) => (v && v.trim() !== "" ? v : "________________");
+const val = (v?: string | null) => (v && v.trim() !== "" ? v.trim() : "________________");
 
 // Classic maroon accent tone
 const ACCENT: [number, number, number] = [120, 20, 20];
