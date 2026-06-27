@@ -79,52 +79,64 @@ export async function generateCharacterCertificatePDF(
 ): Promise<void> {
   const t = getAdditionalCertificateText(lang).character;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const width = doc.internal.pageSize.getWidth();
-  const left = 27;
-  const right = width - 27;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const boxWidth = 190;
+  const boxHeight = 138;
+  const boxX = (pageWidth - boxWidth) / 2;
+  const boxY = (pageHeight - boxHeight) / 2;
+  const left = boxX + 15;
+  const right = boxX + boxWidth - 15;
+  const center = pageWidth / 2;
 
-  await drawSchoolIdentity(doc, college, lang, 18);
-  doc.setDrawColor(90);
-  doc.setLineWidth(0.4);
-  doc.line(left, 51, right, 51);
+  doc.setDrawColor(...BLACK);
+  doc.setLineWidth(0.75);
+  doc.rect(boxX, boxY, boxWidth, boxHeight);
+  doc.setLineWidth(0.25);
+  doc.rect(boxX + 3, boxY + 3, boxWidth - 6, boxHeight - 6);
 
   setLangFont(doc, lang, "bold");
   doc.setTextColor(...BLACK);
-  doc.setFontSize(17);
-  doc.text(t.title, width / 2, 74, { align: "center" });
-  doc.line(width / 2 - 34, 76, width / 2 + 34, 76);
+  doc.setFontSize(lang === "mr" ? 16 : 17);
+  doc.text(t.title, center, boxY + 17, { align: "center" });
+  const titleWidth = doc.getTextWidth(t.title);
+  doc.setLineWidth(0.35);
+  doc.line(center - titleWidth / 2, boxY + 19, center + titleWidth / 2, boxY + 19);
 
-  doc.setFontSize(12);
-  doc.text(t.certify, left, 95);
-
-  setLangFont(doc, lang, "normal");
   doc.setFontSize(11.5);
-  doc.text(`${t.honorific}:`, left, 111);
-  drawValueOrBlank(doc, lang, value(student.full_name), left + 22, 111, 116);
+  doc.text(t.certify, left, boxY + 31);
+
   setLangFont(doc, lang, "normal");
-  doc.text(doc.splitTextToSize(t.bonafide, right - left), left, 125);
+  doc.setFontSize(10.8);
+  doc.text(`${t.honorific}:`, left, boxY + 43);
+  drawValueOrBlank(doc, lang, value(student.full_name), left + 22, boxY + 43, 120);
+
+  setLangFont(doc, lang, "normal");
+  doc.text(doc.splitTextToSize(t.bonafide, right - left), left, boxY + 55);
 
   const school = college.name || "";
-  drawValueOrBlank(doc, lang, school, left, 139, right - left);
-  setLangFont(doc, lang, "normal");
-  doc.text(t.studying, left, 153);
+  drawValueOrBlank(doc, lang, school, left, boxY + 66, right - left);
 
-  drawValueOrBlank(doc, lang, value(student.class), left + 45, 153, 30);
-  drawValueOrBlank(doc, lang, value(student.course), left + 78, 153, 59);
   setLangFont(doc, lang, "normal");
-  doc.text(t.during, left, 167);
-  drawValueOrBlank(doc, lang, value(student.academic_year), left + 65, 167, 40);
+  doc.text(t.studying, left, boxY + 78);
+
+  drawValueOrBlank(doc, lang, value(student.class), left + 45, boxY + 78, 30);
+  drawValueOrBlank(doc, lang, value(student.course), left + 78, boxY + 78, 64);
+
+  setLangFont(doc, lang, "normal");
+  doc.text(t.during, left, boxY + 90);
+  drawValueOrBlank(doc, lang, value(student.academic_year), left + 65, boxY + 90, 42);
 
   setLangFont(doc, lang, "bold");
-  doc.setFontSize(11.5);
-  doc.text(t.character, left, 184);
+  doc.setFontSize(10.8);
+  doc.text(t.character, left, boxY + 103);
 
-  doc.text(`${t.dob}:`, left, 201);
-  drawValueOrBlank(doc, lang, dateValue(student.date_of_birth), left + 31, 201, 45);
+  doc.text(`${t.dob}:`, left, boxY + 115);
+  drawValueOrBlank(doc, lang, dateValue(student.date_of_birth), left + 31, boxY + 115, 45);
 
   setLangFont(doc, lang, "bold");
-  doc.text(t.clerk, left, 239);
-  doc.text(t.signature, right, 239, { align: "right" });
+  doc.text(t.clerk, left, boxY + 129);
+  doc.text(t.signature, right, boxY + 129, { align: "right" });
 
   doc.save(buildCertificateFileName(student.full_name, "Character Certificate", lang));
 }
