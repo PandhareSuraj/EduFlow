@@ -4,6 +4,7 @@ import type { CertificateStudent } from "../CertificateStudentForm";
 import {
   buildCertificateFileName,
   loadImageAsDataUrl,
+  prepareMarathiPdf,
   setLangFont,
   type CertificateLang,
 } from "./pdfUtils";
@@ -24,6 +25,18 @@ const BLACK: [number, number, number] = [28, 28, 28];
 const clean = (input?: string | null) => input?.trim() || "";
 const date = (input?: string | null) =>
   input ? format(new Date(input), "dd/MM/yyyy") : "";
+const translatedDefault = (
+  input: string | null | undefined,
+  english: string,
+  marathi: string,
+  lang: CertificateLang
+) => {
+  const current = clean(input);
+  if (!current || current.toLowerCase() === english.toLowerCase()) {
+    return lang === "mr" ? marathi : english;
+  }
+  return current;
+};
 
 const LC_TEXT = {
   en: {
@@ -207,6 +220,7 @@ export async function generateLeavingCertificatePDF(
 ): Promise<void> {
   const t = LC_TEXT[lang];
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  await prepareMarathiPdf(doc, lang);
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const left = 12;
@@ -307,7 +321,16 @@ export async function generateLeavingCertificatePDF(
   drawField(doc, lang, t.surname, "", left + 7, y, 98, 27);
   drawField(doc, lang, t.mother, clean(student.mother_name), 119, y, 78, 25);
   y += rowGap;
-  drawField(doc, lang, t.nationality, clean(student.nationality) || t.indian, left, y, 91, 35);
+  drawField(
+    doc,
+    lang,
+    t.nationality,
+    translatedDefault(student.nationality, "Indian", t.indian, lang),
+    left,
+    y,
+    91,
+    35
+  );
   drawField(doc, lang, t.motherTongue, clean(student.mother_tongue), 119, y, 78, 34);
   y += rowGap;
   drawField(doc, lang, t.religion, clean(student.religion), left, y, 58, 24);
@@ -318,7 +341,16 @@ export async function generateLeavingCertificatePDF(
   drawField(doc, lang, t.taluka, clean(student.taluka), 139, y, 58, 23);
   y += rowGap;
   drawField(doc, lang, t.district, clean(student.district), left, y, 58, 24);
-  drawField(doc, lang, t.state, clean(student.state) || t.maharashtra, 72, y, 57, 24);
+  drawField(
+    doc,
+    lang,
+    t.state,
+    translatedDefault(student.state, "Maharashtra", t.maharashtra, lang),
+    72,
+    y,
+    57,
+    24
+  );
   drawField(doc, lang, t.country, t.india, 139, y, 58, 25);
   y += rowGap;
 
@@ -343,8 +375,26 @@ export async function generateLeavingCertificatePDF(
     20
   );
   y += rowGap;
-  drawField(doc, lang, t.progress, clean(student.study_progress) || t.good, left, y, 117, 43);
-  drawField(doc, lang, t.conduct, clean(student.conduct) || t.good, 139, y, 58, 26);
+  drawField(
+    doc,
+    lang,
+    t.progress,
+    translatedDefault(student.study_progress, "Good", t.good, lang),
+    left,
+    y,
+    117,
+    43
+  );
+  drawField(
+    doc,
+    lang,
+    t.conduct,
+    translatedDefault(student.conduct, "Good", t.good, lang),
+    139,
+    y,
+    58,
+    26
+  );
   y += rowGap;
   drawField(doc, lang, t.leavingDate, date(student.date_of_leaving), left, y, contentWidth, 50);
   y += rowGap;

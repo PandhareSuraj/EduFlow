@@ -3,7 +3,12 @@ import { format } from "date-fns";
 import i18n from "@/i18n";
 import type { CertificateStudent } from "../CertificateStudentForm";
 import type { CertificateCollege } from "./TransferCertificatePDF";
-import { loadImageAsDataUrl, setLangFont, type CertificateLang } from "./pdfUtils";
+import {
+  loadImageAsDataUrl,
+  prepareMarathiPdf,
+  setLangFont,
+  type CertificateLang,
+} from "./pdfUtils";
 
 const RED: [number, number, number] = [135, 28, 38];
 const DARK: [number, number, number] = [35, 35, 35];
@@ -31,6 +36,7 @@ export async function generateBonafideCertificatePDF(
     i18n.t(`certificates.bonafide.${key}`, { lng, ...options });
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  await prepareMarathiPdf(doc, lang);
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const boxW = 190;

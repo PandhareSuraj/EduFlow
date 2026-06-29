@@ -5,6 +5,7 @@ import type { CertificateCollege } from "./TransferCertificatePDF";
 import {
   buildCertificateFileName,
   loadImageAsDataUrl,
+  prepareMarathiPdf,
   setLangFont,
   type CertificateLang,
 } from "./pdfUtils";
@@ -23,6 +24,7 @@ export async function generateDomicileCertificatePDF(
 ): Promise<void> {
   const t = getCertStrings(lang);
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  await prepareMarathiPdf(doc, lang);
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const left = 20;
@@ -128,7 +130,10 @@ export async function generateDomicileCertificatePDF(
     village: val(student.place_of_birth),
     taluka: val(student.taluka),
     district: val(student.district),
-    state: student.state || "Maharashtra",
+    state:
+      lang === "mr" && (!student.state || student.state.toLowerCase() === "maharashtra")
+        ? "महाराष्ट्र"
+        : student.state || "Maharashtra",
     years: val(student.residence_years),
     dob: fmtDate(student.date_of_birth),
   });

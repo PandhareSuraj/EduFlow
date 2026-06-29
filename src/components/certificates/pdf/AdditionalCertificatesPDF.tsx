@@ -6,6 +6,7 @@ import { getAdditionalCertificateText } from "./additionalCertificateTranslation
 import {
   buildCertificateFileName,
   loadImageAsDataUrl,
+  prepareMarathiPdf,
   setLangFont,
   type CertificateLang,
 } from "./pdfUtils";
@@ -79,6 +80,7 @@ export async function generateCharacterCertificatePDF(
 ): Promise<void> {
   const t = getAdditionalCertificateText(lang).character;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  await prepareMarathiPdf(doc, lang);
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const boxWidth = 190;
@@ -148,6 +150,7 @@ export async function generateForm15ACertificatePDF(
 ): Promise<void> {
   const t = getAdditionalCertificateText(lang).form15a;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  await prepareMarathiPdf(doc, lang);
   const width = doc.internal.pageSize.getWidth();
   const left = 24;
   const right = width - 24;
@@ -251,6 +254,7 @@ export async function generateAdmissionLeavingExtractPDF(
 ): Promise<void> {
   const t = getAdditionalCertificateText(lang).extract;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  await prepareMarathiPdf(doc, lang);
   const width = doc.internal.pageSize.getWidth();
   const height = doc.internal.pageSize.getHeight();
   const x = 12;
