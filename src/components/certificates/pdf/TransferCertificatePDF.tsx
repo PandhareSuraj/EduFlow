@@ -242,7 +242,9 @@ export async function generateLeavingCertificatePDF(
 
   if (logo) {
     try {
-      doc.addImage(logo.dataUrl, "PNG", 13, 13, 22, 22);
+      const logoHeight = 20;
+      const logoWidth = Math.min(17, logoHeight * (logo.width / logo.height));
+      doc.addImage(logo.dataUrl, "PNG", 13, 11.5, logoWidth, logoHeight);
     } catch {
       // Keep the official form usable when a remote logo cannot be embedded.
     }
@@ -262,7 +264,7 @@ export async function generateLeavingCertificatePDF(
   const schoolName = college.name || t.fallbackSchool;
   let schoolFontSize = lang === "mr" ? 17 : 16;
   doc.setFontSize(schoolFontSize);
-  while (doc.getTextWidth(schoolName) > 158 && schoolFontSize > 11.5) {
+  while (doc.getTextWidth(schoolName) > 142 && schoolFontSize > 11.5) {
     schoolFontSize -= 0.5;
     doc.setFontSize(schoolFontSize);
   }
