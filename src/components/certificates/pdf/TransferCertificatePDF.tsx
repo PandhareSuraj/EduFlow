@@ -22,6 +22,8 @@ export interface CertificateCollege {
 
 const RED: [number, number, number] = [130, 32, 42];
 const BLACK: [number, number, number] = [28, 28, 28];
+const SCHOOL_PHONE = "7709871193";
+const SCHOOL_RECOGNITION_NO = "HSC 1701/C326/01) HSE-1 Date 30/08/2001";
 const clean = (input?: string | null) => input?.trim() || "";
 const date = (input?: string | null) =>
   input ? format(new Date(input), "dd/MM/yyyy") : "";
@@ -45,13 +47,14 @@ const LC_TEXT = {
     department: "(Arts and Science) Tq. & Dist. Parbhani",
     original: "ORIGINAL COPY",
     established: "Established: 2001",
+    phone: "Phone",
     recognition: "School Recognition No.",
     udise: "UDISE No. 27170508104",
-    board: "Board Divisional Code, Aurangabad: J 60.01.019",
+    board: "Divisional Board: Chh. Sambhajinagar Affiliation Code: J 60.01.019",
     admissionNo: "Admission No.",
     certificateNo: "Certificate No.",
     title: "SCHOOL LEAVING CERTIFICATE",
-    studentId: "STUDENT ID",
+    studentId: "PEN No.",
     aadhaar: "UID No. (Aadhaar No.)",
     name: "1) Student's Name",
     father: "Father's Name",
@@ -96,13 +99,14 @@ const LC_TEXT = {
     department: "(कला व विज्ञान) ता. जि. परभणी",
     original: "मूळ प्रत",
     established: "स्थापना वर्ष - २००१",
+    phone: "दूरध्वनी",
     recognition: "शाळा मान्यता क्रमांक",
     udise: "यू डायस क्र. २७१७०५०८१०४",
-    board: "बोर्ड विभागीय मंडळ औरंगाबाद संलग्नता क्र. J 60.01.019",
+    board: "विभागीय मंडळ: छ. संभाजीनगर संलग्नता कोड: J 60.01.019",
     admissionNo: "प्रवेश क्र.",
     certificateNo: "प्रमाणपत्र क्रमांक",
     title: "शाळा सोडल्याचे प्रमाणपत्र",
-    studentId: "स्टुडंट आय डी.",
+    studentId: "PEN नं.",
     aadhaar: "यू आय डी नं. (आधार क्र.)",
     name: "१) विद्यार्थ्याचे नाव",
     father: "वडिलांचे नाव",
@@ -276,15 +280,15 @@ export async function generateLeavingCertificatePDF(
   setLangFont(doc, lang, "normal");
   doc.setFontSize(8.2);
   doc.text(`Email: ${college.email || "gokulnathpingli@gmail.com"}`, left, 46.5);
-  doc.text(`Phone: ${college.phone || "02452-266820"}`, right, 46.5, { align: "right" });
+  doc.text(`${t.phone}: ${SCHOOL_PHONE}`, right, 46.5, { align: "right" });
   rule(49);
   setLangFont(doc, lang, "bold");
   doc.setFontSize(7.4);
   doc.text(`${t.recognition}:`, left, 54.5);
-  drawField(doc, lang, "", "", left + 35, 54.5, 59, 0);
+  drawField(doc, lang, "", SCHOOL_RECOGNITION_NO, left + 35, 54.5, 92, 0);
   rule(57);
   doc.text(t.udise, left, 62.5);
-  doc.text(t.board, right, 62.5, { align: "right" });
+  doc.text(fitText(doc, t.board, contentWidth - 55), right, 62.5, { align: "right" });
   rule(65);
   doc.text(`${t.admissionNo}:`, left, 70.5);
   drawField(doc, lang, "", clean(student.register_no), left + 23, 70.5, 55, 0);
@@ -308,7 +312,7 @@ export async function generateLeavingCertificatePDF(
   doc.setTextColor(...RED);
   doc.setFontSize(7.5);
   doc.text(t.studentId, left, 98);
-  drawDigitBoxes(doc, clean(student.register_no), left + 25, 93.5, 18, 5.8);
+  drawDigitBoxes(doc, clean(student.register_no), left + 21, 93.5, 18, 5.8);
   doc.text(t.aadhaar, left, 107);
   drawDigitBoxes(doc, "", left + 39, 102.5, 12, 5.8);
   rule(112);
