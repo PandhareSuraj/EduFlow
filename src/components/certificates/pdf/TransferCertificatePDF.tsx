@@ -8,6 +8,7 @@ import {
   setLangFont,
   type CertificateLang,
 } from "./pdfUtils";
+import schoolLogoUrl from "@/assets/gokulnath-school-logo.png";
 
 export interface CertificateCollege {
   name: string;
@@ -22,7 +23,7 @@ export interface CertificateCollege {
 
 const RED: [number, number, number] = [130, 32, 42];
 const BLACK: [number, number, number] = [28, 28, 28];
-const SCHOOL_PHONE = "7709871193";
+const SCHOOL_PHONE = "7709871199";
 const SCHOOL_RECOGNITION_NO = "HSC 1701/C326/01) HSE-1 Date 30/08/2001";
 const clean = (input?: string | null) => input?.trim() || "";
 const date = (input?: string | null) =>
@@ -42,9 +43,9 @@ const translatedDefault = (
 
 const LC_TEXT = {
   en: {
-    management: "Nath Shikshan Prasarak Mandal, Pingli, Tq. & Dist. Parbhani",
+    management: "Nath Shikshan Prasarak Mandal, Pingli, Tq. & Dist. Parbhani 431402",
     fallbackSchool: "Gokulnath Secondary & Higher Secondary School, Pingli",
-    department: "(Arts and Science) Tq. & Dist. Parbhani",
+    department: "(Arts and Science) Tq. & Dist. Parbhani 431402",
     original: "ORIGINAL COPY",
     established: "Established: 2001",
     phone: "Phone",
@@ -94,9 +95,9 @@ const LC_TEXT = {
     good: "Good",
   },
   mr: {
-    management: "नाथ शिक्षण प्रसारक मंडळ, पिंगळी ता. जि. परभणी संचलित",
+    management: "नाथ शिक्षण प्रसारक मंडळ, पिंगळी ता. जि. परभणी ४३१४०२ संचलित",
     fallbackSchool: "गोकुळनाथ माध्यमिक व उच्च माध्यमिक विद्यालय पिंगळी",
-    department: "(कला व विज्ञान) ता. जि. परभणी",
+    department: "(कला व विज्ञान) ता. जि. परभणी ४३१४०२",
     original: "मूळ प्रत",
     established: "स्थापना वर्ष - २००१",
     phone: "दूरध्वनी",
@@ -231,7 +232,7 @@ export async function generateLeavingCertificatePDF(
   const right = pageWidth - 12;
   const contentWidth = right - left;
   const center = pageWidth / 2;
-  const logo = await loadImageAsDataUrl(college.logoUrl);
+  const logo = await loadImageAsDataUrl(schoolLogoUrl);
 
   doc.setDrawColor(...RED);
   doc.setLineWidth(0.85);
