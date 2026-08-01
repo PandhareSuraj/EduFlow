@@ -28,6 +28,7 @@ const SCHOOL_RECOGNITION_NO = "HSC 1701/C326/01) HSE-1 Date 30/08/2001";
 const clean = (input?: string | null) => input?.trim() || "";
 const date = (input?: string | null) =>
   input ? format(new Date(input), "dd/MM/yyyy") : "";
+const fieldLabel = (label: string) => (label ? `${label} :-` : "");
 const translatedDefault = (
   input: string | null | undefined,
   english: string,
@@ -170,8 +171,9 @@ function drawField(
   setLangFont(doc, lang, "bold");
   doc.setFontSize(lang === "mr" ? 8.2 : 8.5);
   doc.setTextColor(...BLACK);
-  doc.text(label, x, y);
-  const valueX = x + (labelWidth ?? doc.getTextWidth(label) + 2.5);
+  const displayLabel = fieldLabel(label);
+  doc.text(displayLabel, x, y);
+  const valueX = x + (labelWidth ?? doc.getTextWidth(displayLabel) + 2.5);
   const available = Math.max(8, width - (valueX - x));
 
   if (value) {
@@ -216,6 +218,47 @@ function drawDateBoxes(doc: jsPDF, value: string, x: number, y: number) {
     }
     if (groupIndex < 2) currentX += 3;
   });
+}
+
+function drawWatermark(doc: jsPDF, logo: { dataUrl: string; width: number; height: number }, center: number) {
+  const watermarkWidth = 76;
+  const watermarkHeight = watermarkWidth * (logo.height / logo.width);
+  const watermarkY = 130;
+  const pdfWithState = doc as jsPDF & {
+    GState?: new (options: { opacity: number }) => unknown;
+    setGState?: (state: unknown) => jsPDF;
+  };
+
+  try {
+    if (pdfWithState.GState && pdfWithState.setGState) {
+      pdfWithState.setGState(new pdfWithState.GState({ opacity: 0.08 }));
+      doc.addImage(
+        logo.dataUrl,
+        "PNG",
+        center - watermarkWidth / 2,
+        watermarkY,
+        watermarkWidth,
+        watermarkHeight,
+        undefined,
+        "FAST"
+      );
+      pdfWithState.setGState(new pdfWithState.GState({ opacity: 1 }));
+      return;
+    }
+  } catch {
+    // If the PDF runtime cannot apply opacity, use the plain watermark fallback.
+  }
+
+  doc.addImage(
+    logo.dataUrl,
+    "PNG",
+    center - watermarkWidth / 2,
+    watermarkY,
+    watermarkWidth,
+    watermarkHeight,
+    undefined,
+    "FAST"
+  );
 }
 
 export async function generateLeavingCertificatePDF(
@@ -311,6 +354,10 @@ export async function generateLeavingCertificatePDF(
   doc.text(t.title, center, 84.1, { align: "center" });
   rule(91);
 
+  if (logo) {
+    drawWatermark(doc, logo, center);
+  }
+
   setLangFont(doc, lang, "bold");
   doc.setTextColor(...RED);
   doc.setFontSize(7.5);
@@ -363,7 +410,7 @@ export async function generateLeavingCertificatePDF(
 
   setLangFont(doc, lang, "bold");
   doc.setFontSize(lang === "mr" ? 8.2 : 8.5);
-  doc.text(t.dobFigures, left, y);
+  doc.text(fieldLabel(t.dobFigures), left, y);
   drawDateBoxes(doc, date(student.date_of_birth), left + 61, y - 5.5);
   y += rowGap;
   drawField(doc, lang, t.dobWords, clean(student.date_of_birth_words), left + 7, y, contentWidth - 7, 42);
