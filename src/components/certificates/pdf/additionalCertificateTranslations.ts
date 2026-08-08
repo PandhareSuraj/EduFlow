@@ -85,7 +85,7 @@ const en: AdditionalCertificateText = {
     honorific: "Shri/Kum.",
     studentOf: "is a Student of this School / College",
     year: "in Year",
-    studying: "and he/she is studying in",
+    studying: "and he/she is/was studying in",
     standard: "Std.",
     faculty: "His/her name and other information is as mentioned at number",
     register: "in General Register. And the caste stated as per our General Register is",
