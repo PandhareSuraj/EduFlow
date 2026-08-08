@@ -9,6 +9,7 @@ import {
   setLangFont,
   type CertificateLang,
 } from "./pdfUtils";
+import schoolLogoUrl from "@/assets/gokulnath-school-logo.png";
 
 const RED: [number, number, number] = [135, 28, 38];
 const DARK: [number, number, number] = [35, 35, 35];
@@ -47,7 +48,7 @@ export async function generateBonafideCertificatePDF(
   const right = boxX + boxW - 8;
   const center = boxX + boxW / 2;
 
-  const logo = await loadImageAsDataUrl(college.logoUrl);
+  const logo = await loadImageAsDataUrl(schoolLogoUrl);
   const date = format(new Date(), "dd/MM/yyyy");
   const name = val(student.full_name);
   const admissionNo = val(student.register_no);
@@ -103,19 +104,20 @@ export async function generateBonafideCertificatePDF(
 
   const logoX = left;
   const logoY = boxY + 11;
-  const logoSize = 22;
+  const logoHeight = 22;
+  const logoWidth = logo ? Math.min(18, logoHeight * (logo.width / logo.height)) : 22;
   if (logo) {
     try {
-      doc.addImage(logo.dataUrl, "PNG", logoX, logoY, logoSize, logoSize);
+      doc.addImage(logo.dataUrl, "PNG", logoX, logoY, logoWidth, logoHeight);
     } catch {
-      doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2);
+      doc.circle(logoX + 11, logoY + 11, 11);
     }
   } else {
     doc.setDrawColor(100);
-    doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2);
+    doc.circle(logoX + 11, logoY + 11, 11);
     setLangFont(doc, lang, "normal");
     doc.setFontSize(7);
-    doc.text(t("logo"), logoX + logoSize / 2, logoY + 13, { align: "center" });
+    doc.text(t("logo"), logoX + 11, logoY + 13, { align: "center" });
   }
 
   const photoX = right - 25;
