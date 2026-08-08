@@ -487,10 +487,10 @@
      "bonafide": {
        "management": "Nath Shikshan Prasarak Mandal, Pingli, TQ & Dist. Parbhani",
        "schoolNameFallback": "Gokulnath Secondary & Higher Secondary School, Pingli",
-       "placeFallback": "Tq. Dist. Parbhani",
+       "placeFallback": "Tq. & Dist. Parbhani",
        "logo": "Logo",
        "numberLabel": "No.",
-       "admissionNoLabel": "Admi. No.",
+       "admissionNoLabel": "Adm. No.",
        "title": "Bonafide Certificate",
        "body": "This is to certify that {{name}} is/was a bonafide student of this Higher Secondary School. He/She is/was studying in {{class}} {{course}} class during the academic year {{academicYear}}. To the best of my knowledge, he/she bears a good and moral character. His/Her date of birth is {{dob}} and in words {{dobWords}}.",
        "bodyPrefix": "This is to certify that ",

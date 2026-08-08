@@ -21,6 +21,11 @@ const safeFilePart = (value: string) =>
     .trim()
     .replace(/[\\/:*?"<>|]+/g, "")
     .replace(/\s+/g, "_");
+const formatPlace = (place: string) => {
+  const cleanPlace = val(place);
+  if (!cleanPlace) return "";
+  return /^parbhani$/i.test(cleanPlace) ? "Tq. & Dist. Parbhani" : cleanPlace;
+};
 
 interface RichTextSegment {
   text: string;
@@ -57,7 +62,6 @@ export async function generateBonafideCertificatePDF(
   const academicYear = val(student.academic_year);
   const dob = fmtDate(student.date_of_birth);
   const dobWords = val(student.date_of_birth_words);
-  const certNo = val(student.bonafide_no);
   const signature = t("signature");
 
   const writeRichText = (
@@ -120,12 +124,6 @@ export async function generateBonafideCertificatePDF(
     doc.text(t("logo"), logoX + 11, logoY + 13, { align: "center" });
   }
 
-  const photoX = right - 25;
-  const photoY = boxY + 10;
-  doc.setDrawColor(...DARK);
-  doc.setLineWidth(0.45);
-  doc.roundedRect(photoX, photoY, 22, 30, 2, 2);
-
   setLangFont(doc, lang, "normal");
   doc.setTextColor(...DARK);
   doc.setFontSize(lang === "mr" ? 10 : 11);
@@ -143,14 +141,7 @@ export async function generateBonafideCertificatePDF(
   setLangFont(doc, lang, "normal");
   doc.setTextColor(...DARK);
   doc.setFontSize(11);
-  doc.text(college.address || t("placeFallback"), center, boxY + 44, { align: "center" });
-
-  setLangFont(doc, lang, "bold");
-  doc.setFontSize(10);
-  doc.text(`${t("numberLabel")}:`, left, boxY + 50);
-  doc.setTextColor(...RED);
-  doc.setFontSize(15);
-  doc.text(certNo, left + 17, boxY + 50);
+  doc.text(formatPlace(college.address) || t("placeFallback"), center, boxY + 44, { align: "center" });
 
   doc.setTextColor(...DARK);
   setLangFont(doc, lang, "bold");
