@@ -185,6 +185,18 @@ export async function generateForm15ACertificatePDF(
       doc.line(x, y + 1.2, x + fieldWidth, y + 1.2);
     }
   };
+  const drawInline = (
+    text: string,
+    x: number,
+    y: number,
+    style: "normal" | "bold" = "normal",
+    gap = 2.2
+  ) => {
+    if (!text) return x;
+    setFormFont(style);
+    doc.text(text, x, y);
+    return x + doc.getTextWidth(text) + gap;
+  };
 
   setFormFont("bold");
   doc.setTextColor(...BLACK);
@@ -198,34 +210,51 @@ export async function generateForm15ACertificatePDF(
 
   setFormFont("normal");
   doc.setFontSize(lang === "mr" ? 11.5 : 13);
-  doc.text(t.certify, left, 79);
+  doc.text(t.certify, left, 78);
+
+  let currentX = drawInline(`${t.honorific}:`, left, 93);
+  const nameText = value(student.full_name);
+  if (nameText) {
+    currentX = drawInline(nameText, currentX + 2, 93, "bold", 3);
+  } else {
+    drawFormValue("", currentX + 2, 93, 72);
+    currentX += 77;
+  }
+  drawInline(lang === "mr" ? "आहे/होता/होती." : "is/was", currentX, 93);
 
   setFormFont("normal");
-  doc.text(`${t.honorific}:`, left, 94);
-  drawFormValue(value(student.full_name), left + 25, 94, 113);
-  setFormFont("normal");
-  doc.text(lang === "mr" ? "आहे." : "is", right, 94, { align: "right" });
+  doc.text(t.studentOf, left, 106);
 
-  setFormFont("normal");
-  doc.text(t.studentOf, left, 108);
-  doc.text(t.year, left, 121);
-  drawFormValue(value(student.academic_year), left + 27, 121, 34);
-  setFormFont("normal");
-  doc.text(t.studying, left + 65, 121);
+  currentX = drawInline(t.year, left, 119);
+  const yearText = value(student.academic_year);
+  if (yearText) {
+    currentX = drawInline(yearText, currentX + 3, 119, "bold", 3);
+  } else {
+    drawFormValue("", currentX + 3, 119, 32);
+    currentX += 38;
+  }
+  drawInline(t.studying, currentX, 119);
 
-  setFormFont("normal");
-  doc.text(`${t.standard}:`, left, 135);
-  drawFormValue(value(student.class), left + 23, 135, 31);
-  drawFormValue(value(student.course), left + 58, 135, 54);
-  setFormFont("normal");
-  doc.text(lang === "mr" ? "शाखेत." : "faculty.", left + 116, 135);
+  currentX = drawInline(`${t.standard}:`, left, 132);
+  const classText = value(student.class);
+  if (classText) {
+    currentX = drawInline(classText, currentX + 3, 132, "bold", 3);
+  } else {
+    drawFormValue("", currentX + 3, 132, 32);
+    currentX += 38;
+  }
+  const courseText = value(student.course);
+  if (courseText) {
+    currentX = drawInline(courseText, currentX, 132, "bold", 3);
+  }
+  drawInline(lang === "mr" ? "शाखेत." : "faculty.", currentX, 132);
 
   setFormFont("normal");
   doc.setFontSize(lang === "mr" ? 10.8 : 12.5);
   const facultyLines = doc.splitTextToSize(t.faculty, lineWidth);
-  doc.text(facultyLines, left, 149, { lineHeightFactor: 1.25 });
+  doc.text(facultyLines, left, 145, { lineHeightFactor: 1.18 });
 
-  const registerY = 149 + facultyLines.length * 6.2 + 3;
+  const registerY = 145 + facultyLines.length * 5.8 + 3;
   drawFormValue(
     value(student.general_register_no || student.register_no),
     left,
@@ -234,9 +263,9 @@ export async function generateForm15ACertificatePDF(
   );
   setFormFont("normal");
   const registerLines = doc.splitTextToSize(t.register, lineWidth - 50);
-  doc.text(registerLines, left + 50, registerY, { lineHeightFactor: 1.25 });
+  doc.text(registerLines, left + 50, registerY, { lineHeightFactor: 1.18 });
 
-  const casteY = registerY + Math.max(1, registerLines.length) * 6.2 + 7;
+  const casteY = registerY + Math.max(1, registerLines.length) * 5.8 + 6;
   setFormFont("normal");
   doc.text(`${t.caste}:`, left, casteY);
   drawFormValue(value(student.caste), left + 18, casteY, 103);
