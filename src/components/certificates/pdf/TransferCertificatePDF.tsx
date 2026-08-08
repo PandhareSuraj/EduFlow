@@ -24,7 +24,7 @@ export interface CertificateCollege {
 const RED: [number, number, number] = [130, 32, 42];
 const BLACK: [number, number, number] = [28, 28, 28];
 const SCHOOL_PHONE = "7709871199";
-const SCHOOL_RECOGNITION_NO = "HSC 1701/C326/01) HSE-1 Date 30/08/2001";
+const SCHOOL_RECOGNITION_NO = "HSC 1701/(C326/01) HSE-1 Date 30/08/2001";
 const clean = (input?: string | null) => input?.trim() || "";
 const date = (input?: string | null) =>
   input ? format(new Date(input), "dd/MM/yyyy") : "";
@@ -44,7 +44,7 @@ const translatedDefault = (
 
 const LC_TEXT = {
   en: {
-    management: "Nath Shikshan Prasarak Mandal, Pingli, Tq. & Dist. Parbhani 431402",
+    management: "Nath Shikshan Prasarak Mandal, Pingli, Tq. & Dist. Parbhani",
     fallbackSchool: "Gokulnath Secondary & Higher Secondary School, Pingli",
     department: "(Arts and Science) Tq. & Dist. Parbhani 431402",
     original: "ORIGINAL COPY",
@@ -96,7 +96,7 @@ const LC_TEXT = {
     good: "Good",
   },
   mr: {
-    management: "नाथ शिक्षण प्रसारक मंडळ, पिंगळी ता. जि. परभणी ४३१४०२ संचलित",
+    management: "नाथ शिक्षण प्रसारक मंडळ, पिंगळी ता. जि. परभणी संचलित",
     fallbackSchool: "गोकुळनाथ माध्यमिक व उच्च माध्यमिक विद्यालय पिंगळी",
     department: "(कला व विज्ञान) ता. जि. परभणी ४३१४०२",
     original: "मूळ प्रत",
