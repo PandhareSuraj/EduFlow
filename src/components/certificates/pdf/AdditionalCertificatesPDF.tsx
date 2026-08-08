@@ -185,17 +185,32 @@ export async function generateForm15ACertificatePDF(
       doc.line(x, y + 1.2, x + fieldWidth, y + 1.2);
     }
   };
-  const drawInline = (
-    text: string,
+  type ParagraphSegment = { text: string; style?: "normal" | "bold" };
+  const drawParagraph = (
+    segments: ParagraphSegment[],
     x: number,
     y: number,
-    style: "normal" | "bold" = "normal",
-    gap = 2.2
+    maxWidth: number,
+    lineHeight: number
   ) => {
-    if (!text) return x;
-    setFormFont(style);
-    doc.text(text, x, y);
-    return x + doc.getTextWidth(text) + gap;
+    let currentX = x;
+    let currentY = y;
+
+    segments.forEach((segment) => {
+      const words = segment.text.split(/(\s+)/).filter(Boolean);
+      words.forEach((word) => {
+        setFormFont(segment.style || "normal");
+        const width = doc.getTextWidth(word);
+        if (currentX > x && currentX + width > x + maxWidth) {
+          currentX = x;
+          currentY += lineHeight;
+        }
+        doc.text(word, currentX, currentY);
+        currentX += width;
+      });
+    });
+
+    return currentY;
   };
 
   setFormFont("bold");
@@ -210,68 +225,44 @@ export async function generateForm15ACertificatePDF(
 
   setFormFont("normal");
   doc.setFontSize(lang === "mr" ? 11.5 : 13);
-  doc.text(t.certify, left, 78);
+  doc.text(t.certify, left, 83);
 
-  let currentX = drawInline(`${t.honorific}:`, left, 93);
-  const nameText = value(student.full_name);
-  if (nameText) {
-    currentX = drawInline(nameText, currentX + 2, 93, "bold", 3);
-  } else {
-    drawFormValue("", currentX + 2, 93, 72);
-    currentX += 77;
-  }
-  drawInline(lang === "mr" ? "आहे/होता/होती." : "is/was", currentX, 93);
+  const blank = "................................";
+  const form15Paragraph: ParagraphSegment[] =
+    lang === "mr"
+      ? [
+          { text: `${t.honorific}: ` },
+          { text: value(student.full_name) || blank, style: value(student.full_name) ? "bold" : "normal" },
+          { text: ` आहे/होता/होती. ${t.studentOf} ${t.year} ` },
+          { text: value(student.academic_year) || "20 - 20", style: value(student.academic_year) ? "bold" : "normal" },
+          { text: ` ${t.studying} ${t.standard}: ` },
+          { text: value(student.class) || blank, style: value(student.class) ? "bold" : "normal" },
+          { text: value(student.course) ? " " : "" },
+          { text: value(student.course), style: "bold" },
+          { text: " शाखेत. " },
+          { text: `${t.faculty} ` },
+          { text: value(student.general_register_no || student.register_no) || blank, style: value(student.general_register_no || student.register_no) ? "bold" : "normal" },
+          { text: ` ${t.register} ${t.caste}: ` },
+          { text: value(student.caste) || blank, style: value(student.caste) ? "bold" : "normal" },
+          { text: ` ${t.strike}` },
+        ]
+      : [
+          { text: `${t.honorific} ` },
+          { text: value(student.full_name) || blank, style: value(student.full_name) ? "bold" : "normal" },
+          { text: " is/was Student of this School / College in Year " },
+          { text: value(student.academic_year) || "20 - 20", style: value(student.academic_year) ? "bold" : "normal" },
+          { text: " and he/she is/was studying in Std. " },
+          { text: value(student.class) || blank, style: value(student.class) ? "bold" : "normal" },
+          { text: value(student.course) ? " " : "" },
+          { text: value(student.course), style: "bold" },
+          { text: " faculty. His/her name and other information is as per mentioned at number " },
+          { text: value(student.general_register_no || student.register_no) || blank, style: value(student.general_register_no || student.register_no) ? "bold" : "normal" },
+          { text: " in General Register. And the Caste stated as per our general register is " },
+          { text: value(student.caste) || blank, style: value(student.caste) ? "bold" : "normal" },
+          { text: ` ${t.strike}` },
+        ];
 
-  setFormFont("normal");
-  doc.text(t.studentOf, left, 106);
-
-  currentX = drawInline(t.year, left, 119);
-  const yearText = value(student.academic_year);
-  if (yearText) {
-    currentX = drawInline(yearText, currentX + 3, 119, "bold", 3);
-  } else {
-    drawFormValue("", currentX + 3, 119, 32);
-    currentX += 38;
-  }
-  drawInline(t.studying, currentX, 119);
-
-  currentX = drawInline(`${t.standard}:`, left, 132);
-  const classText = value(student.class);
-  if (classText) {
-    currentX = drawInline(classText, currentX + 3, 132, "bold", 3);
-  } else {
-    drawFormValue("", currentX + 3, 132, 32);
-    currentX += 38;
-  }
-  const courseText = value(student.course);
-  if (courseText) {
-    currentX = drawInline(courseText, currentX, 132, "bold", 3);
-  }
-  drawInline(lang === "mr" ? "शाखेत." : "faculty.", currentX, 132);
-
-  setFormFont("normal");
-  doc.setFontSize(lang === "mr" ? 10.8 : 12.5);
-  const facultyLines = doc.splitTextToSize(t.faculty, lineWidth);
-  doc.text(facultyLines, left, 145, { lineHeightFactor: 1.18 });
-
-  const registerY = 145 + facultyLines.length * 5.8 + 3;
-  drawFormValue(
-    value(student.general_register_no || student.register_no),
-    left,
-    registerY,
-    46
-  );
-  setFormFont("normal");
-  const registerLines = doc.splitTextToSize(t.register, lineWidth - 50);
-  doc.text(registerLines, left + 50, registerY, { lineHeightFactor: 1.18 });
-
-  const casteY = registerY + Math.max(1, registerLines.length) * 5.8 + 6;
-  setFormFont("normal");
-  doc.text(`${t.caste}:`, left, casteY);
-  drawFormValue(value(student.caste), left + 18, casteY, 103);
-  setFormFont("normal");
-  doc.setFontSize(lang === "mr" ? 9.5 : 10.5);
-  doc.text(t.strike, right, casteY, { align: "right" });
+  drawParagraph(form15Paragraph, left, 98, lineWidth, lang === "mr" ? 7.4 : 7.8);
 
   doc.setFontSize(lang === "mr" ? 11 : 12.5);
   setFormFont("normal");
