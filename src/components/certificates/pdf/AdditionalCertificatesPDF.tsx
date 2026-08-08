@@ -16,6 +16,11 @@ const BLACK: [number, number, number] = [25, 25, 25];
 const value = (input?: string | null) => input?.trim() || "";
 const dateValue = (input?: string | null) =>
   input ? format(new Date(input), "dd/MM/yyyy") : "";
+const formatPlace = (place: string) => {
+  const cleanPlace = value(place);
+  if (!cleanPlace) return "";
+  return /^parbhani$/i.test(cleanPlace) ? "Tq. & Dist. Parbhani" : cleanPlace;
+};
 
 function drawValueOrBlank(
   doc: jsPDF,
@@ -42,7 +47,8 @@ async function drawSchoolIdentity(
   college: CertificateCollege,
   lang: CertificateLang,
   y: number,
-  compact = false
+  compact = false,
+  schoolNameWidth = 142
 ) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const center = pageWidth / 2;
@@ -57,12 +63,13 @@ async function drawSchoolIdentity(
 
   setLangFont(doc, lang, "bold");
   doc.setTextColor(...RED);
-  doc.setFontSize(compact ? 16 : 19);
+  doc.setFontSize(compact ? 14.5 : 19);
   const schoolName = college.name ||
     (lang === "mr"
       ? "गोकुळनाथ माध्यमिक व उच्च माध्यमिक विद्यालय पिंगळी"
       : "Gokulnath Secondary & Higher Secondary School, Pingli");
-  doc.text(doc.splitTextToSize(schoolName, 142), center, y + 8, {
+  const schoolNameLines = doc.splitTextToSize(schoolName, schoolNameWidth);
+  doc.text(schoolNameLines, center, y + 8, {
     align: "center",
     lineHeightFactor: 1.05,
   });
@@ -70,7 +77,9 @@ async function drawSchoolIdentity(
   setLangFont(doc, lang, "normal");
   doc.setTextColor(...BLACK);
   doc.setFontSize(9.5);
-  if (college.address) doc.text(college.address, center, y + (compact ? 19 : 24), { align: "center" });
+  const address = formatPlace(college.address || "");
+  const addressY = y + (compact ? 10 + schoolNameLines.length * 5.2 : 24);
+  if (address) doc.text(address, center, addressY, { align: "center" });
 }
 
 export async function generateCharacterCertificatePDF(
@@ -260,6 +269,7 @@ export async function generateAdmissionLeavingExtractPDF(
   const x = 12;
   const tableWidth = width - 24;
   const labelWidth = 61;
+  const boxX = width - 61;
 
   doc.setDrawColor(...BLACK);
   doc.setLineWidth(0.7);
@@ -268,12 +278,18 @@ export async function generateAdmissionLeavingExtractPDF(
   setLangFont(doc, lang, "bold");
   doc.setFontSize(9.5);
   doc.text(t.management, width / 2, 17, { align: "center" });
-  await drawSchoolIdentity(doc, college, lang, 15, true);
-  doc.setFontSize(17);
+  await drawSchoolIdentity(doc, college, lang, 15, true, 88);
+  let titleFontSize = lang === "mr" ? 14.5 : 15;
+  const titleCenter = (x + boxX - 4) / 2;
+  const titleMaxWidth = boxX - x - 8;
+  doc.setFontSize(titleFontSize);
+  while (doc.getTextWidth(t.title) > titleMaxWidth && titleFontSize > 10.5) {
+    titleFontSize -= 0.5;
+    doc.setFontSize(titleFontSize);
+  }
   doc.setTextColor(...BLACK);
-  doc.text(t.title, width / 2, 46, { align: "center" });
+  doc.text(t.title, titleCenter, 46, { align: "center" });
 
-  const boxX = width - 61;
   doc.setLineWidth(0.45);
   doc.rect(boxX, 31, 47, 19);
   doc.line(boxX, 40.5, boxX + 47, 40.5);

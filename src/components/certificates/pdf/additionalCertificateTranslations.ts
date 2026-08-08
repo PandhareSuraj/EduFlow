@@ -96,7 +96,7 @@ const en: AdditionalCertificateText = {
     signature: "Seal and Signature of Principal / Head Master",
   },
   extract: {
-    management: "Nath Shikshan Prasarak Mandal, Pingli Tq. & Dist. Parbhani",
+    management: "Nath Shikshan Prasarak Mandal, Pingli, Tq. & Dist. Parbhani",
     title: "ADMISSION AND LEAVING REGISTER EXTRACT",
     admissionSerial: "Admission Serial No.",
     extractNo: "Extract No.",
